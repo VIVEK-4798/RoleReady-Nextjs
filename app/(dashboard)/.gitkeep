@@ -1,0 +1,8 @@
+# Placeholder for dashboard route group
+# This directory will contain protected routes:
+# - /dashboard (user dashboard)
+# - /readiness
+# - /roadmap
+# - /report
+# - /settings
+# With a shared dashboard layout (sidebar, header)

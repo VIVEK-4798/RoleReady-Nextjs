@@ -1,0 +1,6 @@
+# Placeholder for auth route group
+# This directory will contain:
+# - /login page
+# - /signup page
+# - /forgot-password page
+# With a shared auth layout (no sidebar, centered forms)

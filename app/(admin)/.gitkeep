@@ -1,0 +1,8 @@
+# Placeholder for admin route group
+# This directory will contain admin-only routes:
+# - /admin (admin dashboard)
+# - /admin/roles
+# - /admin/skills
+# - /admin/benchmarks
+# - /admin/users
+# With a shared admin layout

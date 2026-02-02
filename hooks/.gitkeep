@@ -1,0 +1,7 @@
+# Placeholder for custom React hooks
+# This directory will contain custom hooks like:
+# - useAuth
+# - useUser
+# - useReadiness
+# - useToast
+# - etc.

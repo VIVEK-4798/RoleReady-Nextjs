@@ -1,0 +1,5 @@
+# Placeholder for mentor route group
+# This directory will contain mentor-only routes:
+# - /mentor (mentor dashboard)
+# - /mentor/validation-queue
+# With a shared mentor layout
