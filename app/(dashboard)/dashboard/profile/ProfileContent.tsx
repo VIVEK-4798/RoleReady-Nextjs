@@ -9,6 +9,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks';
 import { SkeletonPage, useToast } from '@/components/ui';
+import PasswordChangeSection from './PasswordChangeSection';
 
 interface ProfileData {
   id: string;
@@ -214,7 +215,7 @@ export default function ProfileContent() {
       {/* Profile Card */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
         {/* Cover & Avatar */}
-        <div className="h-32 bg-gradient-to-r from-blue-500 to-indigo-600" />
+        <div className="h-32 bg-linear-to-r from-blue-500 to-indigo-600" />
         <div className="px-6 pb-6">
           <div className="flex items-end -mt-12 mb-4">
             <div className="w-24 h-24 rounded-full bg-white dark:bg-gray-700 border-4 border-white dark:border-gray-800 flex items-center justify-center text-3xl font-bold text-gray-600 dark:text-gray-300">
@@ -397,6 +398,9 @@ export default function ProfileContent() {
           )}
         </div>
       </div>
+
+      {/* Password Change Section */}
+      <PasswordChangeSection />
 
       {/* Education Section */}
       <ProfileSection

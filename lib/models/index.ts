@@ -15,6 +15,9 @@ export { default as TargetRole } from './TargetRole';
 export { default as Notification } from './Notification';
 export { default as ReadinessSnapshot } from './ReadinessSnapshot';
 export { default as Roadmap } from './Roadmap';
+export { default as Category } from './Category';
+export { default as Internship } from './Internship';
+export { default as Job } from './Job';
 
 // Re-export document interfaces for convenience
 export type { IUserDocument } from './User';
@@ -27,3 +30,6 @@ export type { ITargetRoleDocument, RoleSelector } from './TargetRole';
 export type { INotificationDocument, NotificationType } from './Notification';
 export type { IReadinessSnapshotDocument, SnapshotTrigger, ISkillBreakdown } from './ReadinessSnapshot';
 export type { IRoadmapDocument, IRoadmapStep, StepType, StepStatus, RoadmapStatus } from './Roadmap';
+export type { ICategory } from './Category';
+export type { IInternship } from './Internship';
+export type { IJob } from './Job';
