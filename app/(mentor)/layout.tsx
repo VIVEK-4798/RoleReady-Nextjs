@@ -1,0 +1,44 @@
+/**
+ * Mentor Dashboard Layout
+ * 
+ * Protected layout for mentor routes with role-based access control.
+ */
+
+import { redirect } from 'next/navigation';
+import { auth } from '@/lib/auth';
+import MentorNav from './MentorNav';
+
+export default async function MentorLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  // Server-side auth check
+  const session = await auth();
+  
+  if (!session?.user) {
+    redirect('/login');
+  }
+
+  // Role check - only mentor and admin can access
+  const userRole = (session.user as { role?: string }).role;
+  
+  if (userRole !== 'mentor' && userRole !== 'admin') {
+    // Non-mentor users redirected to their dashboard
+    if (userRole === 'admin') {
+      redirect('/admin');
+    }
+    redirect('/dashboard');
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <MentorNav />
+      <main className="lg:pl-64">
+        <div className="p-6 lg:p-8">
+          {children}
+        </div>
+      </main>
+    </div>
+  );
+}

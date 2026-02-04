@@ -12,7 +12,7 @@
 
 import { NextRequest } from 'next/server';
 import connectDB from '@/lib/db/mongoose';
-import { UserSkill, Notification } from '@/lib/models';
+import { UserSkill, Notification, ActivityLog } from '@/lib/models';
 import { successResponse, errors } from '@/lib/utils/api';
 import { requireMentorApi } from '@/lib/auth/utils';
 import { isValidObjectId } from '@/lib/utils/db';
@@ -109,6 +109,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     await userSkill.save();
 
     const skillName = (userSkill.skillId as unknown as { name: string }).name;
+
+    // Log activity for mentor contribution graph
+    await ActivityLog.logActivity(user.id, 'mentor', 'skill_rejected', {
+      userSkillId: userSkill._id.toString(),
+      userId: userSkill.userId._id.toString(),
+      skillName,
+    });
 
     // Create readiness_outdated notification for the user
     await Notification.createOrUpdate(

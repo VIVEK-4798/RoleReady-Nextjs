@@ -9,7 +9,7 @@
 import { NextRequest } from 'next/server';
 import { Types } from 'mongoose';
 import connectDB from '@/lib/db/mongoose';
-import { UserSkill, TargetRole, Notification } from '@/lib/models';
+import { UserSkill, TargetRole, Notification, ActivityLog } from '@/lib/models';
 import { success, errors, handleError } from '@/lib/utils/api';
 import { auth } from '@/lib/auth';
 
@@ -131,6 +131,14 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     }
 
     await userSkill.save();
+
+    // Log activity for contribution graph (only for owner updates)
+    if (isOwner && body.level !== undefined) {
+      await ActivityLog.logActivity(id, 'user', 'skill_updated', {
+        userSkillId: userSkill._id.toString(),
+        newLevel: body.level,
+      });
+    }
 
     // Trigger readiness_outdated notification if user has a target role
     const targetRole = await TargetRole.getActiveForUser(id);

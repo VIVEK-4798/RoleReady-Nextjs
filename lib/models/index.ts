@@ -18,6 +18,7 @@ export { default as Roadmap } from './Roadmap';
 export { default as Category } from './Category';
 export { default as Internship } from './Internship';
 export { default as Job } from './Job';
+export { default as ActivityLog } from './ActivityLog';
 
 // Re-export document interfaces for convenience
 export type { IUserDocument } from './User';
@@ -33,3 +34,4 @@ export type { IRoadmapDocument, IRoadmapStep, StepType, StepStatus, RoadmapStatu
 export type { ICategory } from './Category';
 export type { IInternship } from './Internship';
 export type { IJob } from './Job';
+export type { IActivityLogDocument, ActionType, ActivityRole, UserActionType, MentorActionType } from './ActivityLog';

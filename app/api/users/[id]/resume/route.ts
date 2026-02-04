@@ -10,7 +10,7 @@ import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import connectDB from '@/lib/db/mongoose';
-import { Resume } from '@/lib/models';
+import { Resume, ActivityLog } from '@/lib/models';
 import { success, errors, handleError } from '@/lib/utils/api';
 import { auth } from '@/lib/auth';
 
@@ -131,6 +131,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
       localPath: filePath,
       status: 'pending',
       isActive: true,
+      version: nextVersion,
+    });
+
+    // Log activity for contribution graph
+    await ActivityLog.logActivity(id, 'user', 'resume_uploaded', {
+      resumeId: resume._id.toString(),
       version: nextVersion,
     });
 

@@ -11,7 +11,7 @@
 
 import { NextRequest } from 'next/server';
 import connectDB from '@/lib/db/mongoose';
-import { TargetRole } from '@/lib/models';
+import { TargetRole, ActivityLog } from '@/lib/models';
 import { success, errors, handleError } from '@/lib/utils/api';
 import { auth } from '@/lib/auth';
 import {
@@ -199,6 +199,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
       roleId: targetRole.roleId.toString(),
       trigger,
       triggerDetails,
+    });
+
+    // Log activity for contribution graph
+    await ActivityLog.logActivity(userId, 'user', 'readiness_calculated', {
+      roleId: targetRole.roleId.toString(),
+      percentage: result.snapshot.percentage,
+      trigger,
     });
     
     return success({

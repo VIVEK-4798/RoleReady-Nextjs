@@ -2,10 +2,11 @@
  * Profile Page
  * 
  * User profile management page.
+ * Faithful recreation from the old RoleReady React project.
  */
 
 import { Metadata } from 'next';
-import ProfileContent from './ProfileContent';
+import NewProfileContent from './NewProfileContent';
 
 export const metadata: Metadata = {
   title: 'Profile - RoleReady',
@@ -13,5 +14,5 @@ export const metadata: Metadata = {
 };
 
 export default function ProfilePage() {
-  return <ProfileContent />;
+  return <NewProfileContent />;
 }

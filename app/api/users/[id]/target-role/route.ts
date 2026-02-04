@@ -7,7 +7,7 @@
 
 import { NextRequest } from 'next/server';
 import connectDB from '@/lib/db/mongoose';
-import { TargetRole, Role, Notification } from '@/lib/models';
+import { TargetRole, Role, Notification, ActivityLog } from '@/lib/models';
 import { success, errors, handleError } from '@/lib/utils/api';
 import { auth } from '@/lib/auth';
 import type { RoleSelector } from '@/lib/models/TargetRole';
@@ -154,6 +154,15 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     );
 
     const populatedRole = newTargetRole.roleId as unknown as PopulatedRole;
+
+    // Log activity for contribution graph
+    await ActivityLog.logActivity(id, 'user', 'role_changed', {
+      roleId: populatedRole._id,
+      roleName: populatedRole.name,
+      previousRoleId: currentTargetRole 
+        ? (currentTargetRole.roleId as unknown as PopulatedRole)._id 
+        : null,
+    });
 
     // Trigger readiness_outdated notification
     await Notification.createOrUpdate(id, 'readiness_outdated', {

@@ -15,10 +15,6 @@ const navItems = [
   { href: '/dashboard', label: 'Overview', icon: 'home' },
   { href: '/dashboard/profile', label: 'Profile', icon: 'user' },
   { href: '/dashboard/skills', label: 'My Skills', icon: 'skills' },
-  { href: '/dashboard/roles', label: 'Target Roles', icon: 'target' },
-  { href: '/dashboard/roadmap', label: 'Learning Path', icon: 'roadmap' },
-  { href: '/dashboard/assessments', label: 'Assessments', icon: 'assessment' },
-  { href: '/dashboard/readiness', label: 'Readiness Score', icon: 'score' },
   { href: '/dashboard/reports', label: 'Reports', icon: 'report' },
   { href: '/dashboard/notifications', label: 'Notifications', icon: 'notifications' },
 ];

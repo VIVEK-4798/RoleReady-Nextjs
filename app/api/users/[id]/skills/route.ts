@@ -7,7 +7,7 @@
 
 import { NextRequest } from 'next/server';
 import connectDB from '@/lib/db/mongoose';
-import { UserSkill, Skill, TargetRole, Notification } from '@/lib/models';
+import { UserSkill, Skill, TargetRole, Notification, ActivityLog } from '@/lib/models';
 import { success, errors, handleError, getPaginationParams } from '@/lib/utils/api';
 import { auth } from '@/lib/auth';
 
@@ -168,6 +168,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
       skillId,
       level: body.level || 'beginner',
       source: body.source || 'self',
+    });
+
+    // Log activity for contribution graph
+    await ActivityLog.logActivity(id, 'user', 'skill_added', {
+      skillId: skillId.toString(),
+      userSkillId: userSkill._id.toString(),
     });
 
     // Trigger readiness_outdated notification if user has a target role

@@ -14,6 +14,7 @@ import connectDB from '@/lib/db/mongoose';
 import { success, errors, handleError } from '@/lib/utils/api';
 import { auth } from '@/lib/auth';
 import { updateStepStatus, getActiveRoadmap } from '@/lib/services/roadmapService';
+import { ActivityLog } from '@/lib/models';
 import type { StepStatus } from '@/lib/models/Roadmap';
 
 interface RouteContext {
@@ -87,6 +88,15 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     
     // Find the updated step for response
     const updatedStep = updatedRoadmap.steps.find((s) => s._id.toString() === stepId);
+
+    // Log activity for contribution graph when step is completed
+    if (body.status === 'completed' && updatedStep) {
+      await ActivityLog.logActivity(userId, 'user', 'roadmap_step_completed', {
+        stepId,
+        skillName: updatedStep.skillName,
+        roadmapId: roadmap._id.toString(),
+      });
+    }
     
     return success({
       step: updatedStep ? {
