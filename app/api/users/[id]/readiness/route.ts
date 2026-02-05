@@ -101,7 +101,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
     
     // 4. Get latest snapshot
-    const snapshot = await getLatestSnapshot(userId, targetRole.roleId.toString());
+    const snapshot = await getLatestSnapshot(userId, (typeof targetRole.roleId === 'object' ? targetRole.roleId._id.toString() : targetRole.roleId.toString()));
     
     // 5. Check if fresh calculation is needed via query param
     const searchParams = request.nextUrl.searchParams;
@@ -111,12 +111,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
       // Calculate without persisting (preview mode)
       const previewResult = await calculateReadinessOnly(
         userId,
-        targetRole.roleId.toString()
+        (typeof targetRole.roleId === 'object' ? targetRole.roleId._id.toString() : targetRole.roleId.toString())
       );
       
       return success({
         hasTargetRole: true,
-        roleId: targetRole.roleId.toString(),
+        roleId: (typeof targetRole.roleId === 'object' ? targetRole.roleId._id.toString() : targetRole.roleId.toString()),
         snapshot: null,
         preview: {
           percentage: previewResult.percentage,
@@ -131,7 +131,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     
     return success({
       hasTargetRole: true,
-      roleId: targetRole.roleId.toString(),
+      roleId: (typeof targetRole.roleId === 'object' ? targetRole.roleId._id.toString() : targetRole.roleId.toString()),
       roleName: targetRole.roleId && typeof targetRole.roleId === 'object' && 'name' in targetRole.roleId
         ? (targetRole.roleId as { name: string }).name
         : undefined,
@@ -196,14 +196,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
     // 5. Calculate and save snapshot
     const result = await calculateAndSnapshot({
       userId,
-      roleId: targetRole.roleId.toString(),
+      roleId: (typeof targetRole.roleId === 'object' ? targetRole.roleId._id.toString() : targetRole.roleId.toString()),
       trigger,
       triggerDetails,
     });
 
     // Log activity for contribution graph
     await ActivityLog.logActivity(userId, 'user', 'readiness_calculated', {
-      roleId: targetRole.roleId.toString(),
+      roleId: (typeof targetRole.roleId === 'object' ? targetRole.roleId._id.toString() : targetRole.roleId.toString()),
       percentage: result.snapshot.percentage,
       trigger,
     });

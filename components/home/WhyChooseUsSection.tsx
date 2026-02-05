@@ -3,12 +3,14 @@
  * 
  * Shows core differentiators and comparison table.
  * Migrated from WhyChooseUs component in the old React project.
+ * Includes Demo Modal for landing page readiness demo.
  */
 
 'use client';
 
-import { useRef, forwardRef, useImperativeHandle } from 'react';
+import { useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import Link from 'next/link';
+import { DemoModal } from './why-choose-us';
 
 const differences = [
   { 
@@ -72,14 +74,23 @@ const comparisonPoints = [
 
 export interface WhyChooseUsSectionRef {
   scrollToCTA: () => void;
+  scrollToCTAAndOpenDemo: () => void;
 }
 
 const WhyChooseUsSection = forwardRef<WhyChooseUsSectionRef>((_, ref) => {
   const ctaRef = useRef<HTMLDivElement>(null);
+  const [showDemo, setShowDemo] = useState(false);
 
   useImperativeHandle(ref, () => ({
     scrollToCTA() {
       ctaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    },
+    scrollToCTAAndOpenDemo() {
+      ctaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Allow scroll to finish before modal opens
+      setTimeout(() => {
+        setShowDemo(true);
+      }, 400);
     },
   }));
 
@@ -184,18 +195,24 @@ const WhyChooseUsSection = forwardRef<WhyChooseUsSectionRef>((_, ref) => {
               >
                 Start Free Analysis
               </Link>
-              <Link
-                href="/login"
-                className="px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl border border-white/20 transition-all duration-300 hover:-translate-y-1"
+              <button
+                onClick={() => setShowDemo(true)}
+                className="px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl border border-white/20 transition-all duration-300 hover:-translate-y-1 flex items-center justify-center gap-2"
               >
-                Try Demo
-              </Link>
+                Try{' '}
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/20 rounded text-sm">
+                  🎭 DEMO
+                </span>
+              </button>
             </div>
             <p className="text-slate-400 text-sm mt-6">
               No credit card required • Takes 5 minutes • Get instant results
             </p>
           </div>
         </div>
+
+        {/* Demo Modal */}
+        {showDemo && <DemoModal onClose={() => setShowDemo(false)} />}
       </div>
     </section>
   );

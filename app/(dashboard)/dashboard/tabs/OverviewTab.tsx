@@ -1,10 +1,3 @@
-/**
- * Dashboard Overview Tab
- * 
- * Shows current readiness score, skill breakdown, and recommendations.
- * Faithful recreation from the old RoleReady React project.
- */
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -101,7 +94,10 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
         setReadiness(readinessData);
       }
       if (targetRoleData.success) {
-        setTargetRole(targetRoleData);
+        setTargetRole({
+          hasActiveRole: targetRoleData.data.hasTargetRole,
+          targetRole: targetRoleData.data.targetRole,
+        });
       }
       if (contributionDataRes.success) {
         setContributionData(contributionDataRes);
@@ -183,7 +179,7 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
   }
 
   // No target role state
-  if (!readiness?.hasTargetRole) {
+  if (!targetRole?.hasActiveRole) {
     return (
       <div className="space-y-6">
         {/* Empty State Card */}
@@ -266,7 +262,50 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
     );
   }
 
-  const snapshot = readiness.snapshot;
+  // Handle case where role is selected but readiness data isn't loaded yet
+  if (!readiness?.snapshot && !isCalculating) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
+          <div className="w-20 h-20 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
+            <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Target Role Selected</h2>
+          {targetRole?.targetRole && (
+            <p className="text-gray-600 mb-4">
+              Current target: <span className="font-semibold text-gray-900">{targetRole.targetRole.roleName}</span>
+            </p>
+          )}
+          <p className="text-gray-600 mb-6">
+            Calculate your readiness score to see how well your skills match the requirements.
+          </p>
+          <button
+            onClick={handleRecalculate}
+            disabled={isCalculating}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            Calculate Readiness
+          </button>
+          <div className="mt-4">
+            <Link href="/dashboard/roles" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+              Change Target Role
+            </Link>
+          </div>
+        </div>
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Activity</h2>
+          <ContributionGraph data={contributionData} loading={false} />
+        </div>
+      </div>
+    );
+  }
+
+  const snapshot = readiness?.snapshot;
   const percentage = snapshot?.percentage || 0;
   const status = getReadinessStatus(percentage);
 
@@ -281,7 +320,7 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
               <h2 className="text-xl font-bold text-gray-900">Readiness Score</h2>
               {targetRole?.targetRole && (
                 <p className="text-gray-600">
-                  Target: <span className="font-medium text-gray-900">{targetRole.targetRole.roleName}</span>
+                  Target: <span className="font-medium text-gray-900">{targetRole.targetRole.roleName}</span>{'  '}<Link href="/dashboard/roles" className="text-blue-600 hover:text-blue-700 text-sm font-medium">Change Role</Link>
                 </p>
               )}
             </div>

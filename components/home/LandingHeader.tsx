@@ -62,6 +62,28 @@ export default function LandingHeader({ isAuthenticated }: LandingHeaderProps) {
             >
               For Who
             </Link>
+            {isAuthenticated && (
+              <>
+                <Link 
+                  href="/readiness" 
+                  className="text-slate-600 hover:text-[#5693C1] transition-colors font-medium"
+                >
+                  🎯 Readiness
+                </Link>
+                <Link 
+                  href="/roadmap" 
+                  className="text-slate-600 hover:text-[#5693C1] transition-colors font-medium"
+                >
+                  🧭 Roadmap
+                </Link>
+                <Link 
+                  href="/report" 
+                  className="text-slate-600 hover:text-[#5693C1] transition-colors font-medium"
+                >
+                  📊 Report
+                </Link>
+              </>
+            )}
           </nav>
 
           {/* Auth Buttons */}
@@ -145,6 +167,32 @@ export default function LandingHeader({ isAuthenticated }: LandingHeaderProps) {
               >
                 For Who
               </Link>
+              
+              {isAuthenticated && (
+                <>
+                  <Link 
+                    href="/readiness" 
+                    className="text-slate-600 hover:text-[#5693C1] transition-colors font-medium py-2"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    🎯 Readiness
+                  </Link>
+                  <Link 
+                    href="/roadmap" 
+                    className="text-slate-600 hover:text-[#5693C1] transition-colors font-medium py-2"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    🧭 Roadmap
+                  </Link>
+                  <Link 
+                    href="/report" 
+                    className="text-slate-600 hover:text-[#5693C1] transition-colors font-medium py-2"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    📊 Report
+                  </Link>
+                </>
+              )}
               
               <div className="flex flex-col gap-3 pt-4 border-t border-gray-200">
                 {isAuthenticated ? (

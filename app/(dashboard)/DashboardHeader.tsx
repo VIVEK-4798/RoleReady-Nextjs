@@ -2,53 +2,92 @@
  * Dashboard Header Component
  * 
  * Top header bar for the dashboard.
+ * Matches the old RoleReady React project layout.
  */
 
 'use client';
 
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/hooks';
 import { NotificationBell } from '@/components/notifications';
 
 export default function DashboardHeader() {
   const { user } = useAuth();
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY >= 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Toggle body class for mobile sidebar
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.classList.add('overflow-hidden');
+    } else {
+      document.body.classList.remove('overflow-hidden');
+    }
+    return () => {
+      document.body.classList.remove('overflow-hidden');
+    };
+  }, [isMobileMenuOpen]);
 
   return (
-    <header className="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6">
-      {/* Mobile Menu Button (placeholder for future) */}
-      <button className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-        <svg className="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
-
-      {/* Search Bar */}
-      <div className="flex-1 max-w-xl mx-4 hidden md:block">
-        <div className="relative">
-          <input
-            type="search"
-            placeholder="Search skills, roles, resources..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    <header className={`h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-8 transition-all ${isScrolled ? 'shadow-sm' : ''}`}>
+      {/* Left Side - Logo (visible on mobile/tablet, hidden on desktop since sidebar has it) */}
+      <div className="flex items-center gap-4">
+        {/* Mobile menu toggle button */}
+        <button 
+          className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
-        </div>
+        </button>
+
+        {/* Logo - hidden on large screens (shown in sidebar) */}
+        <Link href="/" className="lg:hidden flex items-center">
+          <div className="h-8 w-auto flex items-center">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold mr-2">
+              R
+            </div>
+            <span className="text-lg font-bold text-gray-900">RoleReady</span>
+          </div>
+        </Link>
       </div>
 
-      {/* Right Section */}
+      {/* Right Side - Actions */}
       <div className="flex items-center gap-4">
         {/* Notifications */}
         <NotificationBell />
 
-        {/* User Avatar (Mobile) */}
-        <div className="lg:hidden w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 font-medium">
-          {user?.name?.charAt(0).toUpperCase() || 'U'}
-        </div>
+        {/* User Avatar (visible on all screens) */}
+        <Link 
+          href="/dashboard/profile"
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+        >
+          <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-medium overflow-hidden">
+            {user?.image ? (
+              <Image 
+                src={user.image} 
+                alt={user.name || 'User'} 
+                width={36} 
+                height={36}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              user?.name?.charAt(0).toUpperCase() || 'U'
+            )}
+          </div>
+        </Link>
       </div>
     </header>
   );

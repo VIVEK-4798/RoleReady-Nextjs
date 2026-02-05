@@ -116,7 +116,6 @@ async function fetchUserSkills(userId: string): Promise<UserSkillInput[]> {
   
   const userSkills = await UserSkill.find({
     userId: new Types.ObjectId(userId),
-    isActive: true,
   })
     .populate({
       path: 'skillId',

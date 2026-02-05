@@ -1,23 +1,18 @@
-/**
- * User Profile Page - Complete Recreation
- * 
- * Faithful recreation from the old RoleReady React project.
- * Includes:
- * - Profile Header (Avatar, Name, Email Handle, College, Progress)
- * - About Section
- * - Resume Section
- * - Skills Section (with validation badges)
- * - Work Experience Section
- * - Education Section
- * - Certificates Section
- * - Projects Section
- */
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks';
 import { SkeletonPage, useToast } from '@/components/ui';
+import { Modal } from './components/Modal';
+import { FormField } from './components/FormField';
+import { ResumeUploader } from './components/ResumeUploader';
+import { AboutSection } from './components/sections/AboutSection';
+import { ResumeSection } from './components/sections/ResumeSection';
+import { SkillsSection } from './components/sections/SkillsSection';
+import { ExperienceSection } from './components/sections/ExperienceSection';
+import { EducationSection } from './components/sections/EducationSection';
+import { CertificatesSection } from './components/sections/CertificatesSection';
+import { ProjectsSection } from './components/sections/ProjectsSection';
 
 // Types
 interface ProfileData {
@@ -76,12 +71,11 @@ interface Project {
 }
 
 interface Certificate {
-  _id: string;
-  title: string;
-  organization: string;
-  issuedDate?: string;
-  skills?: string;
-  description?: string;
+  name: string;
+  issuer?: string;
+  issueDate?: Date | string;
+  expiryDate?: Date | string;
+  url?: string;
 }
 
 interface ResumeInfo {
@@ -219,19 +213,26 @@ export default function NewProfileContent() {
           break;
         case 'education':
           endpoint = `/api/users/${user.id}/education`;
-          body = { education: data };
+          body = data;
           break;
         case 'experience':
           endpoint = `/api/users/${user.id}/experience`;
-          body = { experience: data };
+          body = data;
           break;
         case 'project':
           endpoint = `/api/users/${user.id}/projects`;
-          body = { project: data };
+          body = data;
           break;
         case 'certificate':
           endpoint = `/api/users/${user.id}/certificates`;
-          body = { certificate: data };
+          // Map form fields to API fields
+          body = {
+            name: data.title,
+            issuer: data.organization,
+            issueDate: data.issuedDate,
+            expiryDate: data.expiryDate,
+            url: data.url,
+          };
           break;
       }
       
@@ -365,264 +366,117 @@ export default function NewProfileContent() {
       </div>
 
       {/* ===== ABOUT SECTION ===== */}
-      <ProfileSection
-        title="About"
-        icon="user"
+      <AboutSection
+        bio={profile?.profile?.bio}
         onEdit={() => {
           setEditData({ bio: profile?.profile?.bio || '' });
           setActiveModal('about');
         }}
-        imageSrc="/img/profile/about.webp"
-      >
-        {profile?.profile?.bio ? (
-          <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">{profile.profile.bio}</p>
-        ) : (
-          <p className="text-gray-500 dark:text-gray-400">Add a short bio about yourself...</p>
-        )}
-      </ProfileSection>
+      />
 
       {/* ===== RESUME SECTION ===== */}
-      <ProfileSection
-        title="Resume"
-        icon="document"
+      <ResumeSection
+        resume={resume}
         onEdit={() => setActiveModal('resume')}
-        imageSrc="/img/profile/resume.webp"
-      >
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-          Add your Resume & get your profile filled in a click!
-        </p>
-        {resume?.hasResume ? (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="text-green-600 dark:text-green-400 font-medium">Resume uploaded</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-              <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <span className="text-sm">{resume.fileName}</span>
-            </div>
-            {resume.uploadedAt && (
-              <p className="text-xs text-gray-500 dark:text-gray-500 ml-6">
-                Uploaded on {formatDate(resume.uploadedAt)}
-              </p>
-            )}
-          </div>
-        ) : (
-          <button
-            onClick={() => setActiveModal('resume')}
-            className="text-blue-600 dark:text-blue-400 hover:underline"
-          >
-            Upload Resume
-          </button>
-        )}
-      </ProfileSection>
+        formatDate={formatDate}
+      />
 
       {/* ===== SKILLS SECTION ===== */}
-      <ProfileSection
-        title="Skills"
-        icon="skills"
+      <SkillsSection
+        skills={skills}
         onEdit={() => setActiveModal('skills')}
-        imageSrc="/img/profile/skills.webp"
-      >
-        {skills.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {skills.map((skill) => {
-              const badge = getValidationBadge(skill);
-              return (
-                <div
-                  key={skill._id}
-                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm ${
-                    skill.validationStatus === 'validated'
-                      ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-400 dark:border-blue-600'
-                      : skill.validationStatus === 'rejected'
-                      ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-400 dark:border-yellow-600'
-                      : 'bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600'
-                  }`}
-                >
-                  <span className="font-medium text-gray-900 dark:text-white">{skill.skillName}</span>
-                  <span className={`text-xs ${getLevelColor(skill.level)}`}>
-                    ({skill.level})
-                  </span>
-                  <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs ${badge.className}`}>
-                    {badge.icon}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <button
-            onClick={() => setActiveModal('skills')}
-            className="text-blue-600 dark:text-blue-400 hover:underline"
-          >
-            Add Skills
-          </button>
-        )}
-      </ProfileSection>
+        getValidationBadge={getValidationBadge}
+        getLevelColor={getLevelColor}
+      />
 
       {/* ===== WORK EXPERIENCE SECTION ===== */}
-      <ProfileSection
-        title="Work Experience"
-        icon="briefcase"
+      <ExperienceSection
+        experiences={profile?.profile?.experience}
         onEdit={() => {
-          setEditData({});
+          const firstExp = profile?.profile?.experience?.[0];
+          if (firstExp) {
+            setEditData({
+              _id: firstExp._id,
+              company: firstExp.company,
+              title: firstExp.title,
+              location: firstExp.location,
+              startDate: firstExp.startDate,
+              endDate: firstExp.endDate,
+              isCurrent: firstExp.isCurrent,
+              description: firstExp.description,
+              skills: firstExp.skills,
+            });
+          } else {
+            setEditData({});
+          }
           setActiveModal('experience');
         }}
-        imageSrc="/img/profile/work_experience.webp"
-      >
-        {profile?.profile?.experience?.length ? (
-          <div className="space-y-4">
-            {profile.profile.experience.map((exp) => (
-              <div key={exp._id} className="border-l-2 border-blue-200 dark:border-blue-800 pl-4">
-                <h4 className="font-semibold text-gray-900 dark:text-white">
-                  {exp.title} <span className="font-normal text-gray-600 dark:text-gray-400">at</span> {exp.company}
-                </h4>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {exp.startDate} - {exp.isCurrent ? 'Present' : exp.endDate}
-                </p>
-                {exp.location && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{exp.location}</p>
-                )}
-                {exp.description && (
-                  <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{exp.description}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <button
-            onClick={() => setActiveModal('experience')}
-            className="text-blue-600 dark:text-blue-400 hover:underline"
-          >
-            Add Work Experience
-          </button>
-        )}
-      </ProfileSection>
+      />
 
       {/* ===== EDUCATION SECTION ===== */}
-      <ProfileSection
-        title="Education"
-        icon="academic"
+      <EducationSection
+        education={profile?.profile?.education}
         onEdit={() => {
-          setEditData({});
+          const firstEdu = profile?.profile?.education?.[0];
+          if (firstEdu) {
+            setEditData({
+              _id: firstEdu._id,
+              institution: firstEdu.institution,
+              degree: firstEdu.degree,
+              fieldOfStudy: firstEdu.fieldOfStudy,
+              startDate: firstEdu.startDate,
+              endDate: firstEdu.endDate,
+              grade: firstEdu.grade,
+              description: firstEdu.description,
+            });
+          } else {
+            setEditData({});
+          }
           setActiveModal('education');
         }}
-        imageSrc="/img/profile/education.webp"
-      >
-        {profile?.profile?.education?.length ? (
-          <div className="space-y-4">
-            {profile.profile.education.map((edu) => (
-              <div key={edu._id} className="border-l-2 border-green-200 dark:border-green-800 pl-4">
-                <h4 className="font-semibold text-gray-900 dark:text-white">{edu.institution}</h4>
-                <p className="text-gray-700 dark:text-gray-300">
-                  {edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}
-                </p>
-                {edu.startDate && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {edu.startDate} - {edu.endDate || 'Present'}
-                  </p>
-                )}
-                {edu.grade && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Grade: {edu.grade}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <button
-            onClick={() => setActiveModal('education')}
-            className="text-blue-600 dark:text-blue-400 hover:underline"
-          >
-            Add Education
-          </button>
-        )}
-      </ProfileSection>
+      />
 
       {/* ===== CERTIFICATES SECTION ===== */}
-      <ProfileSection
-        title="Certificates"
-        icon="badge"
-        onEdit={() => {
+      <CertificatesSection
+        certificates={profile?.profile?.certificates}
+        onAdd={() => {
           setEditData({});
           setActiveModal('certificate');
         }}
-        imageSrc="/img/profile/certificate.webp"
-      >
-        {profile?.profile?.certificates?.length ? (
-          <div className="space-y-4">
-            {profile.profile.certificates.map((cert) => (
-              <div key={cert._id} className="border-l-2 border-purple-200 dark:border-purple-800 pl-4">
-                <h4 className="font-semibold text-gray-900 dark:text-white">{cert.title}</h4>
-                <p className="text-gray-600 dark:text-gray-400">by {cert.organization}</p>
-                {cert.issuedDate && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Issued: {cert.issuedDate}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <button
-            onClick={() => setActiveModal('certificate')}
-            className="text-blue-600 dark:text-blue-400 hover:underline"
-          >
-            Add Certificate
-          </button>
-        )}
-      </ProfileSection>
+        onEditCertificate={(cert) => {
+          setEditData({
+            title: cert.name,
+            organization: cert.issuer,
+            issuedDate: cert.issueDate,
+            expiryDate: cert.expiryDate,
+            url: cert.url,
+          });
+          setActiveModal('certificate');
+        }}
+      />
 
       {/* ===== PROJECTS SECTION ===== */}
-      <ProfileSection
-        title="Projects"
-        icon="folder"
-        onEdit={() => {
+      <ProjectsSection
+        projects={profile?.profile?.projects}
+        onAdd={() => {
           setEditData({});
           setActiveModal('project');
         }}
-        imageSrc="/img/profile/projects.webp"
-      >
-        {profile?.profile?.projects?.length ? (
-          <div className="space-y-4">
-            {profile.profile.projects.map((proj) => (
-              <div key={proj._id} className="border-l-2 border-orange-200 dark:border-orange-800 pl-4">
-                <h4 className="font-semibold text-gray-900 dark:text-white">{proj.name}</h4>
-                {proj.description && (
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">{proj.description}</p>
-                )}
-                {proj.url && (
-                  <a
-                    href={proj.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                  >
-                    {proj.url}
-                  </a>
-                )}
-                {proj.technologies && proj.technologies.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {proj.technologies.map((tech, i) => (
-                      <span key={i} className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs rounded">
-                        {tech}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <button
-            onClick={() => setActiveModal('project')}
-            className="text-blue-600 dark:text-blue-400 hover:underline"
-          >
-            Add Projects
-          </button>
-        )}
-      </ProfileSection>
+        onEditProject={(proj) => {
+          setEditData({
+            _id: proj._id,
+            name: proj.name,
+            description: proj.description,
+            url: proj.url,
+            githubUrl: proj.githubUrl,
+            technologies: proj.technologies,
+            startDate: proj.startDate,
+            endDate: proj.endDate,
+            isOngoing: proj.isOngoing,
+          });
+          setActiveModal('project');
+        }}
+      />
 
       {/* ===== MODALS ===== */}
       {/* About/Header Edit Modal */}
@@ -799,217 +653,6 @@ export default function NewProfileContent() {
           </div>
         </Modal>
       )}
-    </div>
-  );
-}
-
-// ===== HELPER COMPONENTS =====
-
-interface ProfileSectionProps {
-  title: string;
-  icon: string;
-  onEdit: () => void;
-  imageSrc?: string;
-  children: React.ReactNode;
-}
-
-function ProfileSection({ title, icon, onEdit, imageSrc, children }: ProfileSectionProps) {
-  const icons: Record<string, React.ReactNode> = {
-    user: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />,
-    document: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />,
-    skills: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />,
-    briefcase: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />,
-    academic: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />,
-    badge: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />,
-    folder: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />,
-  };
-
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-      <div className="flex justify-between items-start">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-4">
-            <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {icons[icon]}
-            </svg>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
-            <button
-              onClick={onEdit}
-              className="ml-auto text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            </button>
-          </div>
-          <div>{children}</div>
-        </div>
-        {imageSrc && (
-          <img
-            src={imageSrc}
-            alt={title}
-            className="w-28 h-24 object-cover rounded-lg ml-4 hidden sm:block"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-          />
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Modal Component
-interface ModalProps {
-  title: string;
-  onClose: () => void;
-  onSave?: () => void;
-  isSaving?: boolean;
-  hideFooter?: boolean;
-  children: React.ReactNode;
-}
-
-function Modal({ title, onClose, onSave, isSaving, hideFooter, children }: ModalProps) {
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div
-        className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="sticky top-0 bg-white dark:bg-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <div className="p-6 space-y-4">{children}</div>
-        {!hideFooter && (
-          <div className="sticky bottom-0 bg-white dark:bg-gray-800 px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={onSave}
-              disabled={isSaving}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors"
-            >
-              {isSaving ? 'Saving...' : 'Save'}
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Form Field Component
-interface FormFieldProps {
-  label: string;
-  name: string;
-  value: string | undefined;
-  onChange: (value: string) => void;
-  type?: string;
-  placeholder?: string;
-}
-
-function FormField({ label, name, value, onChange, type = 'text', placeholder }: FormFieldProps) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
-      <input
-        type={type}
-        name={name}
-        value={value || ''}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-      />
-    </div>
-  );
-}
-
-// Resume Uploader Component
-interface ResumeUploaderProps {
-  userId: string;
-  onSuccess: () => void;
-}
-
-function ResumeUploader({ userId, onSuccess }: ResumeUploaderProps) {
-  const [file, setFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleUpload = async () => {
-    if (!file) return;
-    
-    setIsUploading(true);
-    setError('');
-    
-    try {
-      const formData = new FormData();
-      formData.append('resume', file);
-      
-      const response = await fetch(`/api/users/${userId}/resume`, {
-        method: 'POST',
-        body: formData,
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        onSuccess();
-      } else {
-        setError(result.error || 'Failed to upload resume');
-      }
-    } catch (err) {
-      console.error('Upload error:', err);
-      setError('Failed to upload resume');
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
-        <input
-          type="file"
-          accept=".pdf,.doc,.docx"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
-          className="hidden"
-          id="resume-input"
-        />
-        <label
-          htmlFor="resume-input"
-          className="cursor-pointer flex flex-col items-center"
-        >
-          <svg className="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-          </svg>
-          <p className="text-gray-600 dark:text-gray-400">
-            {file ? file.name : 'Click to upload or drag and drop'}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">PDF, DOC, DOCX (max 5MB)</p>
-        </label>
-      </div>
-      
-      {error && (
-        <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
-      )}
-      
-      <button
-        onClick={handleUpload}
-        disabled={!file || isUploading}
-        className="w-full py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors"
-      >
-        {isUploading ? 'Uploading...' : 'Upload Resume'}
-      </button>
     </div>
   );
 }

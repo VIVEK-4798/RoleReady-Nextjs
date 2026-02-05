@@ -390,7 +390,7 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
                           : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
                       }`}
                     >
-                      {b.skillId.name}
+                      {typeof b.skillId === 'object' && b.skillId?.name ? b.skillId.name : 'Unknown Skill'}
                     </span>
                   ))}
                   {role.benchmarks.length > 5 && (

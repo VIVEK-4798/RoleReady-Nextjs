@@ -82,9 +82,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
         skillId: skill._id,
         name: skill.name,
         domain: skill.domain,
+        category: skill.domain, // Map domain to category for frontend compatibility
         description: skill.description,
         level: us.level,
+        proficiency: us.level === 'expert' ? 90 : us.level === 'advanced' ? 70 : us.level === 'intermediate' ? 50 : 30, // Map level to proficiency percentage
         source: us.source,
+        isVerified: us.validationStatus === 'validated',
         validationStatus: us.validationStatus,
         validatedBy: us.validatedBy,
         validatedAt: us.validatedAt,
@@ -163,10 +166,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     // Create user skill
+    const proficiency = body.proficiency || 50;
+    const level = proficiency >= 90 ? 'expert' : proficiency >= 70 ? 'advanced' : proficiency >= 50 ? 'intermediate' : 'beginner';
+    
     const userSkill = await UserSkill.create({
       userId: id,
       skillId,
-      level: body.level || 'beginner',
+      level,
       source: body.source || 'self',
     });
 
@@ -196,8 +202,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
       skillId: skill._id,
       name: skill.name,
       domain: skill.domain,
+      category: skill.domain, // Map domain to category for frontend compatibility
       level: userSkill.level,
+      proficiency: userSkill.level === 'expert' ? 90 : userSkill.level === 'advanced' ? 70 : userSkill.level === 'intermediate' ? 50 : 30,
       source: userSkill.source,
+      isVerified: userSkill.validationStatus === 'validated',
     }, 'Skill added successfully', 201);
   } catch (error) {
     return handleError(error);

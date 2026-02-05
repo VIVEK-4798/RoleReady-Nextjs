@@ -65,11 +65,16 @@ export default function SkillsContent() {
       const data = await response.json();
       
       if (data.success) {
-        setSkills(data.data.skills);
+        // Handle response format: data.data.skills or data.skills
+        const skillsData = data.data?.skills || data.skills || [];
+        setSkills(Array.isArray(skillsData) ? skillsData : []);
+      } else {
+        setSkills([]);
       }
     } catch (err) {
       console.error('Failed to fetch skills:', err);
       setError('Failed to load skills');
+      setSkills([]);
     } finally {
       setIsLoading(false);
     }
@@ -77,14 +82,19 @@ export default function SkillsContent() {
 
   const fetchAvailableSkills = useCallback(async () => {
     try {
-      const response = await fetch('/api/skills?limit=100');
+      const response = await fetch('/api/skills?limit=1000&active=true');
       const data = await response.json();
       
       if (data.success) {
-        setAvailableSkills(data.data.skills);
+        // paginatedResponse returns data directly in the data field
+        const skillsData = data.data || [];
+        setAvailableSkills(Array.isArray(skillsData) ? skillsData : []);
+      } else {
+        setAvailableSkills([]);
       }
     } catch (err) {
       console.error('Failed to fetch available skills:', err);
+      setAvailableSkills([]);
     }
   }, []);
 
@@ -169,7 +179,7 @@ export default function SkillsContent() {
   };
 
   // Filter skills based on search
-  const filteredSkills = skills.filter(skill =>
+  const filteredSkills = (skills || []).filter(skill =>
     skill.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -192,7 +202,7 @@ export default function SkillsContent() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Skills</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            {skills.length} skills added • {skills.filter(s => s.isVerified).length} verified
+            {skills?.length || 0} skills added • {skills?.filter(s => s.isVerified).length || 0} verified
           </p>
         </div>
         <button

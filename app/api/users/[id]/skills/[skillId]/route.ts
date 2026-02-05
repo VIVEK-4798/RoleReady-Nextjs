@@ -62,9 +62,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
       skillId: skill._id,
       name: skill.name,
       domain: skill.domain,
+      category: skill.domain,
       description: skill.description,
       level: userSkill.level,
+      proficiency: userSkill.level === 'expert' ? 90 : userSkill.level === 'advanced' ? 70 : userSkill.level === 'intermediate' ? 50 : 30,
       source: userSkill.source,
+      isVerified: userSkill.validationStatus === 'validated',
       validationStatus: userSkill.validationStatus,
       validatedBy: userSkill.validatedBy,
       validatedAt: userSkill.validatedAt,
@@ -115,6 +118,11 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       if (body.level !== undefined) {
         userSkill.level = body.level;
       }
+      // Also accept proficiency percentage and convert to level
+      if (body.proficiency !== undefined) {
+        const proficiency = body.proficiency;
+        userSkill.level = proficiency >= 90 ? 'expert' : proficiency >= 70 ? 'advanced' : proficiency >= 50 ? 'intermediate' : 'beginner';
+      }
     }
 
     // Only mentors/admins can validate skills
@@ -163,8 +171,11 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       skillId: skill._id,
       name: skill.name,
       domain: skill.domain,
+      category: skill.domain,
       level: userSkill.level,
+      proficiency: userSkill.level === 'expert' ? 90 : userSkill.level === 'advanced' ? 70 : userSkill.level === 'intermediate' ? 50 : 30,
       source: userSkill.source,
+      isVerified: userSkill.validationStatus === 'validated',
       validationStatus: userSkill.validationStatus,
       validatedBy: userSkill.validatedBy,
       validatedAt: userSkill.validatedAt,
