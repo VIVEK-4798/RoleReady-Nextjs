@@ -161,11 +161,14 @@ export default function ReportClient() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Unable to Generate Report</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
-          <Button onClick={fetchReport} variant="primary">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Unable to Generate Report</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button
+            onClick={fetchReport}
+            className="px-4 py-2 bg-[#5693C1] text-white font-medium rounded-lg hover:bg-[#4a80b0] transition-colors focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-2"
+          >
             Try Again
-          </Button>
+          </button>
         </div>
       </div>
     );
@@ -197,63 +200,70 @@ export default function ReportClient() {
           .print-break {
             page-break-before: always;
           }
+          .print-hide {
+            display: none !important;
+          }
+        }
+        
+        @media screen {
+          .print-only {
+            display: none !important;
+          }
         }
       `}</style>
 
       {/* Header with export button */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Readiness Report</h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <h1 className="text-2xl font-bold text-gray-900">Readiness Report</h1>
+          <p className="text-gray-600">
             Generated {formatDate(report.generatedAt)}
           </p>
         </div>
-        <Button
+        <button
           onClick={handleExportPDF}
-          variant="primary"
-          leftIcon={
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          }
+          className="px-4 py-2 bg-[#5693C1] text-white font-medium rounded-lg hover:bg-[#4a80b0] transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-2"
         >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
           Export PDF
-        </Button>
+        </button>
       </div>
 
       {/* Report Content */}
       <div ref={reportRef} className="print-area space-y-6">
         {/* Report Header (for print) */}
-        <div className="hidden print:block mb-8 text-center border-b pb-4">
-          <h1 className="text-3xl font-bold">RoleReady - Readiness Report</h1>
+        <div className="print-only mb-8 text-center border-b pb-4">
+          <h1 className="text-3xl font-bold text-gray-900">RoleReady - Readiness Report</h1>
           <p className="text-gray-600 mt-2">Generated on {formatDate(report.generatedAt)}</p>
         </div>
 
         {/* User & Role Info */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+              <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">
                 Candidate
               </h3>
-              <p className="text-xl font-semibold text-gray-900 dark:text-white">{report.user.name}</p>
-              <p className="text-gray-600 dark:text-gray-400">{report.user.email}</p>
+              <p className="text-xl font-semibold text-gray-900">{report.user.name}</p>
+              <p className="text-gray-600">{report.user.email}</p>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+              <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">
                 Target Role
               </h3>
-              <p className="text-xl font-semibold text-gray-900 dark:text-white">{report.role.name}</p>
+              <p className="text-xl font-semibold text-gray-900">{report.role.name}</p>
               {report.role.description && (
-                <p className="text-gray-600 dark:text-gray-400 text-sm">{report.role.description}</p>
+                <p className="text-gray-600 text-sm">{report.role.description}</p>
               )}
             </div>
           </div>
         </div>
 
         {/* Readiness Summary */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Readiness Overview</h2>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Readiness Overview</h2>
           
           <div className="grid md:grid-cols-4 gap-6">
             {/* Main Score - Progress Ring */}
@@ -268,37 +278,37 @@ export default function ReportClient() {
 
             {/* Stats */}
             <div className="md:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <div className="text-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <p className="text-2xl font-bold text-gray-900">
                   {report.readiness.requiredSkillsMet}/{report.readiness.requiredSkillsTotal}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Required Skills Met</p>
+                <p className="text-sm text-gray-600">Required Skills Met</p>
               </div>
-              <div className="text-center p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <div className="text-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <p className="text-2xl font-bold text-gray-900">
                   {report.readiness.skillsMatched}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Skills Matched</p>
+                <p className="text-sm text-gray-600">Skills Matched</p>
               </div>
-              <div className="text-center p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <div className="text-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <p className="text-2xl font-bold text-gray-900">
                   {report.readiness.skillsMissing}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Skills Missing</p>
+                <p className="text-sm text-gray-600">Skills Missing</p>
               </div>
-              <div className="text-center p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+              <div className="text-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                 <p className={`text-2xl font-bold ${report.readiness.hasAllRequired ? 'text-green-600' : 'text-red-600'}`}>
                   {report.readiness.hasAllRequired ? '✓' : '✗'}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">All Required Met</p>
+                <p className="text-sm text-gray-600">All Required Met</p>
               </div>
             </div>
           </div>
 
           {/* Skill Gap Chart */}
           {report.skills.length > 0 && (
-            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">
                 Skill Gap Overview
               </h3>
               <SkillGapChart
@@ -315,61 +325,61 @@ export default function ReportClient() {
         </div>
 
         {/* Skills Breakdown */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden print-break">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Skill-by-Skill Breakdown</h2>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden print-break">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">Skill-by-Skill Breakdown</h2>
           </div>
           
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-900/50">
+              <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Skill
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
                     Importance
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
                     Required
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
                     Your Level
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
                     Validation
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
                     Score
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="divide-y divide-gray-200">
                 {report.skills.map((skill) => (
                   <tr 
                     key={skill.id} 
-                    className={`transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50 ${skill.isMissing ? 'bg-red-50 dark:bg-red-900/10' : ''}`}
+                    className={`transition-colors hover:bg-gray-50 ${skill.isMissing ? 'bg-red-50' : ''}`}
                   >
                     <td className="px-4 py-3">
-                      <span className="font-medium text-gray-900 dark:text-white">{skill.name}</span>
+                      <span className="font-medium text-gray-900">{skill.name}</span>
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className={`px-2 py-1 text-xs font-medium rounded ${
                         skill.importance === 'required'
-                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300'
-                          : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-gray-100 text-gray-600'
                       }`}>
                         {skill.importance}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400">
+                    <td className="px-4 py-3 text-center text-gray-600">
                       {levelLabels[skill.requiredLevel]}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className={skill.isMissing ? 'text-red-600' : 'text-gray-900 dark:text-white'}>
+                      <span className={skill.isMissing ? 'text-red-600' : 'text-gray-900'}>
                         {skill.isMissing ? 'Missing' : levelLabels[skill.userLevel]}
                       </span>
                     </td>
@@ -403,42 +413,42 @@ export default function ReportClient() {
 
         {/* Roadmap Summary */}
         {report.roadmap && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 print-break">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Learning Roadmap Summary</h2>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 print-break">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Learning Roadmap Summary</h2>
             
             {/* Roadmap Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-2xl font-bold text-gray-900">
                   {report.roadmap.completedSteps}/{report.roadmap.totalSteps}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Steps Completed</p>
+                <p className="text-sm text-gray-600">Steps Completed</p>
               </div>
-              <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-2xl font-bold text-gray-900">
                   {report.roadmap.progressPercentage}%
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Progress</p>
+                <p className="text-sm text-gray-600">Progress</p>
               </div>
-              <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-2xl font-bold text-gray-900">
                   {report.roadmap.totalEstimatedHours}h
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Est. Hours</p>
+                <p className="text-sm text-gray-600">Total Est. Hours</p>
               </div>
-              <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+              <div className="p-4 bg-gray-50 rounded-lg">
                 <p className="text-2xl font-bold text-green-600">
                   {report.roadmap.projectedReadiness}%
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Projected Readiness</p>
+                <p className="text-sm text-gray-600">Projected Readiness</p>
               </div>
             </div>
 
             {/* Progress Bar */}
             <div className="mb-6">
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+              <div className="w-full bg-gray-200 rounded-full h-3">
                 <div
-                  className="h-3 rounded-full bg-purple-500"
+                  className="h-3 rounded-full bg-[#5693C1]"
                   style={{ width: `${report.roadmap.progressPercentage}%` }}
                 />
               </div>
@@ -446,41 +456,41 @@ export default function ReportClient() {
 
             {/* Steps List */}
             <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">
                 Next Steps
               </h3>
               {report.roadmap.steps.map((step, index) => (
                 <div
                   key={step.id}
-                  className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg"
+                  className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg"
                 >
-                  <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 font-medium text-sm">
+                  <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-[#5693C1]/10 text-[#5693C1] font-medium text-sm">
                     {index + 1}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 dark:text-white truncate">
+                    <p className="font-medium text-gray-900 truncate">
                       {step.skillName}
                     </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-gray-600">
                       {stepTypeLabels[step.stepType] || step.stepType}: Level {step.currentLevel} → {step.targetLevel}
                     </p>
                   </div>
                   <div className="flex-shrink-0 text-right">
                     <span className={`px-2 py-1 text-xs font-medium rounded ${
-                      step.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' :
-                      step.status === 'in_progress' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' :
-                      'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                      step.status === 'completed' ? 'bg-green-100 text-green-800' :
+                      step.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                      'bg-gray-100 text-gray-600'
                     }`}>
                       {step.status.replace('_', ' ')}
                     </span>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-xs text-gray-500 mt-1">
                       ~{step.estimatedHours}h
                     </p>
                   </div>
                 </div>
               ))}
               {report.roadmap.hasMoreSteps && (
-                <p className="text-center text-sm text-gray-500 dark:text-gray-400 py-2">
+                <p className="text-center text-sm text-gray-500 py-2">
                   +{report.roadmap.remainingSteps} more steps in your roadmap
                 </p>
               )}
@@ -489,9 +499,30 @@ export default function ReportClient() {
         )}
 
         {/* Footer (for print) */}
-        <div className="hidden print:block mt-8 pt-4 border-t text-center text-gray-500 text-sm">
+        <div className="print-only mt-8 pt-4 border-t text-center text-gray-500 text-sm">
           <p>RoleReady - Readiness Report</p>
           <p>Snapshot from: {formatDate(report.snapshotDate)}</p>
+          <p className="text-xs mt-2">Confidential - For candidate use only</p>
+        </div>
+      </div>
+
+      {/* Print Instructions */}
+      <div className="no-print mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <div className="flex items-start gap-3">
+          <svg className="w-5 h-5 text-[#5693C1] mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <p className="text-sm font-medium text-gray-900 mb-1">PDF Export Instructions</p>
+            <p className="text-sm text-gray-600">
+              Click "Export PDF" and in the print dialog:
+              <ul className="list-disc pl-5 mt-1 space-y-1">
+                <li>Select "Save as PDF" as your printer</li>
+                <li>Set margins to "None" or "Minimum" for best results</li>
+                <li>Enable "Background graphics" to include colors</li>
+              </ul>
+            </p>
+          </div>
         </div>
       </div>
     </>

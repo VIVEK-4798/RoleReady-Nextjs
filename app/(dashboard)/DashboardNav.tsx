@@ -60,6 +60,18 @@ export default function DashboardNav() {
   const { user, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Listen for mobile menu toggle from header
+  useEffect(() => {
+    const handleMobileMenuToggle = (event: CustomEvent) => {
+      setIsMobileMenuOpen(event.detail);
+    };
+
+    window.addEventListener('toggleMobileMenu' as any, handleMobileMenuToggle);
+    return () => {
+      window.removeEventListener('toggleMobileMenu' as any, handleMobileMenuToggle);
+    };
+  }, []);
+
   // Close mobile menu on route change
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -69,11 +81,17 @@ export default function DashboardNav() {
   useEffect(() => {
     if (isMobileMenuOpen) {
       document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
     } else {
       document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
     }
     return () => {
       document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
     };
   }, [isMobileMenuOpen]);
 
@@ -81,18 +99,21 @@ export default function DashboardNav() {
     <>
       {/* Logo Section */}
       <div className="flex items-center h-16 px-6 border-b border-gray-200">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold">
+        <Link href="/" className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-[#5693C1] to-[#4a80b0] flex items-center justify-center text-white font-bold">
             R
           </div>
-          <span className="text-xl font-bold text-gray-900">
-            RoleReady
-          </span>
+          <div>
+            <span className="text-xl font-bold text-gray-900 block">
+              RoleReady
+            </span>
+            <span className="text-xs text-gray-500 block">Career Platform</span>
+          </div>
         </Link>
       </div>
 
-      {/* Navigation Links - Matching old sidebar structure */}
-      <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+      {/* Navigation Links */}
+      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = pathname === item.href || 
             (item.href !== '/dashboard' && pathname.startsWith(item.href));
@@ -100,36 +121,41 @@ export default function DashboardNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-4 px-4 py-3 rounded-lg text-15 font-medium transition-colors ${
+              className={`flex items-center gap-4 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                 isActive
-                  ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600 -ml-1 pl-5'
-                  : 'text-gray-700 hover:bg-gray-50'
+                  ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-[#5693C1] border-l-4 border-[#5693C1] -ml-1 pl-5 shadow-sm'
+                  : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:border-l-4 hover:border-gray-200 hover:-ml-1 hover:pl-5'
               }`}
             >
-              <span className={isActive ? 'text-blue-600' : 'text-gray-500'}>
+              <span className={isActive ? 'text-[#5693C1]' : 'text-gray-500 group-hover:text-gray-700'}>
                 {iconMap[item.icon]}
               </span>
-              {item.label}
+              <span>{item.label}</span>
+              {isActive && (
+                <span className="ml-auto w-2 h-2 bg-[#5693C1] rounded-full"></span>
+              )}
             </Link>
           );
         })}
       </nav>
 
-      {/* User Section & Logout - Matching old sidebar */}
+      {/* User Section & Logout */}
       <div className="p-4 border-t border-gray-200">
         {/* User Info */}
-        <div className="flex items-center gap-3 mb-4 px-2">
-          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-medium overflow-hidden">
+        <div className="flex items-center gap-3 mb-4 px-2 py-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+          <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#5693C1] to-[#4a80b0] flex items-center justify-center text-white font-medium overflow-hidden ring-2 ring-white">
             {user?.image ? (
               <Image 
                 src={user.image} 
                 alt={user.name || 'User'} 
-                width={40} 
-                height={40}
+                width={48} 
+                height={48}
                 className="w-full h-full object-cover"
               />
             ) : (
-              user?.name?.charAt(0).toUpperCase() || 'U'
+              <span className="text-lg">
+                {user?.name?.charAt(0).toUpperCase() || 'U'}
+              </span>
             )}
           </div>
           <div className="flex-1 min-w-0">
@@ -137,18 +163,23 @@ export default function DashboardNav() {
               {user?.name || 'User'}
             </p>
             <p className="text-xs text-gray-500 truncate">
-              {user?.email || ''}
+              {user?.email || 'user@example.com'}
+            </p>
+            <p className="text-xs text-[#5693C1] font-medium mt-1">
+              {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User'}
             </p>
           </div>
         </div>
 
-        {/* Logout Button - Styled like old sidebar */}
+        {/* Logout Button */}
         <button
           onClick={() => logout()}
-          className="w-full flex items-center gap-4 px-4 py-3 text-15 font-medium text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
+          className="w-full flex items-center gap-4 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors group"
         >
-          {iconMap.logout}
-          Logout
+          <span className="text-gray-500 group-hover:text-red-600">
+            {iconMap.logout}
+          </span>
+          <span>Logout</span>
         </button>
       </div>
     </>
@@ -156,17 +187,6 @@ export default function DashboardNav() {
 
   return (
     <>
-      {/* Mobile Menu Button - Hidden since DashboardHeader handles this */}
-      <button
-        onClick={() => setIsMobileMenuOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-40 p-2 bg-white rounded-lg shadow-md border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
-        aria-label="Open menu"
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
-
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
         <div
@@ -177,7 +197,7 @@ export default function DashboardNav() {
 
       {/* Mobile Sidebar */}
       <aside
-        className={`lg:hidden fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 shadow-lg transform transition-transform duration-300 ease-in-out flex flex-col ${
+        className={`lg:hidden fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 shadow-xl transform transition-transform duration-300 ease-in-out flex flex-col ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -194,8 +214,8 @@ export default function DashboardNav() {
         <NavContent />
       </aside>
 
-      {/* Desktop Sidebar - Fixed position like old sidebar */}
-      <aside className="hidden lg:flex lg:flex-col fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 shadow-sm">
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex lg:flex-col fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 shadow-sm z-30">
         <NavContent />
       </aside>
     </>

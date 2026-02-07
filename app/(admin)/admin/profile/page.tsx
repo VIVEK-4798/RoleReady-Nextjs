@@ -1,7 +1,7 @@
 /**
  * Admin Profile Page
  * 
- * Manage profile information and change password.
+ * Modern profile management page with enhanced design and security features.
  */
 
 import { Metadata } from 'next';
@@ -9,7 +9,7 @@ import AdminProfileClient from './AdminProfileClient';
 
 export const metadata: Metadata = {
   title: 'Profile | RoleReady Admin',
-  description: 'Manage your profile and security settings.',
+  description: 'Manage your profile information, security settings, and account activity.',
 };
 
 export default function AdminProfilePage() {

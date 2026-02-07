@@ -38,17 +38,22 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
   const fetchHistory = useCallback(async () => {
     try {
       setIsLoading(true);
+      setError('');
       const response = await fetch(`/api/users/${userId}/readiness/history?limit=50`);
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to load history');
+      }
 
       if (data.success && data.history) {
         setHistory(data.history);
       } else {
-        setError(data.error || 'Failed to load history');
+        throw new Error(data.error || 'Failed to load history');
       }
     } catch (err) {
       console.error('Error fetching history:', err);
-      setError('Failed to load history');
+      setError(err instanceof Error ? err.message : 'Failed to load history');
     } finally {
       setIsLoading(false);
     }
@@ -104,7 +109,7 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
   // Loading state
   if (isLoading) {
     return (
-      <div className="bg-white rounded-xl shadow-md p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="space-y-4">
           <div className="h-8 bg-gray-100 rounded animate-pulse w-48" />
           {[1, 2, 3, 4, 5].map((i) => (
@@ -118,17 +123,18 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
   // Error state
   if (error) {
     return (
-      <div className="bg-white rounded-xl shadow-md p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="text-center py-8">
           <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
             <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <p className="text-gray-600">{error}</p>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Unable to Load History</h3>
+          <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={fetchHistory}
-            className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            className="px-4 py-2 bg-[#5693C1] hover:bg-[#4a80b0] text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-2"
           >
             Try Again
           </button>
@@ -140,14 +146,14 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
   // Empty state
   if (history.length === 0) {
     return (
-      <div className="bg-white rounded-xl shadow-md p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="text-center py-12">
-          <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-            <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-20 h-20 mx-auto mb-4 bg-[#5693C1]/10 rounded-full flex items-center justify-center">
+            <svg className="w-10 h-10 text-[#5693C1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No History Yet</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No History Yet</h3>
           <p className="text-gray-600 max-w-sm mx-auto">
             Your readiness score history will appear here after you calculate your first readiness score.
           </p>
@@ -157,7 +163,7 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       {/* Header */}
       <div className="p-6 border-b border-gray-200">
         <h2 className="text-lg font-semibold text-gray-900">Readiness History</h2>
@@ -193,7 +199,11 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
                     <div className="flex items-center gap-2">
                       <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full ${item.percentage >= 70 ? 'bg-green-500' : item.percentage >= 40 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                          className={`h-full rounded-full ${
+                            item.percentage >= 70 ? 'bg-green-500' : 
+                            item.percentage >= 40 ? 'bg-yellow-500' : 
+                            'bg-red-500'
+                          }`}
                           style={{ width: `${item.percentage}%` }}
                         />
                       </div>
@@ -202,7 +212,11 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {change !== null ? (
-                      <span className={`inline-flex items-center gap-1 text-sm font-medium ${change > 0 ? 'text-green-600' : change < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                      <span className={`inline-flex items-center gap-1 text-sm font-medium ${
+                        change > 0 ? 'text-green-600' : 
+                        change < 0 ? 'text-red-600' : 
+                        'text-gray-500'
+                      }`}>
                         {change > 0 && (
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
@@ -216,7 +230,7 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
                         {change === 0 ? '—' : `${change > 0 ? '+' : ''}${change.toFixed(1)}%`}
                       </span>
                     ) : (
-                      <span className="text-sm text-gray-400">—</span>
+                      <span className="text-sm text-gray-500">—</span>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

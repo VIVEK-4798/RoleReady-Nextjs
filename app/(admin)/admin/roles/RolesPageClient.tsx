@@ -53,7 +53,7 @@ interface RolesPageClientProps {
 
 export default function RolesPageClient({ initialRoles, allSkills }: RolesPageClientProps) {
   const router = useRouter();
-  const [roles, setRoles] = useState(initialRoles);
+  const [roles, setRoles] = useState<Role[]>(initialRoles);
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [search, setSearch] = useState('');
@@ -67,7 +67,7 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
 
   // Role form state
   const [roleForm, setRoleForm] = useState({
-    name: '', // Using 'name' to match API
+    name: '',
     colorClass: 'bg-blue-500',
     description: '',
   });
@@ -89,7 +89,7 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
     if (role) {
       setEditingRole(role);
       setRoleForm({
-        name: role.title, // title in UI = name in API
+        name: role.title,
         colorClass: role.category,
         description: role.description,
       });
@@ -138,13 +138,17 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
       if (editingRole) {
         setRoles((prev) => 
           prev.map((r) => r._id === editingRole._id 
-            ? { ...r, title: roleForm.name, category: roleForm.colorClass, description: roleForm.description } 
+            ? { 
+                ...r, 
+                title: roleForm.name, 
+                category: roleForm.colorClass, 
+                description: roleForm.description 
+              } 
             : r
           )
         );
       } else {
-        // New role - map API response to UI format
-        const newRole = {
+        const newRole: Role = {
           _id: data.data._id,
           title: data.data.name,
           normalizedTitle: data.data.name.toLowerCase().replace(/\s+/g, '-'),
@@ -183,6 +187,7 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
       );
     } catch (err) {
       console.error('Error toggling role:', err);
+      setError('Failed to update role status');
     }
   };
 
@@ -190,7 +195,6 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
   const addBenchmark = () => {
     if (allSkills.length === 0) return;
     
-    // Find a skill not already in benchmarks
     const usedSkillIds = editingBenchmarks.map((b) => b.skillId._id);
     const availableSkill = allSkills.find((s) => !usedSkillIds.includes(s._id));
     
@@ -199,16 +203,15 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
       return;
     }
 
-    setEditingBenchmarks((prev) => [
-      ...prev,
-      {
-        _id: `new-${Date.now()}`,
-        skillId: availableSkill,
-        importance: 'optional',
-        weight: 1,
-        requiredLevel: 3,
-      },
-    ]);
+    const newBenchmark: Benchmark = {
+      _id: `new-${Date.now()}`,
+      skillId: availableSkill,
+      importance: 'optional',
+      weight: 1,
+      requiredLevel: 3,
+    };
+    
+    setEditingBenchmarks((prev) => [...prev, newBenchmark]);
   };
 
   // Update benchmark in editing list
@@ -239,7 +242,6 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
     setError('');
 
     try {
-      // Validate weights
       const totalWeight = editingBenchmarks.reduce((sum, b) => sum + b.weight, 0);
       if (totalWeight > 100) {
         throw new Error('Total weight cannot exceed 100');
@@ -267,7 +269,6 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
       router.refresh();
       setIsBenchmarksModalOpen(false);
       
-      // Update local state
       setRoles((prev) =>
         prev.map((r) => 
           r._id === editingRole._id 
@@ -300,14 +301,14 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
             placeholder="Search roles..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
           />
         </div>
         
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+          className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
         >
           <option value="">All Categories</option>
           {categories.map((c) => (
@@ -318,7 +319,7 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value as 'all' | 'active' | 'inactive')}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+          className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
         >
           <option value="all">All Status</option>
           <option value="active">Active Only</option>
@@ -327,7 +328,7 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
 
         <button
           onClick={() => openRoleModal()}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          className="px-4 py-2 bg-[#5693C1] text-white rounded-lg hover:bg-[#4a80b0] transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -341,17 +342,17 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
         {filteredRoles.map((role) => (
           <div
             key={role._id}
-            className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden ${
+            className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden ${
               !role.isActive ? 'opacity-50' : ''
             }`}
           >
             <div className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white">
+                  <h3 className="font-semibold text-gray-900">
                     {role.title}
                   </h3>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded mt-1 inline-block">
+                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded mt-1 inline-block">
                     {categories.find((c) => c.value === role.category)?.label || role.category}
                   </span>
                 </div>
@@ -359,8 +360,8 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
                   onClick={() => toggleActive(role)}
                   className={`px-2 py-1 text-xs font-medium rounded ${
                     role.isActive
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300'
-                      : 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
                   }`}
                 >
                   {role.isActive ? 'Active' : 'Inactive'}
@@ -368,15 +369,15 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
               </div>
 
               {role.description && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
+                <p className="text-sm text-gray-600 mb-4 line-clamp-2">
                   {role.description}
                 </p>
               )}
 
               <div className="mb-4">
                 <div className="flex items-center justify-between text-sm mb-2">
-                  <span className="text-gray-600 dark:text-gray-400">Benchmarks</span>
-                  <span className="font-medium text-gray-900 dark:text-white">
+                  <span className="text-gray-600">Benchmarks</span>
+                  <span className="font-medium text-gray-900">
                     {role.benchmarks.length} skills
                   </span>
                 </div>
@@ -386,15 +387,15 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
                       key={b._id}
                       className={`text-xs px-2 py-0.5 rounded ${
                         b.importance === 'required'
-                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300'
-                          : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-gray-100 text-gray-600'
                       }`}
                     >
                       {typeof b.skillId === 'object' && b.skillId?.name ? b.skillId.name : 'Unknown Skill'}
                     </span>
                   ))}
                   {role.benchmarks.length > 5 && (
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                    <span className="text-xs text-gray-500">
                       +{role.benchmarks.length - 5} more
                     </span>
                   )}
@@ -404,13 +405,13 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
               <div className="flex gap-2">
                 <button
                   onClick={() => openRoleModal(role)}
-                  className="flex-1 px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                  className="flex-1 px-3 py-2 text-sm text-[#5693C1] hover:bg-blue-50 rounded-lg transition-colors"
                 >
                   Edit Role
                 </button>
                 <button
                   onClick={() => openBenchmarksModal(role)}
-                  className="flex-1 px-3 py-2 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+                  className="flex-1 px-3 py-2 text-sm text-white bg-[#5693C1] hover:bg-[#4a80b0] rounded-lg transition-colors"
                 >
                   Benchmarks
                 </button>
@@ -421,7 +422,7 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
       </div>
 
       {filteredRoles.length === 0 && (
-        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+        <div className="text-center py-12 text-gray-500">
           No roles found matching your criteria.
         </div>
       )}
@@ -429,20 +430,20 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
       {/* Role Modal */}
       {isRoleModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
               {editingRole ? 'Edit Role' : 'Add New Role'}
             </h2>
 
             {error && (
-              <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-lg text-sm">
+              <div className="mb-4 p-3 bg-red-100 text-red-800 rounded-lg text-sm">
                 {error}
               </div>
             )}
 
             <form onSubmit={handleRoleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Role Name *
                 </label>
                 <input
@@ -450,19 +451,19 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
                   value={roleForm.name}
                   onChange={(e) => setRoleForm({ ...roleForm, name: e.target.value })}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
                   placeholder="e.g., Frontend Developer"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Color Theme
                 </label>
                 <select
                   value={roleForm.colorClass}
                   onChange={(e) => setRoleForm({ ...roleForm, colorClass: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
                 >
                   <option value="bg-blue-500">Blue</option>
                   <option value="bg-green-500">Green</option>
@@ -475,14 +476,14 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Description
                 </label>
                 <textarea
                   value={roleForm.description}
                   onChange={(e) => setRoleForm({ ...roleForm, description: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
                   placeholder="Optional role description..."
                 />
               </div>
@@ -491,14 +492,14 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
                 <button
                   type="button"
                   onClick={() => setIsRoleModalOpen(false)}
-                  className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="px-4 py-2 bg-[#5693C1] text-white rounded-lg hover:bg-[#4a80b0] transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-2"
                 >
                   {isLoading ? 'Saving...' : editingRole ? 'Save Changes' : 'Create Role'}
                 </button>
@@ -511,25 +512,25 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
       {/* Benchmarks Modal */}
       {isBenchmarksModalOpen && editingRole && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+          <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900">
                 Edit Benchmarks: {editingRole.title}
               </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-sm text-gray-500 mt-1">
                 Configure required skills and their weights for this role.
               </p>
             </div>
 
             {error && (
-              <div className="mx-6 mt-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-lg text-sm">
+              <div className="mx-6 mt-4 p-3 bg-red-100 text-red-800 rounded-lg text-sm">
                 {error}
               </div>
             )}
 
             <div className="flex-1 overflow-y-auto p-6">
               {editingBenchmarks.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <div className="text-center py-8 text-gray-500">
                   No benchmarks defined. Add skills to define requirements.
                 </div>
               ) : (
@@ -537,18 +538,18 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
                   {editingBenchmarks.map((benchmark, index) => (
                     <div
                       key={benchmark._id}
-                      className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700"
+                      className="p-4 bg-gray-50 rounded-lg border border-gray-200"
                     >
                       <div className="grid grid-cols-12 gap-4">
                         {/* Skill select */}
-                        <div className="col-span-4">
-                          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                        <div className="col-span-12 sm:col-span-4">
+                          <label className="block text-xs font-medium text-gray-500 mb-1">
                             Skill
                           </label>
                           <select
                             value={benchmark.skillId._id}
                             onChange={(e) => changeBenchmarkSkill(index, e.target.value)}
-                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-[#5693C1] focus:border-transparent"
                           >
                             {getAvailableSkills(benchmark).map((s) => (
                               <option key={s._id} value={s._id}>{s.name}</option>
@@ -557,14 +558,14 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
                         </div>
 
                         {/* Importance */}
-                        <div className="col-span-2">
-                          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                        <div className="col-span-6 sm:col-span-2">
+                          <label className="block text-xs font-medium text-gray-500 mb-1">
                             Importance
                           </label>
                           <select
                             value={benchmark.importance}
                             onChange={(e) => updateBenchmark(index, { importance: e.target.value as 'required' | 'optional' })}
-                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-[#5693C1] focus:border-transparent"
                           >
                             <option value="required">Required</option>
                             <option value="optional">Optional</option>
@@ -572,8 +573,8 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
                         </div>
 
                         {/* Weight */}
-                        <div className="col-span-2">
-                          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                        <div className="col-span-6 sm:col-span-2">
+                          <label className="block text-xs font-medium text-gray-500 mb-1">
                             Weight (1-10)
                           </label>
                           <input
@@ -582,13 +583,13 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
                             max={10}
                             value={benchmark.weight}
                             onChange={(e) => updateBenchmark(index, { weight: Math.min(10, Math.max(1, parseInt(e.target.value) || 1)) })}
-                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-[#5693C1] focus:border-transparent"
                           />
                         </div>
 
                         {/* Required Level */}
-                        <div className="col-span-2">
-                          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                        <div className="col-span-6 sm:col-span-2">
+                          <label className="block text-xs font-medium text-gray-500 mb-1">
                             Level (1-5)
                           </label>
                           <input
@@ -597,15 +598,15 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
                             max={5}
                             value={benchmark.requiredLevel}
                             onChange={(e) => updateBenchmark(index, { requiredLevel: Math.min(5, Math.max(1, parseInt(e.target.value) || 1)) })}
-                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-[#5693C1] focus:border-transparent"
                           />
                         </div>
 
                         {/* Delete */}
-                        <div className="col-span-2 flex items-end">
+                        <div className="col-span-6 sm:col-span-2 flex items-end">
                           <button
                             onClick={() => removeBenchmark(index)}
-                            className="w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            className="w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           >
                             Remove
                           </button>
@@ -618,27 +619,27 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
 
               <button
                 onClick={addBenchmark}
-                className="mt-4 w-full px-4 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-lg hover:border-blue-400 hover:text-blue-600 dark:hover:border-blue-500 dark:hover:text-blue-400 transition-colors"
+                className="mt-4 w-full px-4 py-2 border-2 border-dashed border-gray-300 text-gray-500 rounded-lg hover:border-[#5693C1] hover:text-[#5693C1] transition-colors focus:outline-none focus:ring-1 focus:ring-[#5693C1]"
               >
                 + Add Benchmark
               </button>
 
               {/* Weight summary */}
               {editingBenchmarks.length > 0 && (
-                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
                   <div className="flex justify-between text-sm">
-                    <span className="text-blue-700 dark:text-blue-300">Total Weight:</span>
+                    <span className="text-blue-700">Total Weight:</span>
                     <span className={`font-medium ${
                       editingBenchmarks.reduce((sum, b) => sum + b.weight, 0) > 100
-                        ? 'text-red-600 dark:text-red-400'
-                        : 'text-blue-700 dark:text-blue-300'
+                        ? 'text-red-600'
+                        : 'text-blue-700'
                     }`}>
                       {editingBenchmarks.reduce((sum, b) => sum + b.weight, 0)} / 100 max
                     </span>
                   </div>
                   <div className="flex justify-between text-sm mt-1">
-                    <span className="text-blue-700 dark:text-blue-300">Required Skills:</span>
-                    <span className="font-medium text-blue-700 dark:text-blue-300">
+                    <span className="text-blue-700">Required Skills:</span>
+                    <span className="font-medium text-blue-700">
                       {editingBenchmarks.filter((b) => b.importance === 'required').length}
                     </span>
                   </div>
@@ -646,17 +647,17 @@ export default function RolesPageClient({ initialRoles, allSkills }: RolesPageCl
               )}
             </div>
 
-            <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex gap-3 justify-end">
+            <div className="p-6 border-t border-gray-200 flex gap-3 justify-end">
               <button
                 onClick={() => setIsBenchmarksModalOpen(false)}
-                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleBenchmarksSave}
                 disabled={isLoading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-[#5693C1] text-white rounded-lg hover:bg-[#4a80b0] transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-2"
               >
                 {isLoading ? 'Saving...' : 'Save Benchmarks'}
               </button>

@@ -23,17 +23,20 @@ async function getNotifications(userId: string) {
     .limit(50)
     .lean();
 
-  const unreadCount = await Notification.countDocuments({ userId, isRead: false });
+  const unreadCount = await Notification.countDocuments({ 
+    userId, 
+    isRead: false 
+  });
 
   return {
     notifications: notifications.map((n) => ({
       _id: n._id.toString(),
-      type: n.type,
+      type: n.type as 'skill_validation' | 'readiness_change' | 'system' | 'mentor' | 'other',
       title: n.title,
       message: n.message,
       actionUrl: n.actionUrl,
       isRead: n.isRead,
-      metadata: n.metadata,
+      metadata: n.metadata as Record<string, any>,
       createdAt: n.createdAt.toISOString(),
     })),
     unreadCount,
@@ -55,12 +58,12 @@ export default async function NotificationsPage() {
   const { notifications, unreadCount } = await getNotifications(userId);
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">
           Notifications
         </h1>
-        <p className="mt-1 text-gray-600 dark:text-gray-400">
+        <p className="mt-1 text-gray-600">
           Stay updated with your skill validations, readiness changes, and more.
         </p>
       </div>

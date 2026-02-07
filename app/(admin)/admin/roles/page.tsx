@@ -28,16 +28,17 @@ export default async function RolesPage() {
     .sort({ name: 1 })
     .lean();
 
-  // Transform to serializable format (using 'name' as 'title' for UI consistency)
+  // Transform to serializable format
   const serializedRoles = roles.map((role) => ({
     _id: role._id.toString(),
-    title: role.name, // Role model uses 'name' field
+    title: role.name,
     normalizedTitle: role.name.toLowerCase().replace(/\s+/g, '-'),
     description: role.description || '',
-    category: role.colorClass || 'other', // Using colorClass as category indicator
+    category: role.colorClass || 'other',
     isActive: role.isActive !== false,
-    benchmarks: (role.benchmarks || []).map((b: any) => ({
-      _id: b._id?.toString() || `benchmark-${Date.now()}`,
+    benchmarks: (role.benchmarks || []).map((b: any, index: number) => ({
+      // Use a combination of role ID, skill ID, and index for uniqueness
+      _id: b._id?.toString() || `benchmark-${role._id.toString()}-${b.skillId?._id?.toString() || 'unknown'}-${index}`,
       skillId: {
         _id: b.skillId?._id?.toString() || b.skillId?.toString() || '',
         name: b.skillId?.name || 'Unknown Skill',
@@ -61,10 +62,10 @@ export default async function RolesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-gray-900">
             Manage Roles
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-gray-600 mt-1">
             Create, edit, and manage roles and their skill benchmarks.
           </p>
         </div>

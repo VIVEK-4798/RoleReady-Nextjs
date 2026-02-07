@@ -3,16 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks';
 import { SkeletonPage, useToast } from '@/components/ui';
-import { Modal } from './components/Modal';
-import { FormField } from './components/FormField';
-import { ResumeUploader } from './components/ResumeUploader';
-import { AboutSection } from './components/sections/AboutSection';
-import { ResumeSection } from './components/sections/ResumeSection';
-import { SkillsSection } from './components/sections/SkillsSection';
-import { ExperienceSection } from './components/sections/ExperienceSection';
-import { EducationSection } from './components/sections/EducationSection';
-import { CertificatesSection } from './components/sections/CertificatesSection';
-import { ProjectsSection } from './components/sections/ProjectsSection';
 
 // Types
 interface ProfileData {
@@ -122,7 +112,6 @@ export default function NewProfileContent() {
     try {
       setIsLoading(true);
       
-      // Parallel fetch
       const [profileRes, skillsRes, resumeRes] = await Promise.all([
         fetch(`/api/users/${user.id}/profile`),
         fetch(`/api/users/${user.id}/skills`),
@@ -141,7 +130,6 @@ export default function NewProfileContent() {
       if (skillsData.success && skillsData.skills) {
         setSkills(skillsData.skills);
       }
-      // Resume API returns array of resumes
       if (resumeData.success && Array.isArray(resumeData.data) && resumeData.data.length > 0) {
         const latestResume = resumeData.data[0];
         setResume({
@@ -225,7 +213,6 @@ export default function NewProfileContent() {
           break;
         case 'certificate':
           endpoint = `/api/users/${user.id}/certificates`;
-          // Map form fields to API fields
           body = {
             name: data.title,
             issuer: data.organization,
@@ -272,24 +259,24 @@ export default function NewProfileContent() {
   // Get validation badge
   const getValidationBadge = (skill: UserSkill) => {
     if (skill.validationStatus === 'validated') {
-      return { icon: '🎓', label: 'Validated', className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-300 dark:border-blue-700' };
+      return { icon: '🎓', label: 'Validated', className: 'bg-blue-100 text-blue-700 border border-blue-300' };
     }
     if (skill.validationStatus === 'rejected') {
-      return { icon: '⚠️', label: 'Rejected', className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 border border-yellow-300 dark:border-yellow-700' };
+      return { icon: '⚠️', label: 'Rejected', className: 'bg-yellow-100 text-yellow-700 border border-yellow-300' };
     }
     if (skill.source === 'resume') {
-      return { icon: '📄', label: 'Resume', className: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-300 dark:border-purple-700' };
+      return { icon: '📄', label: 'Resume', className: 'bg-purple-100 text-purple-700 border border-purple-300' };
     }
-    return { icon: '✋', label: 'Self', className: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-600' };
+    return { icon: '✋', label: 'Self', className: 'bg-gray-100 text-gray-600 border border-gray-300' };
   };
 
   // Get level color
   const getLevelColor = (level: string) => {
     switch (level) {
-      case 'beginner': return 'text-blue-600 dark:text-blue-400';
-      case 'intermediate': return 'text-purple-600 dark:text-purple-400';
-      case 'advanced': return 'text-green-600 dark:text-green-400';
-      default: return 'text-gray-600 dark:text-gray-400';
+      case 'beginner': return 'text-blue-600';
+      case 'intermediate': return 'text-purple-600';
+      case 'advanced': return 'text-green-600';
+      default: return 'text-gray-600';
     }
   };
 
@@ -300,26 +287,26 @@ export default function NewProfileContent() {
   const primaryEducation = profile?.profile?.education?.[0];
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-4xl mx-auto px-4 sm:px-6">
       {/* ===== PROFILE HEADER ===== */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-4 sm:gap-5">
             {/* Avatar */}
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg border-4 border-white dark:border-gray-700">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-2xl sm:text-3xl font-bold shadow-lg border-4 border-white">
               {profile?.name?.charAt(0).toUpperCase() || 'U'}
             </div>
             
             {/* Info */}
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-xl font-bold text-gray-900">
                 {profile?.name || 'User Name'}
               </h2>
-              <p className="text-gray-500 dark:text-gray-400">
+              <p className="text-gray-500">
                 @{profile?.email?.split('@')[0] || 'username'}
               </p>
               {primaryEducation?.institution && (
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-sm text-gray-500 mt-1">
                   {primaryEducation.institution}
                 </p>
               )}
@@ -327,13 +314,16 @@ export default function NewProfileContent() {
               {/* Progress Bar */}
               <div className="mt-3 w-32">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Profile</span>
-                  <span className="text-xs font-medium text-blue-600 dark:text-blue-400">{progress}%</span>
+                  <span className="text-xs text-gray-500">Profile</span>
+                  <span className="text-xs font-medium text-blue-600">{progress}%</span>
                 </div>
-                <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-blue-600 rounded-full transition-all duration-300"
-                    style={{ width: `${progress}%` }}
+                    className="h-full rounded-full transition-all duration-300"
+                    style={{ 
+                      width: `${progress}%`,
+                      backgroundColor: '#5693C1'
+                    }}
                   />
                 </div>
               </div>
@@ -355,7 +345,8 @@ export default function NewProfileContent() {
               });
               setActiveModal('header');
             }}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+            className="px-4 py-2 text-white rounded-lg font-medium transition-colors flex items-center gap-2 w-full sm:w-auto justify-center"
+            style={{ backgroundColor: '#5693C1' }}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -366,292 +357,772 @@ export default function NewProfileContent() {
       </div>
 
       {/* ===== ABOUT SECTION ===== */}
-      <AboutSection
-        bio={profile?.profile?.bio}
-        onEdit={() => {
-          setEditData({ bio: profile?.profile?.bio || '' });
-          setActiveModal('about');
-        }}
-      />
+      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">About</h3>
+          <button
+            onClick={() => {
+              setEditData({ bio: profile?.profile?.bio || '' });
+              setActiveModal('about');
+            }}
+            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+          >
+            Edit
+          </button>
+        </div>
+        {profile?.profile?.bio ? (
+          <p className="text-gray-700 whitespace-pre-line">{profile.profile.bio}</p>
+        ) : (
+          <p className="text-gray-500 italic">No bio added yet</p>
+        )}
+      </div>
 
       {/* ===== RESUME SECTION ===== */}
-      <ResumeSection
-        resume={resume}
-        onEdit={() => setActiveModal('resume')}
-        formatDate={formatDate}
-      />
+      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Resume</h3>
+          <button
+            onClick={() => setActiveModal('resume')}
+            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+          >
+            {resume?.hasResume ? 'Update' : 'Upload'}
+          </button>
+        </div>
+        {resume?.hasResume ? (
+          <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+            <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <div className="flex-1">
+              <p className="font-medium text-gray-900">{resume.fileName}</p>
+              {resume.uploadedAt && (
+                <p className="text-sm text-gray-500">Uploaded: {formatDate(resume.uploadedAt)}</p>
+              )}
+            </div>
+            <a
+              href={`/api/users/${user?.id}/resume/download`}
+              className="px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm font-medium transition-colors"
+            >
+              Download
+            </a>
+          </div>
+        ) : (
+          <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+            <svg className="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+            </svg>
+            <p className="text-gray-500">No resume uploaded</p>
+            <button
+              onClick={() => setActiveModal('resume')}
+              className="mt-2 text-blue-600 hover:text-blue-700 text-sm font-medium"
+            >
+              Upload your resume
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* ===== SKILLS SECTION ===== */}
-      <SkillsSection
-        skills={skills}
-        onEdit={() => setActiveModal('skills')}
-        getValidationBadge={getValidationBadge}
-        getLevelColor={getLevelColor}
-      />
+      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Skills</h3>
+          <button
+            onClick={() => setActiveModal('skills')}
+            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+          >
+            Manage
+          </button>
+        </div>
+        {skills.length === 0 ? (
+          <p className="text-gray-500 text-center py-8">No skills added yet</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {skills.slice(0, 12).map((skill) => {
+              const badge = getValidationBadge(skill);
+              return (
+                <div key={skill._id} className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                  <span className="font-medium text-gray-900">{skill.skillName}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${badge.className}`}>
+                    {badge.label}
+                  </span>
+                </div>
+              );
+            })}
+            {skills.length > 12 && (
+              <div className="px-3 py-2 text-gray-500 text-sm">
+                + {skills.length - 12} more
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* ===== WORK EXPERIENCE SECTION ===== */}
-      <ExperienceSection
-        experiences={profile?.profile?.experience}
-        onEdit={() => {
-          const firstExp = profile?.profile?.experience?.[0];
-          if (firstExp) {
-            setEditData({
-              _id: firstExp._id,
-              company: firstExp.company,
-              title: firstExp.title,
-              location: firstExp.location,
-              startDate: firstExp.startDate,
-              endDate: firstExp.endDate,
-              isCurrent: firstExp.isCurrent,
-              description: firstExp.description,
-              skills: firstExp.skills,
-            });
-          } else {
-            setEditData({});
-          }
-          setActiveModal('experience');
-        }}
-      />
+      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Work Experience</h3>
+          <button
+            onClick={() => {
+              const firstExp = profile?.profile?.experience?.[0];
+              if (firstExp) {
+                setEditData({
+                  _id: firstExp._id,
+                  company: firstExp.company,
+                  title: firstExp.title,
+                  location: firstExp.location,
+                  startDate: firstExp.startDate,
+                  endDate: firstExp.endDate,
+                  isCurrent: firstExp.isCurrent,
+                  description: firstExp.description,
+                  skills: firstExp.skills,
+                });
+              } else {
+                setEditData({});
+              }
+              setActiveModal('experience');
+            }}
+            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+          >
+            {profile?.profile?.experience?.length ? 'Edit' : 'Add'}
+          </button>
+        </div>
+        {profile?.profile?.experience?.length ? (
+          <div className="space-y-4">
+            {profile.profile.experience.slice(0, 3).map((exp) => (
+              <div key={exp._id} className="p-4 border border-gray-200 rounded-lg">
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="font-medium text-gray-900">{exp.title}</h4>
+                  {exp.isCurrent && (
+                    <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">
+                      Current
+                    </span>
+                  )}
+                </div>
+                <p className="text-gray-600 mb-1">{exp.company}</p>
+                {exp.location && (
+                  <p className="text-sm text-gray-500 mb-2">{exp.location}</p>
+                )}
+                {exp.description && (
+                  <p className="text-sm text-gray-700">{exp.description}</p>
+                )}
+              </div>
+            ))}
+            {profile.profile.experience.length > 3 && (
+              <p className="text-gray-500 text-center text-sm">
+                + {profile.profile.experience.length - 3} more experiences
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="text-gray-500 text-center py-8">No work experience added yet</p>
+        )}
+      </div>
 
       {/* ===== EDUCATION SECTION ===== */}
-      <EducationSection
-        education={profile?.profile?.education}
-        onEdit={() => {
-          const firstEdu = profile?.profile?.education?.[0];
-          if (firstEdu) {
-            setEditData({
-              _id: firstEdu._id,
-              institution: firstEdu.institution,
-              degree: firstEdu.degree,
-              fieldOfStudy: firstEdu.fieldOfStudy,
-              startDate: firstEdu.startDate,
-              endDate: firstEdu.endDate,
-              grade: firstEdu.grade,
-              description: firstEdu.description,
-            });
-          } else {
-            setEditData({});
-          }
-          setActiveModal('education');
-        }}
-      />
-
-      {/* ===== CERTIFICATES SECTION ===== */}
-      <CertificatesSection
-        certificates={profile?.profile?.certificates}
-        onAdd={() => {
-          setEditData({});
-          setActiveModal('certificate');
-        }}
-        onEditCertificate={(cert) => {
-          setEditData({
-            title: cert.name,
-            organization: cert.issuer,
-            issuedDate: cert.issueDate,
-            expiryDate: cert.expiryDate,
-            url: cert.url,
-          });
-          setActiveModal('certificate');
-        }}
-      />
+      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Education</h3>
+          <button
+            onClick={() => {
+              const firstEdu = profile?.profile?.education?.[0];
+              if (firstEdu) {
+                setEditData({
+                  _id: firstEdu._id,
+                  institution: firstEdu.institution,
+                  degree: firstEdu.degree,
+                  fieldOfStudy: firstEdu.fieldOfStudy,
+                  startDate: firstEdu.startDate,
+                  endDate: firstEdu.endDate,
+                  grade: firstEdu.grade,
+                  description: firstEdu.description,
+                });
+              } else {
+                setEditData({});
+              }
+              setActiveModal('education');
+            }}
+            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+          >
+            {profile?.profile?.education?.length ? 'Edit' : 'Add'}
+          </button>
+        </div>
+        {profile?.profile?.education?.length ? (
+          <div className="space-y-4">
+            {profile.profile.education.slice(0, 3).map((edu) => (
+              <div key={edu._id} className="p-4 border border-gray-200 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-1">{edu.institution}</h4>
+                <p className="text-gray-600">{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</p>
+                {edu.grade && (
+                  <p className="text-sm text-gray-500 mt-1">Grade: {edu.grade}</p>
+                )}
+              </div>
+            ))}
+            {profile.profile.education.length > 3 && (
+              <p className="text-gray-500 text-center text-sm">
+                + {profile.profile.education.length - 3} more educations
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="text-gray-500 text-center py-8">No education added yet</p>
+        )}
+      </div>
 
       {/* ===== PROJECTS SECTION ===== */}
-      <ProjectsSection
-        projects={profile?.profile?.projects}
-        onAdd={() => {
-          setEditData({});
-          setActiveModal('project');
-        }}
-        onEditProject={(proj) => {
-          setEditData({
-            _id: proj._id,
-            name: proj.name,
-            description: proj.description,
-            url: proj.url,
-            githubUrl: proj.githubUrl,
-            technologies: proj.technologies,
-            startDate: proj.startDate,
-            endDate: proj.endDate,
-            isOngoing: proj.isOngoing,
-          });
-          setActiveModal('project');
-        }}
-      />
+      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Projects</h3>
+          <button
+            onClick={() => {
+              const firstProj = profile?.profile?.projects?.[0];
+              if (firstProj) {
+                setEditData({
+                  _id: firstProj._id,
+                  name: firstProj.name,
+                  description: firstProj.description,
+                  url: firstProj.url,
+                  githubUrl: firstProj.githubUrl,
+                  technologies: firstProj.technologies,
+                  startDate: firstProj.startDate,
+                  endDate: firstProj.endDate,
+                  isOngoing: firstProj.isOngoing,
+                });
+              } else {
+                setEditData({});
+              }
+              setActiveModal('project');
+            }}
+            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+          >
+            {profile?.profile?.projects?.length ? 'Edit' : 'Add'}
+          </button>
+        </div>
+        {profile?.profile?.projects?.length ? (
+          <div className="space-y-4">
+            {profile.profile.projects.slice(0, 3).map((proj) => (
+              <div key={proj._id} className="p-4 border border-gray-200 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-1">{proj.name}</h4>
+                {proj.description && (
+                  <p className="text-gray-600 mb-2">{proj.description}</p>
+                )}
+                {proj.technologies && proj.technologies.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {proj.technologies.slice(0, 5).map((tech, i) => (
+                      <span key={i} className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded">
+                        {tech}
+                      </span>
+                    ))}
+                    {proj.technologies.length > 5 && (
+                      <span className="px-2 py-0.5 text-gray-500 text-xs">+{proj.technologies.length - 5}</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+            {profile.profile.projects.length > 3 && (
+              <p className="text-gray-500 text-center text-sm">
+                + {profile.profile.projects.length - 3} more projects
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="text-gray-500 text-center py-8">No projects added yet</p>
+        )}
+      </div>
 
       {/* ===== MODALS ===== */}
       {/* About/Header Edit Modal */}
       {(activeModal === 'about' || activeModal === 'header') && (
-        <Modal
-          title={activeModal === 'about' ? 'Edit About' : 'Edit Profile'}
-          onClose={() => setActiveModal(null)}
-          onSave={() => handleSave(activeModal, editData)}
-          isSaving={isSaving}
-        >
-          {activeModal === 'header' && (
-            <>
-              <FormField label="Full Name" name="name" value={editData.name as string} onChange={(v) => setEditData({...editData, name: v})} />
-              <FormField label="Mobile" name="mobile" value={editData.mobile as string} onChange={(v) => setEditData({...editData, mobile: v})} />
-              <FormField label="Headline" name="headline" value={editData.headline as string} onChange={(v) => setEditData({...editData, headline: v})} placeholder="e.g., Full Stack Developer" />
-              <FormField label="Location" name="location" value={editData.location as string} onChange={(v) => setEditData({...editData, location: v})} placeholder="e.g., Bangalore, India" />
-            </>
-          )}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">About</label>
-            <textarea
-              value={editData.bio as string || ''}
-              onChange={(e) => setEditData({...editData, bio: e.target.value})}
-              rows={5}
-              maxLength={1000}
-              placeholder="Write about yourself..."
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
-            />
-            <p className="text-xs text-gray-500 mt-1">{(editData.bio as string || '').length}/1000</p>
-          </div>
-          {activeModal === 'header' && (
-            <>
-              <FormField label="LinkedIn URL" name="linkedinUrl" value={editData.linkedinUrl as string} onChange={(v) => setEditData({...editData, linkedinUrl: v})} placeholder="https://linkedin.com/in/..." />
-              <FormField label="GitHub URL" name="githubUrl" value={editData.githubUrl as string} onChange={(v) => setEditData({...editData, githubUrl: v})} placeholder="https://github.com/..." />
-              <FormField label="Portfolio URL" name="portfolioUrl" value={editData.portfolioUrl as string} onChange={(v) => setEditData({...editData, portfolioUrl: v})} placeholder="https://yoursite.com" />
-            </>
-          )}
-        </Modal>
-      )}
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {activeModal === 'about' ? 'Edit About' : 'Edit Profile'}
+                </h3>
+                <button
+                  onClick={() => setActiveModal(null)}
+                  className="text-gray-400 hover:text-gray-500"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
 
-      {/* Resume Modal */}
-      {activeModal === 'resume' && (
-        <Modal
-          title="Upload Resume"
-          onClose={() => setActiveModal(null)}
-          hideFooter
-        >
-          <ResumeUploader
-            userId={user?.id || ''}
-            onSuccess={() => {
-              setActiveModal(null);
-              fetchProfile();
-            }}
-          />
-        </Modal>
-      )}
+              <div className="space-y-4">
+                {activeModal === 'header' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        value={editData.name as string || ''}
+                        onChange={(e) => setEditData({...editData, name: e.target.value})}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        style={{ color: '#000000' }}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Mobile
+                      </label>
+                      <input
+                        type="tel"
+                        value={editData.mobile as string || ''}
+                        onChange={(e) => setEditData({...editData, mobile: e.target.value})}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        style={{ color: '#000000' }}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Headline
+                      </label>
+                      <input
+                        type="text"
+                        value={editData.headline as string || ''}
+                        onChange={(e) => setEditData({...editData, headline: e.target.value})}
+                        placeholder="e.g., Full Stack Developer"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        style={{ color: '#000000' }}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Location
+                      </label>
+                      <input
+                        type="text"
+                        value={editData.location as string || ''}
+                        onChange={(e) => setEditData({...editData, location: e.target.value})}
+                        placeholder="e.g., Bangalore, India"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        style={{ color: '#000000' }}
+                      />
+                    </div>
+                  </>
+                )}
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    About
+                  </label>
+                  <textarea
+                    value={editData.bio as string || ''}
+                    onChange={(e) => setEditData({...editData, bio: e.target.value})}
+                    rows={5}
+                    maxLength={1000}
+                    placeholder="Write about yourself..."
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ color: '#000000' }}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">{(editData.bio as string || '').length}/1000</p>
+                </div>
+                
+                {activeModal === 'header' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        LinkedIn URL
+                      </label>
+                      <input
+                        type="url"
+                        value={editData.linkedinUrl as string || ''}
+                        onChange={(e) => setEditData({...editData, linkedinUrl: e.target.value})}
+                        placeholder="https://linkedin.com/in/..."
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        style={{ color: '#000000' }}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        GitHub URL
+                      </label>
+                      <input
+                        type="url"
+                        value={editData.githubUrl as string || ''}
+                        onChange={(e) => setEditData({...editData, githubUrl: e.target.value})}
+                        placeholder="https://github.com/..."
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        style={{ color: '#000000' }}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Portfolio URL
+                      </label>
+                      <input
+                        type="url"
+                        value={editData.portfolioUrl as string || ''}
+                        onChange={(e) => setEditData({...editData, portfolioUrl: e.target.value})}
+                        placeholder="https://yoursite.com"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        style={{ color: '#000000' }}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
 
-      {/* Skills Modal - Redirect to skills page */}
-      {activeModal === 'skills' && (
-        <Modal
-          title="Manage Skills"
-          onClose={() => setActiveModal(null)}
-          hideFooter
-        >
-          <div className="text-center py-4">
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Manage your skills from the dedicated skills page.
-            </p>
-            <a
-              href="/dashboard/skills"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-            >
-              Go to Skills Page
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </a>
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setActiveModal(null)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium flex-1 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleSave(activeModal, editData)}
+                  disabled={isSaving}
+                  className="px-4 py-2 text-white rounded-lg font-medium flex-1 transition-colors disabled:opacity-70"
+                  style={{ backgroundColor: '#5693C1' }}
+                >
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
           </div>
-        </Modal>
+        </div>
       )}
 
       {/* Experience Modal */}
       {activeModal === 'experience' && (
-        <Modal
-          title="Add Work Experience"
-          onClose={() => setActiveModal(null)}
-          onSave={() => handleSave('experience', editData)}
-          isSaving={isSaving}
-        >
-          <FormField label="Job Title *" name="title" value={editData.title as string} onChange={(v) => setEditData({...editData, title: v})} placeholder="Software Engineer" />
-          <FormField label="Company *" name="company" value={editData.company as string} onChange={(v) => setEditData({...editData, company: v})} placeholder="Company Name" />
-          <FormField label="Location" name="location" value={editData.location as string} onChange={(v) => setEditData({...editData, location: v})} placeholder="City, Country" />
-          <div className="grid grid-cols-2 gap-4">
-            <FormField label="Start Date" name="startDate" type="date" value={editData.startDate as string} onChange={(v) => setEditData({...editData, startDate: v})} />
-            <FormField label="End Date" name="endDate" type="date" value={editData.endDate as string} onChange={(v) => setEditData({...editData, endDate: v})} />
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {editData._id ? 'Edit Experience' : 'Add Experience'}
+                </h3>
+                <button
+                  onClick={() => setActiveModal(null)}
+                  className="text-gray-400 hover:text-gray-500"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Job Title *
+                  </label>
+                  <input
+                    type="text"
+                    value={editData.title as string || ''}
+                    onChange={(e) => setEditData({...editData, title: e.target.value})}
+                    placeholder="Software Engineer"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ color: '#000000' }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Company *
+                  </label>
+                  <input
+                    type="text"
+                    value={editData.company as string || ''}
+                    onChange={(e) => setEditData({...editData, company: e.target.value})}
+                    placeholder="Company Name"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ color: '#000000' }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Location
+                  </label>
+                  <input
+                    type="text"
+                    value={editData.location as string || ''}
+                    onChange={(e) => setEditData({...editData, location: e.target.value})}
+                    placeholder="City, Country"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ color: '#000000' }}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      value={editData.startDate as string || ''}
+                      onChange={(e) => setEditData({...editData, startDate: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      style={{ color: '#000000' }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      value={editData.endDate as string || ''}
+                      onChange={(e) => setEditData({...editData, endDate: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      style={{ color: '#000000' }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    value={editData.description as string || ''}
+                    onChange={(e) => setEditData({...editData, description: e.target.value})}
+                    rows={3}
+                    placeholder="Describe your responsibilities..."
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ color: '#000000' }}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setActiveModal(null)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium flex-1 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleSave('experience', editData)}
+                  disabled={isSaving}
+                  className="px-4 py-2 text-white rounded-lg font-medium flex-1 transition-colors disabled:opacity-70"
+                  style={{ backgroundColor: '#5693C1' }}
+                >
+                  {isSaving ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-            <textarea
-              value={editData.description as string || ''}
-              onChange={(e) => setEditData({...editData, description: e.target.value})}
-              rows={3}
-              placeholder="Describe your responsibilities..."
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
-            />
-          </div>
-        </Modal>
+        </div>
       )}
 
       {/* Education Modal */}
       {activeModal === 'education' && (
-        <Modal
-          title="Add Education"
-          onClose={() => setActiveModal(null)}
-          onSave={() => handleSave('education', editData)}
-          isSaving={isSaving}
-        >
-          <FormField label="Institution *" name="institution" value={editData.institution as string} onChange={(v) => setEditData({...editData, institution: v})} placeholder="University/College Name" />
-          <FormField label="Degree *" name="degree" value={editData.degree as string} onChange={(v) => setEditData({...editData, degree: v})} placeholder="Bachelor's, Master's, etc." />
-          <FormField label="Field of Study" name="fieldOfStudy" value={editData.fieldOfStudy as string} onChange={(v) => setEditData({...editData, fieldOfStudy: v})} placeholder="Computer Science, etc." />
-          <div className="grid grid-cols-2 gap-4">
-            <FormField label="Start Date" name="startDate" type="month" value={editData.startDate as string} onChange={(v) => setEditData({...editData, startDate: v})} />
-            <FormField label="End Date" name="endDate" type="month" value={editData.endDate as string} onChange={(v) => setEditData({...editData, endDate: v})} />
-          </div>
-          <FormField label="Grade/CGPA" name="grade" value={editData.grade as string} onChange={(v) => setEditData({...editData, grade: v})} placeholder="3.8/4.0" />
-        </Modal>
-      )}
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {editData._id ? 'Edit Education' : 'Add Education'}
+                </h3>
+                <button
+                  onClick={() => setActiveModal(null)}
+                  className="text-gray-400 hover:text-gray-500"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
 
-      {/* Certificate Modal */}
-      {activeModal === 'certificate' && (
-        <Modal
-          title="Add Certificate"
-          onClose={() => setActiveModal(null)}
-          onSave={() => handleSave('certificate', editData)}
-          isSaving={isSaving}
-        >
-          <FormField label="Certificate Title *" name="title" value={editData.title as string} onChange={(v) => setEditData({...editData, title: v})} placeholder="AWS Certified Developer" />
-          <FormField label="Issuing Organization *" name="organization" value={editData.organization as string} onChange={(v) => setEditData({...editData, organization: v})} placeholder="Amazon Web Services" />
-          <FormField label="Issue Date" name="issuedDate" type="date" value={editData.issuedDate as string} onChange={(v) => setEditData({...editData, issuedDate: v})} />
-          <FormField label="Skills" name="skills" value={editData.skills as string} onChange={(v) => setEditData({...editData, skills: v})} placeholder="AWS, Cloud Computing" />
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-            <textarea
-              value={editData.description as string || ''}
-              onChange={(e) => setEditData({...editData, description: e.target.value})}
-              rows={3}
-              placeholder="Describe the certification..."
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
-            />
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Institution *
+                  </label>
+                  <input
+                    type="text"
+                    value={editData.institution as string || ''}
+                    onChange={(e) => setEditData({...editData, institution: e.target.value})}
+                    placeholder="University/College Name"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ color: '#000000' }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Degree *
+                  </label>
+                  <input
+                    type="text"
+                    value={editData.degree as string || ''}
+                    onChange={(e) => setEditData({...editData, degree: e.target.value})}
+                    placeholder="Bachelor's, Master's, etc."
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ color: '#000000' }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Field of Study
+                  </label>
+                  <input
+                    type="text"
+                    value={editData.fieldOfStudy as string || ''}
+                    onChange={(e) => setEditData({...editData, fieldOfStudy: e.target.value})}
+                    placeholder="Computer Science, etc."
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ color: '#000000' }}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Start Date
+                    </label>
+                    <input
+                      type="month"
+                      value={editData.startDate as string || ''}
+                      onChange={(e) => setEditData({...editData, startDate: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      style={{ color: '#000000' }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      End Date
+                    </label>
+                    <input
+                      type="month"
+                      value={editData.endDate as string || ''}
+                      onChange={(e) => setEditData({...editData, endDate: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      style={{ color: '#000000' }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Grade/CGPA
+                  </label>
+                  <input
+                    type="text"
+                    value={editData.grade as string || ''}
+                    onChange={(e) => setEditData({...editData, grade: e.target.value})}
+                    placeholder="3.8/4.0"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ color: '#000000' }}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setActiveModal(null)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium flex-1 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleSave('education', editData)}
+                  disabled={isSaving}
+                  className="px-4 py-2 text-white rounded-lg font-medium flex-1 transition-colors disabled:opacity-70"
+                  style={{ backgroundColor: '#5693C1' }}
+                >
+                  {isSaving ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </div>
           </div>
-        </Modal>
+        </div>
       )}
 
       {/* Project Modal */}
       {activeModal === 'project' && (
-        <Modal
-          title="Add Project"
-          onClose={() => setActiveModal(null)}
-          onSave={() => handleSave('project', editData)}
-          isSaving={isSaving}
-        >
-          <FormField label="Project Title *" name="name" value={editData.name as string} onChange={(v) => setEditData({...editData, name: v})} placeholder="My Awesome Project" />
-          <FormField label="Project URL" name="url" value={editData.url as string} onChange={(v) => setEditData({...editData, url: v})} placeholder="https://myproject.com" />
-          <FormField label="Technologies" name="technologies" value={(editData.technologies as string[])?.join(', ') || ''} onChange={(v) => setEditData({...editData, technologies: v.split(',').map((t: string) => t.trim())})} placeholder="React, Node.js, MongoDB" />
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-            <textarea
-              value={editData.description as string || ''}
-              onChange={(e) => setEditData({...editData, description: e.target.value})}
-              rows={4}
-              placeholder="Describe your project..."
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
-            />
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {editData._id ? 'Edit Project' : 'Add Project'}
+                </h3>
+                <button
+                  onClick={() => setActiveModal(null)}
+                  className="text-gray-400 hover:text-gray-500"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Project Title *
+                  </label>
+                  <input
+                    type="text"
+                    value={editData.name as string || ''}
+                    onChange={(e) => setEditData({...editData, name: e.target.value})}
+                    placeholder="My Awesome Project"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ color: '#000000' }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Project URL
+                  </label>
+                  <input
+                    type="url"
+                    value={editData.url as string || ''}
+                    onChange={(e) => setEditData({...editData, url: e.target.value})}
+                    placeholder="https://myproject.com"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ color: '#000000' }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Technologies
+                  </label>
+                  <input
+                    type="text"
+                    value={(editData.technologies as string[])?.join(', ') || ''}
+                    onChange={(e) => setEditData({...editData, technologies: e.target.value.split(',').map((t: string) => t.trim())})}
+                    placeholder="React, Node.js, MongoDB"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ color: '#000000' }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    value={editData.description as string || ''}
+                    onChange={(e) => setEditData({...editData, description: e.target.value})}
+                    rows={4}
+                    placeholder="Describe your project..."
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ color: '#000000' }}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setActiveModal(null)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium flex-1 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleSave('project', editData)}
+                  disabled={isSaving}
+                  className="px-4 py-2 text-white rounded-lg font-medium flex-1 transition-colors disabled:opacity-70"
+                  style={{ backgroundColor: '#5693C1' }}
+                >
+                  {isSaving ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </div>
           </div>
-        </Modal>
+        </div>
       )}
     </div>
   );

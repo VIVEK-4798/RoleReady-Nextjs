@@ -19,20 +19,23 @@ export function ProfileSection({ title, icon, onEdit, onAdd, imageSrc, children 
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-      <div className="flex justify-between items-start">
-        <div className="flex-1">
+    <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+        <div className="flex-1 w-full">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+              style={{ backgroundColor: '#5693C1' }}
+            >
+              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {icons[icon]}
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
             {(onEdit || onAdd) && (
               <button
                 onClick={onEdit || onAdd}
-                className="ml-auto text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                className="ml-auto text-blue-600 hover:text-blue-700 transition-colors p-1 rounded-full hover:bg-blue-50"
+                aria-label={onAdd ? `Add ${title}` : `Edit ${title}`}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   {onAdd ? (
@@ -50,8 +53,11 @@ export function ProfileSection({ title, icon, onEdit, onAdd, imageSrc, children 
           <img
             src={imageSrc}
             alt={title}
-            className="w-28 h-24 object-cover rounded-lg ml-4 hidden sm:block"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            className="w-full sm:w-28 h-48 sm:h-24 object-cover rounded-lg sm:ml-4"
+            onError={(e) => { 
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none'; 
+            }}
           />
         )}
       </div>

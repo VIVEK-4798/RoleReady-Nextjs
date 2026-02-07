@@ -38,7 +38,7 @@ interface SkillsPageClientProps {
 
 export default function SkillsPageClient({ initialSkills }: SkillsPageClientProps) {
   const router = useRouter();
-  const [skills, setSkills] = useState(initialSkills);
+  const [skills, setSkills] = useState<Skill[]>(initialSkills);
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [domainFilter, setDomainFilter] = useState<string>('');
   const [search, setSearch] = useState('');
@@ -103,17 +103,25 @@ export default function SkillsPageClient({ initialSkills }: SkillsPageClientProp
         throw new Error(data.error || 'Failed to save skill');
       }
 
-      // Refresh data
       router.refresh();
       setIsModalOpen(false);
       
-      // Update local state
       if (editingSkill) {
         setSkills((prev) => 
           prev.map((s) => s._id === editingSkill._id ? { ...s, ...formData } : s)
         );
       } else {
-        setSkills((prev) => [...prev, data.data]);
+        const newSkill: Skill = {
+          _id: data.data._id,
+          name: data.data.name,
+          normalizedName: data.data.normalizedName,
+          domain: data.data.domain,
+          description: data.data.description,
+          isActive: data.data.isActive !== false,
+          createdAt: data.data.createdAt,
+          updatedAt: data.data.updatedAt,
+        };
+        setSkills((prev) => [...prev, newSkill]);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -141,6 +149,7 @@ export default function SkillsPageClient({ initialSkills }: SkillsPageClientProp
       );
     } catch (err) {
       console.error('Error toggling skill:', err);
+      setError('Failed to update skill status');
     }
   };
 
@@ -154,14 +163,14 @@ export default function SkillsPageClient({ initialSkills }: SkillsPageClientProp
             placeholder="Search skills..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
           />
         </div>
         
         <select
           value={domainFilter}
           onChange={(e) => setDomainFilter(e.target.value)}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+          className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
         >
           <option value="">All Domains</option>
           {domains.map((d) => (
@@ -172,7 +181,7 @@ export default function SkillsPageClient({ initialSkills }: SkillsPageClientProp
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value as 'all' | 'active' | 'inactive')}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+          className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
         >
           <option value="all">All Status</option>
           <option value="active">Active Only</option>
@@ -181,7 +190,7 @@ export default function SkillsPageClient({ initialSkills }: SkillsPageClientProp
 
         <button
           onClick={() => openModal()}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          className="px-4 py-2 bg-[#5693C1] text-white rounded-lg hover:bg-[#4a80b0] transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -191,42 +200,42 @@ export default function SkillsPageClient({ initialSkills }: SkillsPageClientProp
       </div>
 
       {/* Skills Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-900/50">
+            <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Skill
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Domain
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="divide-y divide-gray-200">
               {filteredSkills.map((skill) => (
                 <tr key={skill._id} className={!skill.isActive ? 'opacity-50' : ''}>
                   <td className="px-6 py-4">
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white">
+                      <p className="font-medium text-gray-900">
                         {skill.name}
                       </p>
                       {skill.description && (
-                        <p className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
+                        <p className="text-sm text-gray-500 truncate max-w-xs">
                           {skill.description}
                         </p>
                       )}
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded">
+                    <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">
                       {domains.find((d) => d.value === skill.domain)?.label || skill.domain}
                     </span>
                   </td>
@@ -235,8 +244,8 @@ export default function SkillsPageClient({ initialSkills }: SkillsPageClientProp
                       onClick={() => toggleActive(skill)}
                       className={`px-2 py-1 text-xs font-medium rounded ${
                         skill.isActive
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300'
-                          : 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
                       }`}
                     >
                       {skill.isActive ? 'Active' : 'Inactive'}
@@ -245,7 +254,7 @@ export default function SkillsPageClient({ initialSkills }: SkillsPageClientProp
                   <td className="px-6 py-4 text-right">
                     <button
                       onClick={() => openModal(skill)}
-                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                      className="text-[#5693C1] hover:text-[#4a80b0] font-medium"
                     >
                       Edit
                     </button>
@@ -257,7 +266,7 @@ export default function SkillsPageClient({ initialSkills }: SkillsPageClientProp
         </div>
 
         {filteredSkills.length === 0 && (
-          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+          <div className="p-8 text-center text-gray-500">
             No skills found matching your criteria.
           </div>
         )}
@@ -266,20 +275,20 @@ export default function SkillsPageClient({ initialSkills }: SkillsPageClientProp
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
               {editingSkill ? 'Edit Skill' : 'Add New Skill'}
             </h2>
 
             {error && (
-              <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-lg text-sm">
+              <div className="mb-4 p-3 bg-red-100 text-red-800 rounded-lg text-sm">
                 {error}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Skill Name *
                 </label>
                 <input
@@ -287,19 +296,19 @@ export default function SkillsPageClient({ initialSkills }: SkillsPageClientProp
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
                   placeholder="e.g., React, Python, AWS"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Domain
                 </label>
                 <select
                   value={formData.domain}
                   onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
                 >
                   {domains.map((d) => (
                     <option key={d.value} value={d.value}>{d.label}</option>
@@ -308,14 +317,14 @@ export default function SkillsPageClient({ initialSkills }: SkillsPageClientProp
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Description
                 </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
                   placeholder="Optional description..."
                 />
               </div>
@@ -324,14 +333,14 @@ export default function SkillsPageClient({ initialSkills }: SkillsPageClientProp
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="px-4 py-2 bg-[#5693C1] text-white rounded-lg hover:bg-[#4a80b0] transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-2"
                 >
                   {isLoading ? 'Saving...' : editingSkill ? 'Save Changes' : 'Create Skill'}
                 </button>

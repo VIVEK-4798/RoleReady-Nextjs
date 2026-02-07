@@ -30,6 +30,11 @@ export default function SignupForm() {
     setError('');
   };
 
+  const handleRoleChange = (role: 'user' | 'mentor') => {
+    setFormData((prev) => ({ ...prev, role }));
+    setError('');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -39,6 +44,13 @@ export default function SignupForm() {
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate password length
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters');
       setIsLoading(false);
       return;
     }
@@ -60,6 +72,7 @@ export default function SignupForm() {
 
       if (!response.ok) {
         setError(data.error || data.message || 'Signup failed');
+        setIsLoading(false);
         return;
       }
 
@@ -78,17 +91,17 @@ export default function SignupForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-6">
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
           {error}
         </div>
       )}
 
       {/* Success Message */}
       {success && (
-        <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg text-sm">
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
           {success}
         </div>
       )}
@@ -97,7 +110,7 @@ export default function SignupForm() {
       <div>
         <label
           htmlFor="name"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          className="block text-sm font-medium text-gray-700 mb-2"
         >
           Full Name
         </label>
@@ -109,57 +122,79 @@ export default function SignupForm() {
           onChange={handleChange}
           placeholder="John Doe"
           required
-          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent transition-colors"
         />
       </div>
 
       {/* Role Selection */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          I want to register as
+        <label className="block text-sm font-medium text-gray-700 mb-3">
+          I want to register as *
         </label>
-        <div className="grid grid-cols-2 gap-3">
-          <label
-            className={`relative flex items-center justify-center px-4 py-3 border-2 rounded-lg cursor-pointer transition-all ${
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => handleRoleChange('user')}
+            className={`relative flex items-center justify-center px-4 py-4 border-2 rounded-lg cursor-pointer transition-all ${
               formData.role === 'user'
-                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
+                ? 'border-[#5693C1] bg-blue-50'
+                : 'border-gray-300 hover:border-gray-400'
             }`}
           >
-            <input
-              type="radio"
-              name="role"
-              value="user"
-              checked={formData.role === 'user'}
-              onChange={handleChange}
-              className="sr-only"
-            />
-            <span className="flex flex-col items-center">
-              <span className="text-lg font-medium text-gray-900 dark:text-white">User</span>
-              <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Looking for career guidance</span>
-            </span>
-          </label>
+            <div className="flex flex-col items-center">
+              <svg 
+                className={`w-6 h-6 mb-2 ${formData.role === 'user' ? 'text-[#5693C1]' : 'text-gray-400'}`}
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" 
+                />
+              </svg>
+              <span className={`text-base font-medium ${formData.role === 'user' ? 'text-[#5693C1]' : 'text-gray-900'}`}>
+                Job Seeker
+              </span>
+              <span className="text-xs text-gray-500 mt-1 text-center">
+                Looking for career guidance
+              </span>
+            </div>
+          </button>
           
-          <label
-            className={`relative flex items-center justify-center px-4 py-3 border-2 rounded-lg cursor-pointer transition-all ${
+          <button
+            type="button"
+            onClick={() => handleRoleChange('mentor')}
+            className={`relative flex items-center justify-center px-4 py-4 border-2 rounded-lg cursor-pointer transition-all ${
               formData.role === 'mentor'
-                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
+                ? 'border-[#5693C1] bg-blue-50'
+                : 'border-gray-300 hover:border-gray-400'
             }`}
           >
-            <input
-              type="radio"
-              name="role"
-              value="mentor"
-              checked={formData.role === 'mentor'}
-              onChange={handleChange}
-              className="sr-only"
-            />
-            <span className="flex flex-col items-center">
-              <span className="text-lg font-medium text-gray-900 dark:text-white">Mentor</span>
-              <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Guide and validate skills</span>
-            </span>
-          </label>
+            <div className="flex flex-col items-center">
+              <svg 
+                className={`w-6 h-6 mb-2 ${formData.role === 'mentor' ? 'text-[#5693C1]' : 'text-gray-400'}`}
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" 
+                />
+              </svg>
+              <span className={`text-base font-medium ${formData.role === 'mentor' ? 'text-[#5693C1]' : 'text-gray-900'}`}>
+                Mentor
+              </span>
+              <span className="text-xs text-gray-500 mt-1 text-center">
+                Guide and validate skills
+              </span>
+            </div>
+          </button>
         </div>
       </div>
 
@@ -167,7 +202,7 @@ export default function SignupForm() {
       <div>
         <label
           htmlFor="email"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          className="block text-sm font-medium text-gray-700 mb-2"
         >
           Email Address
         </label>
@@ -179,7 +214,7 @@ export default function SignupForm() {
           onChange={handleChange}
           placeholder="you@example.com"
           required
-          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent transition-colors"
         />
       </div>
 
@@ -187,10 +222,10 @@ export default function SignupForm() {
       <div>
         <label
           htmlFor="mobile"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          className="block text-sm font-medium text-gray-700 mb-2"
         >
           Mobile Number{' '}
-          <span className="text-gray-400">(optional)</span>
+          <span className="text-gray-500 font-normal">(optional)</span>
         </label>
         <input
           type="tel"
@@ -199,7 +234,7 @@ export default function SignupForm() {
           value={formData.mobile}
           onChange={handleChange}
           placeholder="+91 98765 43210"
-          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent transition-colors"
         />
       </div>
 
@@ -207,7 +242,7 @@ export default function SignupForm() {
       <div>
         <label
           htmlFor="password"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          className="block text-sm font-medium text-gray-700 mb-2"
         >
           Password
         </label>
@@ -220,9 +255,9 @@ export default function SignupForm() {
           placeholder="••••••••"
           required
           minLength={6}
-          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent transition-colors"
         />
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        <p className="mt-2 text-xs text-gray-500">
           Must be at least 6 characters
         </p>
       </div>
@@ -231,7 +266,7 @@ export default function SignupForm() {
       <div>
         <label
           htmlFor="confirmPassword"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          className="block text-sm font-medium text-gray-700 mb-2"
         >
           Confirm Password
         </label>
@@ -244,7 +279,7 @@ export default function SignupForm() {
           placeholder="••••••••"
           required
           minLength={6}
-          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent transition-colors"
         />
       </div>
 
@@ -252,7 +287,7 @@ export default function SignupForm() {
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed"
+        className="w-full py-3 px-4 bg-[#5693C1] hover:bg-[#4a80b0] disabled:bg-[#8ab4d8] text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-2 disabled:cursor-not-allowed"
       >
         {isLoading ? (
           <span className="flex items-center justify-center gap-2">
@@ -284,13 +319,13 @@ export default function SignupForm() {
       </button>
 
       {/* Terms */}
-      <p className="text-xs text-center text-gray-500 dark:text-gray-400">
+      <p className="text-xs text-center text-gray-500 pt-4 border-t border-gray-200">
         By signing up, you agree to our{' '}
-        <a href="/terms" className="text-blue-600 hover:underline">
+        <a href="/terms" className="text-[#5693C1] hover:text-[#4a80b0] font-medium">
           Terms of Service
         </a>{' '}
         and{' '}
-        <a href="/privacy" className="text-blue-600 hover:underline">
+        <a href="/privacy" className="text-[#5693C1] hover:text-[#4a80b0] font-medium">
           Privacy Policy
         </a>
       </p>

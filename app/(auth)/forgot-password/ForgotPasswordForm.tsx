@@ -64,6 +64,7 @@ export default function ForgotPasswordForm() {
 
       if (!response.ok) {
         setError(data.error || 'Failed to send OTP');
+        setIsLoading(false);
         return;
       }
 
@@ -99,6 +100,7 @@ export default function ForgotPasswordForm() {
 
       if (!response.ok) {
         setError(data.error || 'Invalid OTP');
+        setIsLoading(false);
         return;
       }
 
@@ -123,6 +125,11 @@ export default function ForgotPasswordForm() {
       return;
     }
 
+    if (formData.newPassword.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -141,6 +148,7 @@ export default function ForgotPasswordForm() {
 
       if (!response.ok) {
         setError(data.error || 'Failed to reset password');
+        setIsLoading(false);
         return;
       }
 
@@ -157,18 +165,42 @@ export default function ForgotPasswordForm() {
     }
   };
 
+  // Progress indicator
+  const stepLabels = ['Enter Email', 'Verify OTP', 'New Password'];
+  const currentStepIndex = ['email', 'otp', 'password'].indexOf(step);
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      {/* Progress Indicator */}
+      <div className="flex items-center justify-between mb-8">
+        {stepLabels.map((label, index) => (
+          <div key={label} className="flex flex-col items-center flex-1">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 ${
+              index <= currentStepIndex
+                ? 'bg-[#5693C1] text-white'
+                : 'bg-gray-200 text-gray-400'
+            }`}>
+              {index + 1}
+            </div>
+            <span className={`text-xs font-medium ${
+              index <= currentStepIndex ? 'text-[#5693C1]' : 'text-gray-400'
+            }`}>
+              {label}
+            </span>
+          </div>
+        ))}
+      </div>
+
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
           {error}
         </div>
       )}
 
       {/* Success Message */}
       {success && (
-        <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg text-sm">
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
           {success}
         </div>
       )}
@@ -179,7 +211,7 @@ export default function ForgotPasswordForm() {
           <div>
             <label
               htmlFor="role"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              className="block text-sm font-medium text-gray-700 mb-2"
             >
               Account Type
             </label>
@@ -188,7 +220,7 @@ export default function ForgotPasswordForm() {
               name="role"
               value={formData.role}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
             >
               {roles.map((role) => (
                 <option key={role.value} value={role.value}>
@@ -201,7 +233,7 @@ export default function ForgotPasswordForm() {
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              className="block text-sm font-medium text-gray-700 mb-2"
             >
               Email Address
             </label>
@@ -213,16 +245,40 @@ export default function ForgotPasswordForm() {
               onChange={handleChange}
               placeholder="you@example.com"
               required
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
             />
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors"
+            className="w-full py-3 px-4 bg-[#5693C1] hover:bg-[#4a80b0] disabled:bg-[#8ab4d8] text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-2 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Sending OTP...' : 'Send OTP'}
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg
+                  className="animate-spin h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+                Sending OTP...
+              </span>
+            ) : 'Send OTP'}
           </button>
         </form>
       )}
@@ -233,7 +289,7 @@ export default function ForgotPasswordForm() {
           <div>
             <label
               htmlFor="otp"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              className="block text-sm font-medium text-gray-700 mb-2"
             >
               Enter OTP
             </label>
@@ -246,25 +302,52 @@ export default function ForgotPasswordForm() {
               placeholder="123456"
               required
               maxLength={6}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-2xl tracking-widest"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent text-center text-2xl tracking-widest"
             />
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-              Enter the 6-digit code sent to {formData.email}
+            <p className="mt-3 text-sm text-gray-500">
+              Enter the 6-digit code sent to <span className="font-medium text-gray-900">{formData.email}</span>
+            </p>
+            <p className="mt-1 text-xs text-gray-500">
+              Didn't receive the code? Check your spam folder or request a new code.
             </p>
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors"
+            className="w-full py-3 px-4 bg-[#5693C1] hover:bg-[#4a80b0] disabled:bg-[#8ab4d8] text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-2 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Verifying...' : 'Verify OTP'}
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg
+                  className="animate-spin h-5 w-5"
+                  xmlns="http://www.w3.org2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+                Verifying...
+              </span>
+            ) : 'Verify OTP'}
           </button>
 
           <button
             type="button"
             onClick={() => setStep('email')}
-            className="w-full py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+            className="w-full py-2 text-gray-600 hover:text-[#5693C1] font-medium"
           >
             Resend OTP
           </button>
@@ -277,7 +360,7 @@ export default function ForgotPasswordForm() {
           <div>
             <label
               htmlFor="newPassword"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              className="block text-sm font-medium text-gray-700 mb-2"
             >
               New Password
             </label>
@@ -290,14 +373,17 @@ export default function ForgotPasswordForm() {
               placeholder="••••••••"
               required
               minLength={6}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
             />
+            <p className="mt-2 text-xs text-gray-500">
+              Must be at least 6 characters
+            </p>
           </div>
 
           <div>
             <label
               htmlFor="confirmPassword"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              className="block text-sm font-medium text-gray-700 mb-2"
             >
               Confirm Password
             </label>
@@ -310,16 +396,40 @@ export default function ForgotPasswordForm() {
               placeholder="••••••••"
               required
               minLength={6}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
             />
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors"
+            className="w-full py-3 px-4 bg-[#5693C1] hover:bg-[#4a80b0] disabled:bg-[#8ab4d8] text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-2 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Resetting...' : 'Reset Password'}
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg
+                  className="animate-spin h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+                Resetting...
+              </span>
+            ) : 'Reset Password'}
           </button>
         </form>
       )}

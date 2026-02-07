@@ -66,7 +66,6 @@ export default function SkillsContent() {
       const data = await response.json();
       
       if (data.success) {
-        // Handle response format: data.data.skills or data.skills
         const skillsData = data.data?.skills || data.skills || [];
         setSkills(Array.isArray(skillsData) ? skillsData : []);
       } else {
@@ -87,7 +86,6 @@ export default function SkillsContent() {
       const data = await response.json();
       
       if (data.success) {
-        // paginatedResponse returns data directly in the data field
         const skillsData = data.data || [];
         setAvailableSkills(Array.isArray(skillsData) ? skillsData : []);
       } else {
@@ -188,7 +186,6 @@ export default function SkillsContent() {
       const data = await response.json();
 
       if (data.success) {
-        // Update skill in state
         setSkills(prev => prev.map(s => 
           s.id === userSkillId 
             ? { ...s, validationStatus: 'pending' as const }
@@ -226,14 +223,14 @@ export default function SkillsContent() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Skills</h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <h1 className="text-2xl font-bold text-gray-900">My Skills</h1>
+          <p className="text-gray-600">
             {skills?.length || 0} skills added • {skills?.filter(s => s.isVerified).length || 0} verified
           </p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 hover:shadow-md active:scale-95 flex items-center gap-2"
+          className="px-4 py-2 bg-[#5693C1] hover:bg-[#4a80b0] text-white rounded-lg transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -242,21 +239,70 @@ export default function SkillsContent() {
         </button>
       </div>
 
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Total Skills</p>
+              <p className="text-2xl font-bold text-gray-900">{skills?.length || 0}</p>
+            </div>
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <svg className="w-6 h-6 text-[#5693C1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Verified Skills</p>
+              <p className="text-2xl font-bold text-green-600">{skills?.filter(s => s.isVerified).length || 0}</p>
+            </div>
+            <div className="p-2 bg-green-50 rounded-lg">
+              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Avg. Proficiency</p>
+              <p className="text-2xl font-bold text-[#5693C1]">
+                {skills?.length > 0 
+                  ? Math.round(skills.reduce((sum, s) => sum + s.proficiency, 0) / skills.length) 
+                  : 0}%
+              </p>
+            </div>
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <svg className="w-6 h-6 text-[#5693C1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl border border-gray-200">
         <div className="flex-1">
           <input
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search skills..."
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
           />
         </div>
         <select
           value={selectedDomain}
           onChange={(e) => setSelectedDomain(e.target.value)}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+          className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
         >
           {DOMAINS.map(domain => (
             <option key={domain.value} value={domain.value}>
@@ -268,26 +314,39 @@ export default function SkillsContent() {
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg">
-          {error}
+        <div className="px-4 py-3 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{error}</span>
+          </div>
+          <button
+            onClick={fetchSkills}
+            className="mt-2 text-sm font-medium text-red-700 hover:text-red-800"
+          >
+            Try again
+          </button>
         </div>
       )}
 
       {/* Skills Display */}
       {filteredSkills.length === 0 ? (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-12 text-center">
-          <svg className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-          </svg>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+        <div className="bg-white rounded-xl p-12 text-center border border-gray-200">
+          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-[#5693C1]/10 flex items-center justify-center">
+            <svg className="w-10 h-10 text-[#5693C1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
             No skills added yet
           </h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-4">
+          <p className="text-gray-500 mb-4">
             Start by adding skills you have or upload your resume to auto-import.
           </p>
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+            className="px-4 py-2 bg-[#5693C1] hover:bg-[#4a80b0] text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-2"
           >
             Add Your First Skill
           </button>
@@ -295,10 +354,12 @@ export default function SkillsContent() {
       ) : (
         <div className="space-y-6">
           {Object.entries(groupedSkills).map(([domain, domainSkills]) => (
-            <div key={domain} className="bg-white dark:bg-gray-800 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 capitalize">
-                {domain.replace('-', ' ')}
-              </h3>
+            <div key={domain} className="bg-white rounded-xl border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 capitalize">
+                  {domain.replace('-', ' ')} ({domainSkills.length})
+                </h3>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {domainSkills.map(skill => (
                   <SkillCard
@@ -363,25 +424,25 @@ function SkillCard({ skill, onUpdateProficiency, onRemove, onRequestValidation }
   };
 
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-200 hover:shadow-md group">
+    <div className="border border-gray-200 rounded-lg p-4 hover:border-[#5693C1] transition-colors duration-200 hover:shadow-sm">
       <div className="flex items-start justify-between mb-3">
         <div>
-          <h4 className="font-medium text-gray-900 dark:text-white flex items-center gap-2">
+          <h4 className="font-medium text-gray-900 flex items-center gap-2">
             {skill.name}
             {skill.isVerified && (
-              <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-4 h-4 text-[#5693C1]" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
             )}
           </h4>
-          <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">
+          <p className="text-sm text-gray-500 capitalize">
             {skill.category}
           </p>
         </div>
         <div className="flex gap-1">
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="p-1 text-gray-400 hover:text-[#5693C1] focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-1 rounded"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -389,7 +450,7 @@ function SkillCard({ skill, onUpdateProficiency, onRemove, onRequestValidation }
           </button>
           <button
             onClick={() => onRemove(skill.id)}
-            className="p-1 text-gray-400 hover:text-red-600"
+            className="p-1 text-gray-400 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 rounded"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -401,7 +462,7 @@ function SkillCard({ skill, onUpdateProficiency, onRemove, onRequestValidation }
       {/* Validation Status Badge */}
       {skill.validationStatus === 'pending' && (
         <div className="mb-3">
-          <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs rounded-full">
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full">
             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
             </svg>
@@ -411,7 +472,7 @@ function SkillCard({ skill, onUpdateProficiency, onRemove, onRequestValidation }
       )}
       {skill.validationStatus === 'rejected' && (
         <div className="mb-3">
-          <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs rounded-full">
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">
             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
             </svg>
@@ -423,7 +484,7 @@ function SkillCard({ skill, onUpdateProficiency, onRemove, onRequestValidation }
       {isEditing ? (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
+            <label className="block text-sm text-gray-600 mb-1">
               Proficiency: {proficiency}%
             </label>
             <input
@@ -432,13 +493,13 @@ function SkillCard({ skill, onUpdateProficiency, onRemove, onRequestValidation }
               max="100"
               value={proficiency}
               onChange={(e) => setProficiency(Number(e.target.value))}
-              className="w-full"
+              className="w-full focus:outline-none focus:ring-2 focus:ring-[#5693C1] rounded-lg"
             />
           </div>
           <div className="flex gap-2">
             <button
               onClick={handleSave}
-              className="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded"
+              className="flex-1 py-1.5 bg-[#5693C1] hover:bg-[#4a80b0] text-white text-sm rounded focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-1"
             >
               Save
             </button>
@@ -447,7 +508,7 @@ function SkillCard({ skill, onUpdateProficiency, onRemove, onRequestValidation }
                 setProficiency(skill.proficiency);
                 setIsEditing(false);
               }}
-              className="flex-1 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm rounded"
+              className="flex-1 py-1.5 border border-gray-300 text-gray-700 text-sm rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-1"
             >
               Cancel
             </button>
@@ -456,14 +517,14 @@ function SkillCard({ skill, onUpdateProficiency, onRemove, onRequestValidation }
       ) : (
         <div>
           <div className="flex items-center justify-between text-sm mb-1">
-            <span className="text-gray-600 dark:text-gray-400">
+            <span className="text-gray-600">
               {getProficiencyLabel(skill.proficiency)}
             </span>
-            <span className="text-gray-900 dark:text-white font-medium">
+            <span className="text-gray-900 font-medium">
               {skill.proficiency}%
             </span>
           </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
             <div
               className={`h-2 rounded-full transition-all duration-500 ease-out ${getProficiencyColor(skill.proficiency)}`}
               style={{ width: `${skill.proficiency}%` }}
@@ -474,10 +535,10 @@ function SkillCard({ skill, onUpdateProficiency, onRemove, onRequestValidation }
 
       {/* Request Validation Button */}
       {skill.source === 'self' && skill.validationStatus === 'none' && !isEditing && (
-        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+        <div className="mt-3 pt-3 border-t border-gray-200">
           <button
             onClick={() => onRequestValidation(skill.id)}
-            className="w-full py-2 px-3 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-sm font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+            className="w-full py-2 px-3 bg-[#5693C1]/10 hover:bg-[#5693C1]/20 text-[#5693C1] text-sm font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-1"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -511,18 +572,20 @@ function AddSkillModal({ availableSkills, onAdd, onClose }: AddSkillModalProps) 
     if (selectedSkill) {
       onAdd(selectedSkill.id, proficiency);
     }
-    // TODO: Handle custom skill addition
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md max-h-[80vh] flex flex-col">
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+      <div className="bg-white rounded-xl w-full max-w-md max-h-[80vh] flex flex-col shadow-2xl">
+        <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h3 className="text-lg font-semibold text-gray-900">
               Add Skill
             </h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <button 
+              onClick={onClose} 
+              className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#5693C1] rounded"
+            >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -538,21 +601,21 @@ function AddSkillModal({ availableSkills, onAdd, onClose }: AddSkillModalProps) 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search for a skill..."
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white mb-4"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent mb-4"
                 autoFocus
               />
 
-              <div className="space-y-2 max-h-64 overflow-y-auto">
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
                 {filteredSkills.slice(0, 20).map(skill => (
                   <button
                     key={skill.id}
                     onClick={() => setSelectedSkill(skill)}
-                    className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-1"
                   >
-                    <div className="font-medium text-gray-900 dark:text-white">
+                    <div className="font-medium text-gray-900">
                       {skill.name}
                     </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 capitalize">
+                    <div className="text-sm text-gray-500 capitalize">
                       {skill.domain} • {skill.category}
                     </div>
                   </button>
@@ -560,17 +623,16 @@ function AddSkillModal({ availableSkills, onAdd, onClose }: AddSkillModalProps) 
 
                 {filteredSkills.length === 0 && searchQuery && (
                   <div className="text-center py-4">
-                    <p className="text-gray-500 dark:text-gray-400 mb-2">
+                    <p className="text-gray-500 mb-2">
                       No matching skills found
                     </p>
                     <button
                       onClick={() => {
                         setCustomSkillName(searchQuery);
-                        // TODO: Create custom skill flow
                       }}
-                      className="text-blue-600 hover:text-blue-700"
+                      className="text-[#5693C1] hover:text-[#4a80b0] font-medium"
                     >
-                      + Add &quot;{searchQuery}&quot; as new skill
+                      + Add "{searchQuery}" as new skill
                     </button>
                   </div>
                 )}
@@ -578,17 +640,17 @@ function AddSkillModal({ availableSkills, onAdd, onClose }: AddSkillModalProps) 
             </>
           ) : (
             <div className="space-y-4">
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <h4 className="font-medium text-gray-900 dark:text-white">
+              <div className="p-4 bg-[#5693C1]/10 rounded-lg">
+                <h4 className="font-medium text-gray-900">
                   {selectedSkill.name}
                 </h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400 capitalize">
+                <p className="text-sm text-gray-600 capitalize">
                   {selectedSkill.domain} • {selectedSkill.category}
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Your Proficiency Level: {proficiency}%
                 </label>
                 <input
@@ -597,9 +659,9 @@ function AddSkillModal({ availableSkills, onAdd, onClose }: AddSkillModalProps) 
                   max="100"
                   value={proficiency}
                   onChange={(e) => setProficiency(Number(e.target.value))}
-                  className="w-full"
+                  className="w-full focus:outline-none focus:ring-2 focus:ring-[#5693C1] rounded-lg"
                 />
-                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
                   <span>Beginner</span>
                   <span>Intermediate</span>
                   <span>Expert</span>
@@ -609,18 +671,18 @@ function AddSkillModal({ availableSkills, onAdd, onClose }: AddSkillModalProps) 
           )}
         </div>
 
-        <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex gap-3">
+        <div className="p-6 border-t border-gray-200 flex gap-3">
           {selectedSkill ? (
             <>
               <button
                 onClick={() => setSelectedSkill(null)}
-                className="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="flex-1 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
               >
                 Back
               </button>
               <button
                 onClick={handleAdd}
-                className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                className="flex-1 py-2 bg-[#5693C1] hover:bg-[#4a80b0] text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-2"
               >
                 Add Skill
               </button>
@@ -628,7 +690,7 @@ function AddSkillModal({ availableSkills, onAdd, onClose }: AddSkillModalProps) 
           ) : (
             <button
               onClick={onClose}
-              className="w-full py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+              className="w-full py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
             >
               Cancel
             </button>

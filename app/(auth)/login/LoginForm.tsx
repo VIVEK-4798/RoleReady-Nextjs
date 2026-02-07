@@ -60,7 +60,7 @@ function LoginFormContent() {
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
           {error}
         </div>
       )}
@@ -69,7 +69,7 @@ function LoginFormContent() {
       <div>
         <label
           htmlFor="role"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          className="block text-sm font-medium text-gray-700 mb-1"
         >
           I am a
         </label>
@@ -78,7 +78,7 @@ function LoginFormContent() {
           name="role"
           value={formData.role}
           onChange={handleChange}
-          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent transition-colors"
         >
           {roles.map((role) => (
             <option key={role.value} value={role.value}>
@@ -92,7 +92,7 @@ function LoginFormContent() {
       <div>
         <label
           htmlFor="email"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          className="block text-sm font-medium text-gray-700 mb-1"
         >
           Email Address
         </label>
@@ -104,7 +104,7 @@ function LoginFormContent() {
           onChange={handleChange}
           placeholder="you@example.com"
           required
-          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent transition-colors"
         />
       </div>
 
@@ -112,7 +112,7 @@ function LoginFormContent() {
       <div>
         <label
           htmlFor="password"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          className="block text-sm font-medium text-gray-700 mb-1"
         >
           Password
         </label>
@@ -125,7 +125,7 @@ function LoginFormContent() {
           placeholder="••••••••"
           required
           minLength={6}
-          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent transition-colors"
         />
       </div>
 
@@ -133,7 +133,7 @@ function LoginFormContent() {
       <div className="flex justify-end">
         <a
           href="/forgot-password"
-          className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
+          className="text-sm text-[#5693C1] hover:text-[#4a80b0] font-medium"
         >
           Forgot password?
         </a>
@@ -143,7 +143,7 @@ function LoginFormContent() {
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed"
+        className="w-full py-3 px-4 bg-[#5693C1] hover:bg-[#4a80b0] disabled:bg-[#8ab4d8] text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-2 disabled:cursor-not-allowed"
       >
         {isLoading ? (
           <span className="flex items-center justify-center gap-2">
@@ -181,10 +181,10 @@ export default function LoginForm() {
   return (
     <Suspense fallback={
       <div className="space-y-5">
-        <div className="h-20 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse" />
-        <div className="h-14 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse" />
-        <div className="h-14 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse" />
-        <div className="h-12 bg-blue-400 rounded-lg animate-pulse" />
+        <div className="h-20 bg-gray-100 rounded-lg animate-pulse" />
+        <div className="h-14 bg-gray-100 rounded-lg animate-pulse" />
+        <div className="h-14 bg-gray-100 rounded-lg animate-pulse" />
+        <div className="h-12 bg-blue-100 rounded-lg animate-pulse" />
       </div>
     }>
       <LoginFormContent />

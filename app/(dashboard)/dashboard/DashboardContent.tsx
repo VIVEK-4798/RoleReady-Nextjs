@@ -44,20 +44,20 @@ export default function DashboardContent() {
   };
 
   return (
-    <div className="space-y-6" style={{ background: '#f8fafc' }}>
+    <div className="space-y-6">
       {/* Page Header - Matching old dashboard structure */}
-      <div className="py-6 px-6 rounded-xl bg-white shadow-sm border border-gray-100">
+      <div className="py-6 px-6 rounded-xl bg-white shadow-sm border border-gray-200">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-4">
           {/* Title and Target Role */}
           <div>
-            <h1 className="text-2xl lg:text-3xl font-bold mb-2" style={{ color: '#0f172a' }}>
+            <h1 className="text-2xl lg:text-3xl font-bold mb-2 text-gray-900">
               Readiness Dashboard
             </h1>
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">Welcome back,</span>
               <span 
-                className="text-sm font-semibold text-blue-600 flex items-center gap-1 px-3 py-1 rounded-full"
-                style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}
+                className="text-sm font-semibold text-[#5693C1] flex items-center gap-1 px-3 py-1 rounded-full"
+                style={{ backgroundColor: 'rgba(86, 147, 193, 0.1)' }}
               >
                 {user?.name?.split(' ')[0] || 'User'} 👋
               </span>
@@ -76,7 +76,7 @@ export default function DashboardContent() {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#5693C1] border border-[#5693C1] rounded-lg hover:bg-[#5693C1]/5 transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-2"
             >
               <svg 
                 className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} 
@@ -92,13 +92,13 @@ export default function DashboardContent() {
         </div>
 
         {/* Tabs - Matching old dashboard styling */}
-        <div className="flex gap-1 mt-6 border-b border-gray-200">
+        <div className="flex gap-1 mt-6 border-b border-gray-200 overflow-x-auto">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`px-6 py-3 text-sm font-semibold border-b-2 transition-all ${
+            className={`px-4 sm:px-6 py-3 text-sm font-semibold border-b-2 transition-all whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-2 rounded-t-lg ${
               activeTab === 'overview'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-[#5693C1] text-[#5693C1] bg-[#5693C1]/5'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
             }`}
           >
             <span className="flex items-center gap-2">
@@ -110,10 +110,10 @@ export default function DashboardContent() {
           </button>
           <button
             onClick={() => setActiveTab('history')}
-            className={`px-6 py-3 text-sm font-semibold border-b-2 transition-all ${
+            className={`px-4 sm:px-6 py-3 text-sm font-semibold border-b-2 transition-all whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-2 rounded-t-lg ${
               activeTab === 'history'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-[#5693C1] text-[#5693C1] bg-[#5693C1]/5'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
             }`}
           >
             <span className="flex items-center gap-2">
@@ -125,10 +125,10 @@ export default function DashboardContent() {
           </button>
           <button
             onClick={() => setActiveTab('trends')}
-            className={`px-6 py-3 text-sm font-semibold border-b-2 transition-all ${
+            className={`px-4 sm:px-6 py-3 text-sm font-semibold border-b-2 transition-all whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-2 rounded-t-lg ${
               activeTab === 'trends'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-[#5693C1] text-[#5693C1] bg-[#5693C1]/5'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
             }`}
           >
             <span className="flex items-center gap-2">
@@ -150,7 +150,7 @@ export default function DashboardContent() {
 
       {/* CTA Section - Matching old dashboard */}
       <div className="mt-8">
-        <div className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 p-6 lg:p-8 text-white">
+        <div className="rounded-xl bg-gradient-to-r from-[#5693C1] to-[#4a80b0] p-6 lg:p-8 text-white">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
             <div>
               <h2 className="text-xl lg:text-2xl font-bold mb-2">
@@ -160,10 +160,77 @@ export default function DashboardContent() {
                 Update your skills or retake assessment to refresh your readiness score.
               </p>
             </div>
-            <button className="px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors">
+            <button className="px-6 py-3 bg-white text-[#5693C1] font-semibold rounded-lg hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#5693C1]">
               Retake Assessment
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Quick Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Readiness Score</p>
+              <p className="text-2xl font-bold text-gray-900">78%</p>
+            </div>
+            <div className="p-2 bg-green-50 rounded-lg">
+              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            </div>
+          </div>
+          <div className="mt-2">
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="bg-green-600 h-2 rounded-full" style={{ width: '78%' }}></div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Skills Validated</p>
+              <p className="text-2xl font-bold text-gray-900">24</p>
+            </div>
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <svg className="w-6 h-6 text-[#5693C1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">Out of 32 required</p>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Current Role</p>
+              <p className="text-2xl font-bold text-gray-900">Frontend</p>
+            </div>
+            <div className="p-2 bg-purple-50 rounded-lg">
+              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">Target: Senior Level</p>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Days Active</p>
+              <p className="text-2xl font-bold text-gray-900">45</p>
+            </div>
+            <div className="p-2 bg-orange-50 rounded-lg">
+              <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">Joined 45 days ago</p>
         </div>
       </div>
     </div>

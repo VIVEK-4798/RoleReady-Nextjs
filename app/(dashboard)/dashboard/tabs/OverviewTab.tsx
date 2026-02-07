@@ -72,12 +72,10 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
   const [isCalculating, setIsCalculating] = useState(false);
   const [error, setError] = useState('');
 
-  // Fetch all data on mount
   const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
       
-      // Parallel fetch
       const [readinessRes, targetRoleRes, contributionRes] = await Promise.all([
         fetch(`/api/users/${userId}/readiness`),
         fetch(`/api/users/${userId}/target-role`),
@@ -114,7 +112,6 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
     fetchData();
   }, [fetchData]);
 
-  // Handle recalculate readiness
   const handleRecalculate = async () => {
     setIsCalculating(true);
     try {
@@ -125,7 +122,6 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
       });
       const data = await response.json();
       if (data.success) {
-        // Refresh data after recalculation
         await fetchData();
       } else {
         setError(data.error || 'Failed to recalculate readiness');
@@ -138,64 +134,60 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
     }
   };
 
-  // Get readiness status styling
   const getReadinessStatus = (percentage: number) => {
     if (percentage >= 70) {
-      return { label: 'Ready', color: 'text-green-600 dark:text-green-400', bgColor: 'bg-green-100 dark:bg-green-900/30', icon: '✅' };
+      return { label: 'Ready', color: 'text-green-600', bgColor: 'bg-green-100', icon: '✅' };
     } else if (percentage >= 40) {
-      return { label: 'Partially Ready', color: 'text-yellow-600 dark:text-yellow-400', bgColor: 'bg-yellow-100 dark:bg-yellow-900/30', icon: '⚠️' };
+      return { label: 'Partially Ready', color: 'text-yellow-600', bgColor: 'bg-yellow-100', icon: '⚠️' };
     } else {
-      return { label: 'Not Ready', color: 'text-red-600 dark:text-red-400', bgColor: 'bg-red-100 dark:bg-red-900/30', icon: '❌' };
+      return { label: 'Not Ready', color: 'text-red-600', bgColor: 'bg-red-100', icon: '❌' };
     }
   };
 
-  // Get validation badge
   const getValidationBadge = (skill: SkillBreakdown) => {
     if (skill.validationStatus === 'validated') {
-      return { icon: '🎓', label: 'Validated', className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-300 dark:border-blue-700' };
+      return { icon: '🎓', label: 'Validated', className: 'bg-blue-100 text-blue-700 border border-blue-300' };
     }
     if (skill.validationStatus === 'rejected') {
-      return { icon: '⚠️', label: 'Rejected', className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 border border-yellow-300 dark:border-yellow-700' };
+      return { icon: '⚠️', label: 'Rejected', className: 'bg-yellow-100 text-yellow-700 border border-yellow-300' };
     }
     if (skill.source === 'resume') {
-      return { icon: '📄', label: 'Resume', className: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-300 dark:border-purple-700' };
+      return { icon: '📄', label: 'Resume', className: 'bg-purple-100 text-purple-700 border border-purple-300' };
     }
-    return { icon: '✋', label: 'Self', className: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-300 dark:border-gray-600' };
+    return { icon: '✋', label: 'Self', className: 'bg-gray-100 text-gray-600 border border-gray-300' };
   };
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="h-48 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse" />
+        <div className="h-48 bg-gray-100 rounded-2xl animate-pulse" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" />
+            <div key={i} className="h-24 bg-gray-100 rounded-xl animate-pulse" />
           ))}
         </div>
-        <div className="h-64 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" />
+        <div className="h-64 bg-gray-100 rounded-xl animate-pulse" />
       </div>
     );
   }
 
-  // No target role state
   if (!targetRole?.hasActiveRole) {
     return (
       <div className="space-y-6">
-        {/* Empty State Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm text-center">
-          <div className="w-20 h-20 mx-auto mb-4 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-            <svg className="w-10 h-10 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
+          <div className="w-20 h-20 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
+            <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No Target Role Selected</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+          <h2 className="text-xl font-bold text-gray-900 mb-2">No Target Role Selected</h2>
+          <p className="text-gray-600 mb-6 max-w-md mx-auto">
             Select a target role to see your readiness score. Your readiness is calculated based on how well your skills match the requirements for your chosen role.
           </p>
           <Link
             href="/dashboard/roles"
             className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+            style={{ backgroundColor: '#5693C1' }}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -204,65 +196,62 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
           </Link>
         </div>
 
-        {/* Quick Actions */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Get Started</h2>
+        <div className="bg-white rounded-xl p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Get Started</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link
               href="/dashboard/skills"
-              className="flex items-start gap-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all group"
+              className="flex items-start gap-4 p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all group"
             >
-              <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 flex-shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
               </div>
               <div>
-                <h3 className="font-medium text-gray-900 dark:text-white">Add Your Skills</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Start by adding skills you already have</p>
+                <h3 className="font-medium text-gray-900">Add Your Skills</h3>
+                <p className="text-sm text-gray-500">Start by adding skills you already have</p>
               </div>
             </Link>
             <Link
               href="/dashboard/roles"
-              className="flex items-start gap-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all group"
+              className="flex items-start gap-4 p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all group"
             >
-              <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 flex-shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 flex-shrink-0">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               </div>
               <div>
-                <h3 className="font-medium text-gray-900 dark:text-white">Choose Target Role</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Select the job roles you&apos;re aiming for</p>
+                <h3 className="font-medium text-gray-900">Choose Target Role</h3>
+                <p className="text-sm text-gray-500">Select the job roles you&apos;re aiming for</p>
               </div>
             </Link>
             <Link
               href="/dashboard/profile"
-              className="flex items-start gap-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all group"
+              className="flex items-start gap-4 p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all group"
             >
-              <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 flex-shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center text-green-600 flex-shrink-0">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
               <div>
-                <h3 className="font-medium text-gray-900 dark:text-white">Complete Profile</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Add education and experience</p>
+                <h3 className="font-medium text-gray-900">Complete Profile</h3>
+                <p className="text-sm text-gray-500">Add education and experience</p>
               </div>
             </Link>
           </div>
         </div>
 
-        {/* Contribution Graph */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Activity</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Activity</h2>
           <ContributionGraph data={contributionData} loading={false} />
         </div>
       </div>
     );
   }
 
-  // Handle case where role is selected but readiness data isn't loaded yet
   if (!readiness?.snapshot && !isCalculating) {
     return (
       <div className="space-y-6">
@@ -284,7 +273,8 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
           <button
             onClick={handleRecalculate}
             disabled={isCalculating}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-6 py-3 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+            style={{ backgroundColor: '#5693C1' }}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -311,11 +301,9 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* Readiness Score Card */}
       <div className="bg-white rounded-2xl shadow-md overflow-hidden">
         <div className="p-6">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
             <div>
               <h2 className="text-xl font-bold text-gray-900">Readiness Score</h2>
               {targetRole?.targetRole && (
@@ -327,7 +315,7 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
             <button
               onClick={handleRecalculate}
               disabled={isCalculating}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 w-fit"
             >
               <svg className={`w-4 h-4 ${isCalculating ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -336,9 +324,7 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
             </button>
           </div>
 
-          {/* Score Display */}
-          <div className="flex items-center gap-8">
-            {/* Circular Progress */}
+          <div className="flex flex-col md:flex-row items-center gap-8">
             <div className="relative w-32 h-32 flex-shrink-0">
               <svg className="w-32 h-32 transform -rotate-90">
                 <circle
@@ -367,23 +353,22 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
               </div>
             </div>
 
-            {/* Status & Stats */}
-            <div className="flex-1">
+            <div className="flex-1 w-full">
               <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${status.bgColor} ${status.color} mb-4`}>
                 <span>{status.icon}</span>
                 <span>{status.label}</span>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="text-center md:text-left">
                   <p className="text-2xl font-bold text-gray-900">{snapshot?.skillsMatched || 0}</p>
                   <p className="text-sm text-gray-500">Skills Matched</p>
                 </div>
-                <div>
+                <div className="text-center md:text-left">
                   <p className="text-2xl font-bold text-gray-900">{snapshot?.skillsMissing || 0}</p>
                   <p className="text-sm text-gray-500">Skills Missing</p>
                 </div>
-                <div>
+                <div className="col-span-2 md:col-span-1 text-center md:text-left">
                   <p className="text-2xl font-bold text-gray-900">{snapshot?.requiredSkillsMet || 0}/{snapshot?.requiredSkillsTotal || 0}</p>
                   <p className="text-sm text-gray-500">Required Met</p>
                 </div>
@@ -391,7 +376,6 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
             </div>
           </div>
 
-          {/* Last calculated */}
           {snapshot?.createdAt && (
             <p className="mt-4 text-sm text-gray-500">
               Last calculated: {new Date(snapshot.createdAt).toLocaleDateString('en-US', {
@@ -406,7 +390,6 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
         </div>
       </div>
 
-      {/* Skill Breakdown */}
       {snapshot?.breakdown && snapshot.breakdown.length > 0 && (
         <div className="bg-white rounded-xl shadow-md p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Skill Breakdown</h3>
@@ -416,9 +399,9 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
               const scorePercent = skill.maxPossibleScore > 0 ? (skill.weightedScore / skill.maxPossibleScore) * 100 : 0;
               
               return (
-                <div key={skill.skillId} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                <div key={skill.skillId} className="flex flex-col sm:flex-row sm:items-center gap-4 p-3 bg-gray-50 rounded-lg">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
                       <span className="font-medium text-gray-900 truncate">{skill.skillName}</span>
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${badge.className}`}>
                         <span>{badge.icon}</span>
@@ -440,7 +423,7 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
                       </span>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-left sm:text-right">
                     <p className={`text-sm font-medium ${skill.meetsRequirement ? 'text-green-600' : 'text-yellow-600'}`}>
                       {skill.meetsRequirement ? '✓ Met' : 'Gap'}
                     </p>
@@ -457,7 +440,6 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
         </div>
       )}
 
-      {/* Contribution Graph */}
       <div>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Activity</h2>
         <ContributionGraph data={contributionData} loading={false} />
