@@ -11,12 +11,12 @@
  * Readiness is calculated based on how well a user's skills match a role's
  * benchmark requirements.
  * 
- * 1. SKILL LEVEL SCORING (0-100 scale per skill):
- *    - none:         0 points
- *    - beginner:    25 points
- *    - intermediate: 50 points
- *    - advanced:    75 points
- *    - expert:     100 points
+ * 1. SKILL LEVEL SCORING (0-1 scale per skill):
+ *    - none:         0.00
+ *    - beginner:     0.25
+ *    - intermediate: 0.50
+ *    - advanced:     0.75
+ *    - expert:       1.00
  * 
  * 2. LEVEL MATCH SCORING:
  *    - If user level >= required level: Full points (based on user level)
@@ -34,7 +34,10 @@
  * 4. WEIGHT APPLICATION:
  *    Each benchmark has a weight (1-10). Higher weights mean more important skills.
  *    
- *    Skill Score = (Level Points × Validation Multiplier) × Benchmark Weight
+ *    Skill Score = (Level Score × Validation Multiplier) × Benchmark Weight
+ *    
+ *    Example: Intermediate skill (0.5) that's validated (1.0) with weight 25:
+ *    Score = (0.5 × 1.0) × 25 = 12.5 out of 25 possible points
  * 
  * 5. REQUIRED VS OPTIONAL:
  *    - REQUIRED skills: If ANY required skill is at level 'none' or missing,
@@ -46,7 +49,7 @@
  *    
  *    Where:
  *    - totalScore = sum of all weighted skill scores
- *    - maxPossibleScore = sum of (100 × weight) for all benchmarks
+ *    - maxPossibleScore = sum of all weights (typically equals 100)
  * 
  * ============================================================================
  */
@@ -123,14 +126,14 @@ export interface ReadinessResult {
 // ============================================================================
 
 /**
- * Points assigned to each skill level (0-100 scale)
+ * Points assigned to each skill level (0-1 scale)
  */
 export const LEVEL_POINTS: Record<SkillLevel, number> = {
   'none': 0,
-  'beginner': 25,
-  'intermediate': 50,
-  'advanced': 75,
-  'expert': 100,
+  'beginner': 0.25,
+  'intermediate': 0.5,
+  'advanced': 0.75,
+  'expert': 1,
 };
 
 /**
@@ -248,7 +251,7 @@ export function calculateReadiness(
     // Calculate scores
     const rawScore = levelPoints * validationMultiplier;
     const weightedScore = rawScore * benchmark.weight;
-    const maxForThisSkill = 100 * benchmark.weight; // Max is 100 points × weight
+    const maxForThisSkill = benchmark.weight; // Max is 1 point × weight
     
     // Check if requirement is met
     const meets = meetsLevelRequirement(userLevel, benchmark.requiredLevel);

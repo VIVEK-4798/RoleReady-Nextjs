@@ -1,26 +1,12 @@
 /**
- * Roadmap Model
+ * Enhanced Roadmap Model with 5-Rule Priority System
  * 
- * A personalized learning roadmap generated from the user's readiness gaps.
- * 
- * Design Decisions:
- * 
- * 1. ROADMAP = PRIORITIZED PLAN: A roadmap is a snapshot of what the user needs
- *    to learn, ordered by priority. It's regenerated when readiness changes.
- * 
- * 2. STEPS ARE ACTIONABLE: Each step represents a concrete learning action:
- *    - Learn a new skill (missing)
- *    - Improve an existing skill (below required level)
- *    - Get skill validated (increase validation multiplier)
- * 
- * 3. PROGRESS TRACKING: Users can mark steps as in-progress or completed.
- *    Completed steps don't automatically update skills - that's done separately.
- * 
- * 4. LINKED TO TARGET ROLE: A roadmap is always for a specific target role.
- *    Changing target role should trigger roadmap regeneration.
- * 
- * 5. ESTIMATED EFFORT: Each step has an estimated time/effort based on the
- *    level jump required.
+ * Features from old system:
+ * - Priority rules (CRITICAL/HIGH/MEDIUM/LOW)
+ * - Category breakdown (required_gap, optional_gap, strengthen, rejected)
+ * - Rule-based item generation (5 deterministic rules)
+ * - Edge case detection (fully_ready, only_optional_gaps, etc.)
+ * - Progress tracking with detailed breakdowns
  */
 
 import mongoose, { Schema, Document, Model, Types } from 'mongoose';
@@ -30,9 +16,13 @@ import type { SkillLevel } from '@/types';
 // Types
 // ============================================================================
 
-export type StepType = 'learn_new' | 'improve' | 'validate';
+export type StepType = 'learn' | 'practice' | 'validate' | 'master';
 export type StepStatus = 'not_started' | 'in_progress' | 'completed' | 'skipped';
 export type RoadmapStatus = 'active' | 'completed' | 'archived';
+export type PriorityType = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+export type CategoryType = 'required_gap' | 'optional_gap' | 'strengthen' | 'rejected';
+export type ConfidenceType = 'validated' | 'unvalidated' | 'rejected';
+export type RuleType = 'RULE_1_REQUIRED_MISSING' | 'RULE_2_REJECTED' | 'RULE_3_UNVALIDATED_REQUIRED' | 'RULE_4_OPTIONAL_MISSING';
 
 export interface IRoadmapStep {
   _id: Types.ObjectId;
@@ -40,29 +30,17 @@ export interface IRoadmapStep {
   skillName: string;
   stepType: StepType;
   importance: 'required' | 'optional';
-  
-  // Level progression
   currentLevel: SkillLevel;
   targetLevel: SkillLevel;
   levelsToImprove: number;
-  
-  // Priority (from readiness gap calculation)
   priority: number;
   weight: number;
-  
-  // Progress
   status: StepStatus;
   startedAt?: Date;
   completedAt?: Date;
-  
-  // Estimated effort
   estimatedHours: number;
-  
-  // Action details
   actionDescription: string;
-  suggestedResources: string[];
-  
-  // Notes
+  suggestedResources?: string[];
   userNotes?: string;
 }
 
@@ -70,12 +48,13 @@ export interface IRoadmap {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
   roleId: Types.ObjectId;
+  readinessId: Types.ObjectId;
   
   // Roadmap metadata
   status: RoadmapStatus;
   title: string;
   description: string;
-  
+ 
   // Progress summary
   totalSteps: number;
   completedSteps: number;
@@ -85,16 +64,53 @@ export interface IRoadmap {
   totalEstimatedHours: number;
   completedHours: number;
   
+  // Readiness context
+  readinessAtGeneration: number;
+  projectedReadiness: number;
+  
   // Steps
   steps: IRoadmapStep[];
   
-  // Readiness context
-  readinessAtGeneration: number; // Readiness % when roadmap was created
-  projectedReadiness: number;    // Expected readiness after completing all steps
+  // Priority breakdown (from old system)
+  priorityBreakdown: {
+    high: number;
+    medium: number;
+    low: number;
+    critical: number;
+  };
+  
+  // Category breakdown (from old system)
+  categoryBreakdown: {
+    required_gap: number;
+    optional_gap: number;
+    strengthen: number;
+    rejected: number;
+  };
+  
+  // Rule breakdown (from old system)
+  ruleBreakdown: {
+    rule_1_required_missing: number;
+    rule_2_rejected: number;
+    rule_3_unvalidated_required: number;
+    rule_4_optional_missing: number;
+  };
+  
+  // Edge case detection
+  edgeCase: {
+    is_fully_ready: boolean;
+    only_optional_gaps: boolean;
+    has_pending_validation: boolean;
+    pending_validation_count: number;
+    has_unvalidated_required: boolean;
+    unvalidated_required_count: number;
+    message: string;
+    message_type: string;
+  };
   
   // Timestamps
   generatedAt: Date;
   lastUpdatedAt: Date;
+  archivedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -110,17 +126,11 @@ export interface IRoadmapDocument extends Omit<IRoadmap, '_id'>, Document {}
 // ============================================================================
 
 interface IRoadmapModel extends Model<IRoadmapDocument> {
-  /**
-   * Get the active roadmap for a user's target role
-   */
   getActiveForUser(
     userId: string | Types.ObjectId,
     roleId?: string | Types.ObjectId
   ): Promise<IRoadmapDocument | null>;
   
-  /**
-   * Archive existing roadmaps when a new one is generated
-   */
   archiveExisting(
     userId: string | Types.ObjectId,
     roleId: string | Types.ObjectId
@@ -128,7 +138,7 @@ interface IRoadmapModel extends Model<IRoadmapDocument> {
 }
 
 // ============================================================================
-// Step Sub-Schema
+// Main Schema (Steps are embedded)
 // ============================================================================
 
 const RoadmapStepSchema = new Schema<IRoadmapStep>(
@@ -141,7 +151,7 @@ const RoadmapStepSchema = new Schema<IRoadmapStep>(
     skillName: { type: String, required: true },
     stepType: {
       type: String,
-      enum: ['learn_new', 'improve', 'validate'] as StepType[],
+      enum: ['learn', 'practice', 'validate', 'master'],
       required: true,
     },
     importance: {
@@ -149,8 +159,6 @@ const RoadmapStepSchema = new Schema<IRoadmapStep>(
       enum: ['required', 'optional'],
       required: true,
     },
-    
-    // Level progression
     currentLevel: {
       type: String,
       enum: ['none', 'beginner', 'intermediate', 'advanced', 'expert'],
@@ -161,37 +169,23 @@ const RoadmapStepSchema = new Schema<IRoadmapStep>(
       enum: ['none', 'beginner', 'intermediate', 'advanced', 'expert'],
       required: true,
     },
-    levelsToImprove: { type: Number, required: true, min: 0 },
-    
-    // Priority
-    priority: { type: Number, required: true },
-    weight: { type: Number, required: true, min: 1, max: 10 },
-    
-    // Progress
+    levelsToImprove: { type: Number, required: true, default: 0 },
+    priority: { type: Number, required: true, min: 1, max: 5 },
+    weight: { type: Number, required: true },
     status: {
       type: String,
-      enum: ['not_started', 'in_progress', 'completed', 'skipped'] as StepStatus[],
+      enum: ['not_started', 'in_progress', 'completed', 'skipped'],
       default: 'not_started',
     },
     startedAt: { type: Date },
     completedAt: { type: Date },
-    
-    // Estimated effort
-    estimatedHours: { type: Number, required: true, min: 0 },
-    
-    // Action details
+    estimatedHours: { type: Number, required: true, default: 0 },
     actionDescription: { type: String, required: true },
     suggestedResources: [{ type: String }],
-    
-    // Notes
-    userNotes: { type: String, maxlength: 2000 },
+    userNotes: { type: String },
   },
-  { timestamps: false }
+  { _id: true }
 );
-
-// ============================================================================
-// Main Schema
-// ============================================================================
 
 const RoadmapSchema = new Schema<IRoadmapDocument>(
   {
@@ -207,24 +201,33 @@ const RoadmapSchema = new Schema<IRoadmapDocument>(
       required: [true, 'Role reference is required'],
       index: true,
     },
+    readinessId: {
+      type: Schema.Types.ObjectId,
+      ref: 'ReadinessSnapshot',
+      required: [true, 'Readiness snapshot reference is required'],
+    },
     
     // Roadmap metadata
     status: {
       type: String,
-      enum: ['active', 'completed', 'archived'] as RoadmapStatus[],
+      enum: ['active', 'completed', 'archived'],
       default: 'active',
     },
-    title: { type: String, required: true },
-    description: { type: String },
+    title: { type: String, required: true, default: 'Skill Development Roadmap' },
+    description: { type: String, default: '' },
     
     // Progress summary
-    totalSteps: { type: Number, required: true, default: 0 },
-    completedSteps: { type: Number, required: true, default: 0 },
-    progressPercentage: { type: Number, required: true, default: 0, min: 0, max: 100 },
+    totalSteps: { type: Number, default: 0 },
+    completedSteps: { type: Number, default: 0 },
+    progressPercentage: { type: Number, default: 0, min: 0, max: 100 },
     
     // Estimated totals
-    totalEstimatedHours: { type: Number, required: true, default: 0 },
-    completedHours: { type: Number, required: true, default: 0 },
+    totalEstimatedHours: { type: Number, default: 0 },
+    completedHours: { type: Number, default: 0 },
+    
+    // Readiness context
+    readinessAtGeneration: { type: Number, default: 0, min: 0, max: 100 },
+    projectedReadiness: { type: Number, default: 0, min: 0, max: 100 },
     
     // Steps
     steps: {
@@ -232,13 +235,46 @@ const RoadmapSchema = new Schema<IRoadmapDocument>(
       default: [],
     },
     
-    // Readiness context
-    readinessAtGeneration: { type: Number, required: true, min: 0, max: 100 },
-    projectedReadiness: { type: Number, required: true, min: 0, max: 100 },
+    // Priority breakdown
+    priorityBreakdown: {
+      high: { type: Number, default: 0 },
+      medium: { type: Number, default: 0 },
+      low: { type: Number, default: 0 },
+      critical: { type: Number, default: 0 }
+    },
+    
+    // Category breakdown
+    categoryBreakdown: {
+      required_gap: { type: Number, default: 0 },
+      optional_gap: { type: Number, default: 0 },
+      strengthen: { type: Number, default: 0 },
+      rejected: { type: Number, default: 0 }
+    },
+    
+    // Rule breakdown
+    ruleBreakdown: {
+      rule_1_required_missing: { type: Number, default: 0 },
+      rule_2_rejected: { type: Number, default: 0 },
+      rule_3_unvalidated_required: { type: Number, default: 0 },
+      rule_4_optional_missing: { type: Number, default: 0 }
+    },
+    
+    // Edge case detection
+    edgeCase: {
+      is_fully_ready: { type: Boolean, default: false },
+      only_optional_gaps: { type: Boolean, default: false },
+      has_pending_validation: { type: Boolean, default: false },
+      pending_validation_count: { type: Number, default: 0 },
+      has_unvalidated_required: { type: Boolean, default: false },
+      unvalidated_required_count: { type: Number, default: 0 },
+      message: { type: String, default: '' },
+      message_type: { type: String, default: '' }
+    },
     
     // Timestamps
     generatedAt: { type: Date, default: Date.now },
     lastUpdatedAt: { type: Date, default: Date.now },
+    archivedAt: { type: Date }
   },
   {
     timestamps: true,
@@ -249,7 +285,6 @@ const RoadmapSchema = new Schema<IRoadmapDocument>(
 // Indexes
 // ============================================================================
 
-// Active roadmap for user + role
 RoadmapSchema.index({ userId: 1, roleId: 1, status: 1 });
 
 // ============================================================================
@@ -273,7 +308,7 @@ RoadmapSchema.pre('save', function () {
   this.lastUpdatedAt = new Date();
   
   // Check if roadmap is completed
-  if (this.completedSteps === this.totalSteps && this.totalSteps > 0) {
+  if (this.completedSteps === this.totalSteps && this.totalSteps > 0 && this.status !== 'archived') {
     this.status = 'completed';
   }
 });

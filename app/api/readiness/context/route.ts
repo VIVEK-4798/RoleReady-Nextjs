@@ -36,24 +36,6 @@ async function getRoleWithBenchmarks(targetRole: any) {
 async function getUserSkills(userId: string, roleId: string) {
   // Get ALL user skills (not filtered by role benchmarks)
   // The benchmark matching happens during readiness calculation
-  console.log('[getUserSkills] Fetching skills for user:', userId);
-  
-  // First, let's check ALL skills for this user without any filters
-  const allUserSkills = await UserSkill.find({
-    userId: new Types.ObjectId(userId)
-  }).lean();
-  console.log('[getUserSkills] Total skills in DB for this user (no filters):', allUserSkills.length);
-  
-  if (allUserSkills.length > 0) {
-    console.log('[getUserSkills] Sample skill from DB:', JSON.stringify({
-      _id: allUserSkills[0]._id?.toString(),
-      userId: allUserSkills[0].userId?.toString(),
-      skillId: allUserSkills[0].skillId?.toString(),
-      source: allUserSkills[0].source,
-      level: allUserSkills[0].level,
-      validationStatus: allUserSkills[0].validationStatus
-    }, null, 2));
-  }
   
   const userSkills = await UserSkill.find({
     userId: new Types.ObjectId(userId),
@@ -61,19 +43,11 @@ async function getUserSkills(userId: string, roleId: string) {
     $or: [
       { validationStatus: { $exists: false } },
       { validationStatus: null },
+      { validationStatus: 'none' },
       { validationStatus: 'pending' },
       { validationStatus: 'validated' }
     ]
   }).lean();
-  
-  console.log('[getUserSkills] Found', userSkills.length, 'skills (after filters)');
-  console.log('[getUserSkills] Skills:', JSON.stringify(userSkills.map((s: any) => ({
-    _id: s._id?.toString(),
-    skillId: s.skillId?.toString(),
-    source: s.source,
-    level: s.level,
-    validationStatus: s.validationStatus
-  })), null, 2));
   
   return userSkills;
 }
@@ -268,13 +242,9 @@ async function calculateReadiness(userId: string, roleId: string, triggerSource:
   for (const benchmark of benchmarks) {
     const skillId = typeof benchmark.skillId === 'object' ? (benchmark.skillId as any)._id?.toString() : String(benchmark.skillId);
     
-    console.log(`[calculateReadiness] Checking benchmark skill: ${skillId} (${typeof benchmark.skillId === 'object' ? (benchmark.skillId as any).name : 'Unknown'})`);
-    
     const hasSkill = userSkills.some((s: any) => {
       const userSkillId = typeof s.skillId === 'object' ? (s.skillId as any)._id?.toString() : String(s.skillId);
-      const matches = userSkillId === skillId;
-      console.log(`  - Comparing user skill ${userSkillId} with benchmark ${skillId}: ${matches}`);
-      return matches;
+      return userSkillId === skillId;
     });
     
     const userSkill = userSkills.find((s: any) => {
@@ -378,7 +348,6 @@ export async function GET(request: NextRequest) {
   try {
     // 1. Auth check
     const session = await auth();
-    console.log('[Context API] Session:', session?.user ? 'Authenticated' : 'Not authenticated');
     
     if (!session?.user) {
       console.log('[Context API] No session, returning unauthorized');
@@ -386,7 +355,6 @@ export async function GET(request: NextRequest) {
     }
 
     const userId = (session.user as { id?: string }).id;
-    console.log('[Context API] User ID:', userId);
     
     if (!userId) {
       console.log('[Context API] No user ID in session');
@@ -394,11 +362,11 @@ export async function GET(request: NextRequest) {
     }
     
     await connectDB();
-    console.log('[Context API] Database connected');
+
     
     // 2. Get user's active target role
     const targetRole = await getTargetRoleFromUser(userId);
-    console.log('[Context API] Target role:', targetRole ? 'Found' : 'Not found');
+
     
     if (!targetRole) {
       console.log('[Context API] No target role, returning NO_TARGET_ROLE edge case');
@@ -420,7 +388,6 @@ export async function GET(request: NextRequest) {
     
     // 3. Get role with benchmarks
     const role = await getRoleWithBenchmarks(targetRole);
-    console.log('[Context API] Role with benchmarks:', role ? role.name : 'Not found');
     
     if (!role) {
       return success({
@@ -538,10 +505,7 @@ export async function GET(request: NextRequest) {
     let actionRequired = null;
     let actionUrl = null;
     
-    console.log('[Context API] Total user skills count:', totalUserSkills);
-    
     if (totalUserSkills === 0) {
-      console.log('[Context API] NO_USER_SKILLS edge case triggered');
       edgeCase = "NO_USER_SKILLS";
       edgeCaseMessage = `You haven't added any skills yet. Add your skills to calculate your readiness.`;
       actionRequired = "ADD_SKILLS";
@@ -549,7 +513,6 @@ export async function GET(request: NextRequest) {
     }
     
     // 9. Return context response
-    console.log('[Context API] Returning response with edge_case:', edgeCase);
     return success({
       success: true,
       has_target_role: true,

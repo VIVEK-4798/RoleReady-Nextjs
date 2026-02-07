@@ -12,6 +12,7 @@ import { Types } from 'mongoose';
 import connectDB from '@/lib/db/mongoose';
 import Roadmap, { type IRoadmapDocument, type StepStatus } from '@/lib/models/Roadmap';
 import TargetRole from '@/lib/models/TargetRole';
+import ReadinessSnapshot from '@/lib/models/ReadinessSnapshot';
 import { calculateReadinessOnly } from './readinessService';
 import { generateRoadmap, type GeneratedRoadmap } from './roadmapGenerator';
 
@@ -61,6 +62,24 @@ export async function generateAndSaveRoadmap(
   // Get readiness data
   const readinessResult = await calculateReadinessOnly(userId, roleId);
   
+  // Get or create readiness snapshot
+  let snapshot = await ReadinessSnapshot.getLatest(userId, roleId);
+  
+  if (!snapshot) {
+    // If no snapshot exists, create one
+    snapshot = await ReadinessSnapshot.create({
+      userId: new Types.ObjectId(userId),
+      roleId: new Types.ObjectId(roleId),
+      percentage: readinessResult.percentage,
+      status: readinessResult.status,
+      breakdown: readinessResult.breakdown,
+      summary: readinessResult.summary,
+      edge_case: readinessResult.edge_case,
+    });
+  }
+  
+  const readinessId = snapshot._id;
+  
   // Generate roadmap (pure function)
   const generated: GeneratedRoadmap = generateRoadmap({
     userId,
@@ -96,6 +115,7 @@ export async function generateAndSaveRoadmap(
   const roadmap = await Roadmap.create({
     userId: new Types.ObjectId(userId),
     roleId: new Types.ObjectId(roleId),
+    readinessId: readinessId,
     status: 'active',
     title: generated.title,
     description: generated.description,

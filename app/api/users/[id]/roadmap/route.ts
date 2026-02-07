@@ -115,12 +115,21 @@ export async function GET(request: NextRequest, context: RouteContext) {
       });
     }
     
+    // Extract roleId safely
+    let roleId: string;
+    if (typeof targetRole.roleId === 'object' && targetRole.roleId !== null) {
+      const populatedRoleId = targetRole.roleId as any;
+      roleId = populatedRoleId._id ? populatedRoleId._id.toString() : populatedRoleId.toString();
+    } else {
+      roleId = String(targetRole.roleId);
+    }
+    
     // Get active roadmap
-    const roadmap = await getActiveRoadmap(userId, targetRole.roleId.toString());
+    const roadmap = await getActiveRoadmap(userId, roleId);
     
     return success({
       hasTargetRole: true,
-      roleId: targetRole.roleId.toString(),
+      roleId: roleId,
       roadmap: formatRoadmapResponse(roadmap),
       message: roadmap 
         ? undefined 
@@ -179,7 +188,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
       if (!targetRole) {
         return errors.badRequest('No target role selected. Select a target role first.');
       }
-      roleId = targetRole.roleId.toString();
+      
+      // Extract roleId safely
+      if (typeof targetRole.roleId === 'object' && targetRole.roleId !== null) {
+        const populatedRoleId = targetRole.roleId as any;
+        roleId = populatedRoleId._id ? populatedRoleId._id.toString() : populatedRoleId.toString();
+      } else {
+        roleId = String(targetRole.roleId);
+      }
     }
     
     // Generate and save roadmap
