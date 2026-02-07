@@ -1,23 +1,17 @@
 /**
  * Admin Users Page
  * 
- * Lists all users with search, filter, and actions.
- * Migrated from old project: pages/dashboard/admin-dashboard/users/index.jsx
+ * Modern user management page with enhanced design and analytics.
  */
 
-import { Suspense } from 'react';
 import { Metadata } from 'next';
 import AdminUsersClient from './AdminUsersClient';
 
 export const metadata: Metadata = {
-  title: 'Users | RoleReady Admin',
-  description: 'Manage all platform users.',
+  title: 'User Management | RoleReady Admin',
+  description: 'Manage user accounts with advanced filtering, analytics, and bulk actions.',
 };
 
 export default function AdminUsersPage() {
-  return (
-    <Suspense fallback={<div className="p-6">Loading users...</div>}>
-      <AdminUsersClient />
-    </Suspense>
-  );
+  return <AdminUsersClient />;
 }

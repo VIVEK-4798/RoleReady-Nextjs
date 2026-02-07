@@ -1,41 +1,35 @@
 /**
- * Roadmap Generator Service
+ * Roadmap Generator Service with 5-Rule Priority System
  * 
- * Generates personalized learning roadmaps from readiness gaps.
- * 
- * ============================================================================
- * PRIORITY ALGORITHM
- * ============================================================================
- * 
- * Steps are prioritized based on:
- * 
- * 1. IMPORTANCE (required vs optional):
- *    - Required skills get +100 priority points
- *    - This ensures required skills come before optional ones
- * 
- * 2. WEIGHT (1-10):
- *    - Higher weight = more important to the role
- *    - Directly added to priority
- * 
- * 3. GAP SIZE (levels needed × 10):
- *    - Bigger gaps might need earlier attention
- *    - Each level needed adds 10 priority points
- * 
- * 4. VALIDATION OPPORTUNITY:
- *    - Skills that are self-reported get a small boost
- *    - Getting them validated improves readiness score
+ * Generates personalized learning roadmaps from readiness gaps using deterministic rules.
  * 
  * ============================================================================
- * EFFORT ESTIMATION
+ * 5-RULE PRIORITY SYSTEM (matches old project)
  * ============================================================================
  * 
- * Estimated hours per level improvement:
- * - none → beginner:         20 hours (basics)
- * - beginner → intermediate: 40 hours (fundamentals)
- * - intermediate → advanced: 80 hours (deep learning)
- * - advanced → expert:      160 hours (mastery)
+ * RULE_1: Missing Required Skills → HIGH priority
+ *   - Required skills with level = 'none'
+ *   - Priority score: 80 + (weight × 5)
+ *   - Category: required_gap
  * 
- * These are rough estimates and can be customized per skill category.
+ * RULE_2: Rejected Skills → HIGH priority
+ *   - Skills with validationStatus = 'rejected'
+ *   - Priority score: 70 + (weight × 5)
+ *   - Category: rejected
+ * 
+ * RULE_3: Unvalidated Required Skills → MEDIUM priority
+ *   - Required skills that user has but mentor hasn't validated
+ *   - Priority score: 50 + (weight × 3)
+ *   - Category: required_gap
+ * 
+ * RULE_4: Optional Missing Skills → LOW priority
+ *   - Optional skills with level = 'none'
+ *   - Priority score: 20 + (weight × 2)
+ *   - Category: optional_gap
+ * 
+ * RULE_5: Validated & Met Skills → EXCLUDED
+ *   - Skills that meet requirements and are validated
+ *   - Not included in roadmap
  * 
  * ============================================================================
  */
@@ -46,70 +40,19 @@ import type { ReadinessResult, SkillReadinessBreakdown } from './readinessCalcul
 import type { StepType, IRoadmapStep } from '@/lib/models/Roadmap';
 
 // ============================================================================
-// Constants
-// ============================================================================
-
-/**
- * Estimated hours to improve one skill level
- */
-const HOURS_PER_LEVEL: Record<string, number> = {
-  'none_to_beginner': 20,
-  'beginner_to_intermediate': 40,
-  'intermediate_to_advanced': 80,
-  'advanced_to_expert': 160,
-};
-
-/**
- * Level progression order
- */
-const LEVEL_ORDER: SkillLevel[] = ['none', 'beginner', 'intermediate', 'advanced', 'expert'];
-
-/**
- * Action descriptions templates
- */
-const ACTION_TEMPLATES: Record<StepType, (skillName: string, targetLevel: SkillLevel) => string> = {
-  learn_new: (skillName, targetLevel) =>
-    `Start learning ${skillName} fundamentals and build up to ${targetLevel} level proficiency.`,
-  improve: (skillName, targetLevel) =>
-    `Deepen your ${skillName} knowledge through practice and study to reach ${targetLevel} level.`,
-  validate: (skillName) =>
-    `Request mentor validation for your ${skillName} skill to increase your readiness score.`,
-};
-
-/**
- * Suggested resources templates (placeholder - can be enhanced with actual resources)
- */
-const RESOURCE_SUGGESTIONS: Record<string, string[]> = {
-  default: [
-    'Online courses (Coursera, Udemy, Pluralsight)',
-    'Official documentation and tutorials',
-    'Practice projects and coding challenges',
-    'Community forums and discussion groups',
-  ],
-  programming: [
-    'LeetCode for algorithm practice',
-    'GitHub open source contributions',
-    'Build personal projects',
-    'Code review with peers',
-  ],
-  soft_skills: [
-    'Books and audiobooks',
-    'Workshops and webinars',
-    'Mentorship sessions',
-    'Real-world practice opportunities',
-  ],
-};
-
-// ============================================================================
 // Types
 // ============================================================================
+
+export type RoadmapPriority = 'HIGH' | 'MEDIUM' | 'LOW';
+export type RoadmapCategory = 'required_gap' | 'optional_gap' | 'strengthen' | 'rejected';
+export type RoadmapRule = 'RULE_1_REQUIRED_MISSING' | 'RULE_2_REJECTED' | 'RULE_3_UNVALIDATED_REQUIRED' | 'RULE_4_OPTIONAL_MISSING' | 'RULE_5_VALIDATED_MET';
 
 export interface GenerateRoadmapInput {
   userId: string;
   roleId: string;
   roleName: string;
   readinessResult: ReadinessResult;
-  maxSteps?: number; // Limit number of steps (default: all gaps)
+  maxSteps?: number;
 }
 
 export interface GeneratedRoadmap {
@@ -131,235 +74,238 @@ export interface GeneratedStep {
   currentLevel: SkillLevel;
   targetLevel: SkillLevel;
   levelsToImprove: number;
-  priority: number;
+  priority: number; // Simple 1-5 for UI (1=highest)
   weight: number;
   estimatedHours: number;
   actionDescription: string;
   suggestedResources: string[];
+  
+  // Enhanced fields from old project
+  reason: string;
+  priorityLabel: RoadmapPriority;
+  category: RoadmapCategory;
+  confidence: string;
+  priorityScore: number;
+  ruleApplied: RoadmapRule;
 }
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const HOURS_PER_LEVEL: Record<string, number> = {
+  'none_to_beginner': 20,
+  'beginner_to_intermediate': 40,
+  'intermediate_to_advanced': 80,
+  'advanced_to_expert': 160,
+};
+
+const LEVEL_ORDER: SkillLevel[] = ['none', 'beginner', 'intermediate', 'advanced', 'expert'];
+
+const RESOURCE_SUGGESTIONS: Record<string, string[]> = {
+  default: [
+    'Online courses (Coursera, Udemy, Pluralsight)',
+    'Official documentation and tutorials',
+    'Practice projects and coding challenges',
+    'Community forums and discussion groups',
+  ],
+};
 
 // ============================================================================
 // Helper Functions
 // ============================================================================
 
-/**
- * Calculate estimated hours for a level progression
- */
 function calculateEstimatedHours(currentLevel: SkillLevel, targetLevel: SkillLevel): number {
   const currentIndex = LEVEL_ORDER.indexOf(currentLevel);
   const targetIndex = LEVEL_ORDER.indexOf(targetLevel);
   
-  if (targetIndex <= currentIndex) {
-    return 0;
-  }
+  if (targetIndex <= currentIndex) return 0;
   
   let totalHours = 0;
-  
   for (let i = currentIndex; i < targetIndex; i++) {
     const fromLevel = LEVEL_ORDER[i];
     const toLevel = LEVEL_ORDER[i + 1];
     const key = `${fromLevel}_to_${toLevel}`;
-    totalHours += HOURS_PER_LEVEL[key] || 40; // Default 40 hours per level
+    totalHours += HOURS_PER_LEVEL[key] || 40;
   }
   
   return totalHours;
 }
 
+function getConfidenceLabel(source: SkillSource | null, validationStatus: ValidationStatus | null): string {
+  if (validationStatus === 'validated') return 'validated';
+  if (validationStatus === 'rejected') return 'rejected';
+  if (source === 'self') return 'unvalidated';
+  return 'unvalidated';
+}
+
 /**
- * Determine the step type based on current state
+ * Apply the 5-rule system to determine priority, category, and reason
+ */
+function applyRules(item: SkillReadinessBreakdown, roleName: string): {
+  rule: RoadmapRule;
+  priorityLabel: RoadmapPriority;
+  priorityScore: number;
+  category: RoadmapCategory;
+  reason: string;
+  include: boolean;
+} {
+  const { skillName, importance, userLevel, validationStatus, source, weight } = item;
+  
+  // RULE_5: Validated & Met Skills → EXCLUDED
+  if (item.meetsRequirement && validationStatus === 'validated') {
+    return {
+      rule: 'RULE_5_VALIDATED_MET',
+      priorityLabel: 'LOW',
+      priorityScore: 0,
+      category: 'required_gap',
+      reason: `${skillName} is validated and meets requirements`,
+      include: false,
+    };
+  }
+  
+  // RULE_2: Rejected Skills → HIGH priority
+  if (validationStatus === 'rejected') {
+    return {
+      rule: 'RULE_2_REJECTED',
+      priorityLabel: 'HIGH',
+      priorityScore: 70 + (weight * 5),
+      category: 'rejected',
+      reason: `${skillName} was rejected by mentor validation — needs improvement for ${roleName}`,
+      include: true,
+    };
+  }
+  
+  // RULE_1: Missing Required Skills → HIGH priority
+  if (importance === 'required' && userLevel === 'none') {
+    return {
+      rule: 'RULE_1_REQUIRED_MISSING',
+      priorityLabel: 'HIGH',
+      priorityScore: 80 + (weight * 5),
+      category: 'required_gap',
+      reason: `${skillName} is required for ${roleName} but missing from your profile`,
+      include: true,
+    };
+  }
+  
+  // RULE_3: Unvalidated Required Skills → MEDIUM priority
+  if (importance === 'required' && source === 'self' && validationStatus !== 'validated') {
+    return {
+      rule: 'RULE_3_UNVALIDATED_REQUIRED',
+      priorityLabel: 'MEDIUM',
+      priorityScore: 50 + (weight * 3),
+      category: 'required_gap',
+      reason: `${skillName} is required for ${roleName} but not yet validated by a mentor`,
+      include: true,
+    };
+  }
+  
+  // RULE_4: Optional Missing Skills → LOW priority
+  if (importance === 'optional' && userLevel === 'none') {
+    return {
+      rule: 'RULE_4_OPTIONAL_MISSING',
+      priorityLabel: 'LOW',
+      priorityScore: 20 + (weight * 2),
+      category: 'optional_gap',
+      reason: `${skillName} is optional for ${roleName} — would boost your score if added`,
+      include: true,
+    };
+  }
+  
+  // Default: Include as strengthen if they have the skill but need improvement
+  if (userLevel !== 'none' && !item.meetsRequirement) {
+    return {
+      rule: importance === 'required' ? 'RULE_3_UNVALIDATED_REQUIRED' : 'RULE_4_OPTIONAL_MISSING',
+      priorityLabel: importance === 'required' ? 'MEDIUM' : 'LOW',
+      priorityScore: importance === 'required' ? (50 + weight * 3) : (25 + weight * 2),
+      category: 'strengthen',
+      reason: `Improve your ${skillName} skills to meet ${roleName} requirements`,
+      include: true,
+    };
+  }
+  
+  // Exclude by default
+  return {
+    rule: 'RULE_5_VALIDATED_MET',
+    priorityLabel: 'LOW',
+    priorityScore: 0,
+    category: 'required_gap',
+    reason: `${skillName} meets requirements`,
+    include: false,
+  };
+}
+
+/**
+ * Determine step type based on current state
  */
 function determineStepType(
   currentLevel: SkillLevel,
-  source: SkillSource | null,
-  validationStatus: ValidationStatus | null
+  targetLevel: SkillLevel,
+  rule: RoadmapRule
 ): StepType {
-  // If skill is missing entirely, it's a learn_new step
-  if (currentLevel === 'none') {
-    return 'learn_new';
-  }
-  
-  // If skill is self-reported and not validated, suggest validation
-  if (source === 'self' && validationStatus !== 'validated') {
-    return 'validate';
-  }
-  
-  // Otherwise, it's an improvement step
-  return 'improve';
+  if (currentLevel === 'none') return 'learn';
+  if (rule === 'RULE_3_UNVALIDATED_REQUIRED') return 'validate';
+  if (currentLevel !== targetLevel) return 'practice';
+  return 'master';
 }
-
-/**
- * Calculate priority score for a skill gap
- */
-function calculatePriority(
-  importance: 'required' | 'optional',
-  weight: number,
-  levelsNeeded: number,
-  isUnvalidated: boolean
-): number {
-  let priority = 0;
   
-  // Required skills get highest priority
-  priority += importance === 'required' ? 100 : 0;
-  
-  // Weight adds to priority (1-10)
-  priority += weight;
-  
-  // Gap size (levels needed × 10)
-  priority += levelsNeeded * 10;
-  
-  // Small boost for unvalidated skills (encourages validation)
-  priority += isUnvalidated ? 5 : 0;
-  
-  return priority;
-}
-
-/**
- * Get suggested resources based on skill/category
- * Can be enhanced to pull from a resources database
- */
-function getSuggestedResources(skillName: string): string[] {
-  // For now, return default resources
-  // This can be enhanced to categorize skills and return specific resources
-  const lowerName = skillName.toLowerCase();
-  
-  if (lowerName.includes('communication') || 
-      lowerName.includes('leadership') || 
-      lowerName.includes('teamwork')) {
-    return RESOURCE_SUGGESTIONS.soft_skills;
-  }
-  
-  if (lowerName.includes('javascript') || 
-      lowerName.includes('python') || 
-      lowerName.includes('java') ||
-      lowerName.includes('programming') ||
-      lowerName.includes('coding')) {
-    return RESOURCE_SUGGESTIONS.programming;
-  }
-  
-  return RESOURCE_SUGGESTIONS.default;
-}
-
-/**
- * Calculate projected readiness after completing all steps
- * This is an estimate based on reaching target levels
- */
-function calculateProjectedReadiness(
-  currentPercentage: number,
-  breakdown: SkillReadinessBreakdown[],
-  steps: GeneratedStep[]
-): number {
-  // If no steps, readiness stays the same
-  if (steps.length === 0) {
-    return currentPercentage;
-  }
-  
-  // Get total max possible score
-  const maxPossibleScore = breakdown.reduce((sum, b) => sum + b.maxPossibleScore, 0);
-  if (maxPossibleScore === 0) {
-    return 100;
-  }
-  
-  // Calculate current total score
-  const currentTotalScore = breakdown.reduce((sum, b) => sum + b.weightedScore, 0);
-  
-  // Calculate potential gain from completing steps
-  // Assume completing a step means reaching target level with validation
-  let potentialGain = 0;
-  
-  for (const step of steps) {
-    // Find the breakdown item for this skill
-    const breakdownItem = breakdown.find((b) => b.skillId === step.skillId);
-    if (!breakdownItem) continue;
-    
-    // Calculate score at target level (assume validated = 1.0 multiplier)
-    const levelPoints: Record<SkillLevel, number> = {
-      'none': 0,
-      'beginner': 25,
-      'intermediate': 50,
-      'advanced': 75,
-      'expert': 100,
-    };
-    
-    const targetPoints = levelPoints[step.targetLevel];
-    const targetScore = targetPoints * 1.0 * step.weight; // Validated multiplier
-    
-    // Add the difference to potential gain
-    potentialGain += targetScore - breakdownItem.weightedScore;
-  }
-  
-  // Calculate projected percentage
-  const projectedTotalScore = currentTotalScore + potentialGain;
-  const projectedPercentage = Math.round((projectedTotalScore / maxPossibleScore) * 100);
-  
-  // Cap at 100%
-  return Math.min(projectedPercentage, 100);
-}
-
 // ============================================================================
 // Main Generator Function
 // ============================================================================
 
 /**
- * Generate a personalized roadmap from readiness results
- * 
- * This is a PURE FUNCTION - it takes readiness data and returns a roadmap.
- * It does NOT write to the database.
+ * Generate a personalized roadmap using the 5-rule priority system
  */
 export function generateRoadmap(input: GenerateRoadmapInput): GeneratedRoadmap {
   const { userId, roleId, roleName, readinessResult, maxSteps } = input;
   
+  console.log('[generateRoadmap] Starting generation for role:', roleName);
+  console.log('[generateRoadmap] Breakdown items:', readinessResult.breakdown.length);
+  console.log('[generateRoadmap] Sample breakdown:', readinessResult.breakdown.slice(0, 3).map(b => ({
+    skill: b.skillName,
+    userLevel: b.userLevel,
+    required: b.requiredLevel,
+    importance: b.importance,
+    source: b.source,
+    validationStatus: b.validationStatus
+  })));
+  
   const steps: GeneratedStep[] = [];
   
-  // Process each skill in the breakdown that needs improvement
+  // Apply 5-rule system to each skill in breakdown
   for (const item of readinessResult.breakdown) {
-    // Skip skills that already meet requirements
-    if (item.meetsRequirement && item.validationStatus === 'validated') {
+    const ruleResult = applyRules(item, roleName);
+    
+    console.log(`[generateRoadmap] ${item.skillName}: rule=${ruleResult.rule}, priority=${ruleResult.priorityLabel}, include=${ruleResult.include}`);
+    
+    // Skip excluded skills (RULE_5)
+    if (!ruleResult.include) {
       continue;
     }
-    
-    // Determine what type of step this is
-    const stepType = determineStepType(
-      item.userLevel,
-      item.source,
-      item.validationStatus
-    );
-    
-    // For validation steps, target is same level (just getting validated)
-    const targetLevel = stepType === 'validate' 
-      ? item.userLevel 
-      : item.requiredLevel;
     
     // Calculate levels to improve
     const currentIndex = LEVEL_ORDER.indexOf(item.userLevel);
-    const targetIndex = LEVEL_ORDER.indexOf(targetLevel);
+    const targetIndex = LEVEL_ORDER.indexOf(item.requiredLevel);
     const levelsToImprove = Math.max(0, targetIndex - currentIndex);
     
-    // Skip if no improvement needed (except validation steps)
-    if (levelsToImprove === 0 && stepType !== 'validate') {
-      continue;
-    }
-    
-    // Calculate priority
-    const isUnvalidated = item.source === 'self' && item.validationStatus !== 'validated';
-    const priority = calculatePriority(
-      item.importance,
-      item.weight,
-      levelsToImprove,
-      isUnvalidated
-    );
+    // Determine step type
+    const stepType = determineStepType(item.userLevel, item.requiredLevel, ruleResult.rule);
     
     // Calculate estimated hours
     const estimatedHours = stepType === 'validate'
-      ? 2 // Validation just takes a review session
-      : calculateEstimatedHours(item.userLevel, targetLevel);
+      ? 2 // Validation session
+      : calculateEstimatedHours(item.userLevel, item.requiredLevel);
     
-    // Generate action description
-    const actionDescription = ACTION_TEMPLATES[stepType](item.skillName, targetLevel);
+    // Action description
+    const actionDescription = ruleResult.reason;
     
-    // Get suggested resources
-    const suggestedResources = stepType === 'validate'
-      ? ['Schedule a mentor validation session', 'Prepare examples of your work']
-      : getSuggestedResources(item.skillName);
+    // Get confidence label
+    const confidence = getConfidenceLabel(item.source, item.validationStatus);
+    
+    // Convert priority label to number (1=highest, 5=lowest)
+    const priorityNum = ruleResult.priorityLabel === 'HIGH' ? 1 
+                      : ruleResult.priorityLabel === 'MEDIUM' ? 2 
+                      : 3;
     
     steps.push({
       skillId: item.skillId,
@@ -367,42 +313,52 @@ export function generateRoadmap(input: GenerateRoadmapInput): GeneratedRoadmap {
       stepType,
       importance: item.importance,
       currentLevel: item.userLevel,
-      targetLevel,
+      targetLevel: item.requiredLevel,
       levelsToImprove,
-      priority,
+      priority: priorityNum,
       weight: item.weight,
       estimatedHours,
       actionDescription,
-      suggestedResources,
+      suggestedResources: RESOURCE_SUGGESTIONS.default,
+      
+      // Enhanced fields
+      reason: ruleResult.reason,
+      priorityLabel: ruleResult.priorityLabel,
+      category: ruleResult.category,
+      confidence,
+      priorityScore: ruleResult.priorityScore,
+      ruleApplied: ruleResult.rule,
     });
   }
   
-  // Sort by priority (highest first)
-  steps.sort((a, b) => b.priority - a.priority);
+  console.log('[generateRoadmap] Generated', steps.length, 'steps before limiting');
   
-  // Limit steps if maxSteps is specified
+  // Sort by priority score (highest first)
+  steps.sort((a, b) => b.priorityScore - a.priorityScore);
+  
+  // Limit steps if maxSteps specified
   const limitedSteps = maxSteps ? steps.slice(0, maxSteps) : steps;
+  
+  console.log('[generateRoadmap] Final step count:', limitedSteps.length);
   
   // Calculate totals
   const totalEstimatedHours = limitedSteps.reduce((sum, s) => sum + s.estimatedHours, 0);
   
-  // Calculate projected readiness
-  const projectedReadiness = calculateProjectedReadiness(
-    readinessResult.percentage,
-    readinessResult.breakdown,
-    limitedSteps
-  );
+  // Calculate projected readiness (simplified - assume completing all steps = 100%)
+  const currentPercentage = readinessResult.percentage;
+  const hasHighPriority = limitedSteps.some(s => s.priorityLabel === 'HIGH');
+  const projectedGain = hasHighPriority ? (100 - currentPercentage) * 0.7 : (100 - currentPercentage) * 0.5;
+  const projectedReadiness = Math.min(100, Math.round(currentPercentage + projectedGain));
   
   return {
     userId,
     roleId,
-    title: `Roadmap to ${roleName}`,
-    description: `Your personalized learning path to become a ${roleName}. ` +
-      `Complete these ${limitedSteps.length} steps to improve your readiness from ` +
-      `${readinessResult.percentage}% to an estimated ${projectedReadiness}%.`,
+    title: `Learning Roadmap for ${roleName}`,
+    description: `Prioritized skill development plan based on your ${currentPercentage}% readiness. ` +
+      `Complete these ${limitedSteps.length} action items to improve your readiness score.`,
     steps: limitedSteps,
     totalEstimatedHours,
-    readinessAtGeneration: readinessResult.percentage,
+    readinessAtGeneration: currentPercentage,
     projectedReadiness,
   };
 }

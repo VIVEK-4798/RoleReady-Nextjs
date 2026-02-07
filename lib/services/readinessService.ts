@@ -277,14 +277,18 @@ export async function calculateReadinessOnly(
   userId: string,
   roleId: string
 ): Promise<ReadinessResult & { gaps: ReturnType<typeof getSkillGaps> }> {
+  console.log('[calculateReadinessOnly] Starting for userId:', userId, 'roleId:', roleId);
   await connectDB();
   
   const roleData = await fetchBenchmarks(roleId);
   if (!roleData) {
+    console.log('[calculateReadinessOnly] Role not found:', roleId);
     throw new Error(`Role not found: ${roleId}`);
   }
+  console.log('[calculateReadinessOnly] Found role:', roleData.roleName, 'with', roleData.benchmarks.length, 'benchmarks');
   
   const userSkills = await fetchUserSkills(userId);
+  console.log('[calculateReadinessOnly] Found', userSkills.length, 'user skills');
   
   const result = calculateReadiness(
     userId,
@@ -293,10 +297,15 @@ export async function calculateReadinessOnly(
     roleData.benchmarks,
     userSkills
   );
+  console.log('[calculateReadinessOnly] Calculated readiness:', result.percentage + '%');
+  console.log('[calculateReadinessOnly] Breakdown items:', result.breakdown.length);
+  
+  const gaps = getSkillGaps(result);
+  console.log('[calculateReadinessOnly] Skill gaps:', gaps.length);
   
   return {
     ...result,
-    gaps: getSkillGaps(result),
+    gaps: gaps,
   };
 }
 

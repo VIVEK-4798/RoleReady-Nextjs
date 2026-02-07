@@ -219,6 +219,18 @@ export function calculateReadiness(
   benchmarks: BenchmarkInput[],
   userSkills: UserSkillInput[]
 ): ReadinessResult {
+  console.log('[calculateReadiness] ===== STARTING CALCULATION =====');
+  console.log('[calculateReadiness] Role:', roleName);
+  console.log('[calculateReadiness] Benchmarks count:', benchmarks.length);
+  console.log('[calculateReadiness] User skills count:', userSkills.length);
+  console.log('[calculateReadiness] User skills:', userSkills.map(s => ({
+    skillId: s.skillId,
+    skillName: s.skillName,
+    level: s.level,
+    source: s.source,
+    validationStatus: s.validationStatus
+  })));
+  
   // Create a map of user skills by skillId for O(1) lookup
   const userSkillMap = new Map<string, UserSkillInput>();
   for (const skill of userSkills) {
@@ -237,6 +249,12 @@ export function calculateReadiness(
   for (const benchmark of benchmarks) {
     const userSkill = userSkillMap.get(benchmark.skillId);
     const isMissing = !userSkill;
+    
+    console.log(`[calculateReadiness] Processing benchmark: ${benchmark.skillName} (${benchmark.skillId})`);
+    console.log(`[calculateReadiness] - Has user skill: ${!isMissing}`);
+    if (userSkill) {
+      console.log(`[calculateReadiness] - User level: ${userSkill.level}, Required: ${benchmark.minimumLevel}, Source: ${userSkill.source}, Validation: ${userSkill.validationStatus}`);
+    }
     
     // Get user's level (default to 'none' if missing)
     const userLevel: SkillLevel = userSkill?.level || 'none';

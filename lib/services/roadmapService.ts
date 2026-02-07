@@ -45,6 +45,7 @@ export interface UpdateStepOptions {
 export async function generateAndSaveRoadmap(
   options: GenerateRoadmapOptions
 ): Promise<IRoadmapDocument> {
+  console.log('[generateAndSaveRoadmap] Starting with options:', options);
   const { userId, maxSteps, archiveExisting = true } = options;
   let { roleId } = options;
   
@@ -52,35 +53,54 @@ export async function generateAndSaveRoadmap(
   
   // If no roleId provided, get from active target role
   if (!roleId) {
+    // console.log('[generateAndSaveRoadmap] No roleId, fetching active target role');
     const targetRole = await TargetRole.getActiveForUser(userId);
     if (!targetRole) {
+      // console.log('[generateAndSaveRoadmap] No active target role found');
       throw new Error('No target role selected. Select a target role first.');
     }
     roleId = targetRole.roleId.toString();
+    console.log('[generateAndSaveRoadmap] Got roleId:', roleId);
   }
   
   // Get readiness data
+  // console.log('[generateAndSaveRoadmap] Calculating readiness for userId:', userId, 'roleId:', roleId);
   const readinessResult = await calculateReadinessOnly(userId, roleId);
+  // console.log('[generateAndSaveRoadmap] Readiness result:', { percentage: readinessResult.percentage, status: readinessResult.status });
   
   // Get or create readiness snapshot
+  // console.log('[generateAndSaveRoadmap] Fetching latest snapshot');
   let snapshot = await ReadinessSnapshot.getLatest(userId, roleId);
   
   if (!snapshot) {
+    console.log('[generateAndSaveRoadmap] No snapshot found, creating new one');
     // If no snapshot exists, create one
     snapshot = await ReadinessSnapshot.create({
       userId: new Types.ObjectId(userId),
       roleId: new Types.ObjectId(roleId),
+      totalScore: readinessResult.totalScore,
+      maxPossibleScore: readinessResult.maxPossibleScore,
       percentage: readinessResult.percentage,
-      status: readinessResult.status,
+      hasAllRequired: readinessResult.hasAllRequired,
+      requiredSkillsMet: readinessResult.requiredSkillsMet,
+      requiredSkillsTotal: readinessResult.requiredSkillsTotal,
+      totalBenchmarks: readinessResult.totalBenchmarks,
+      skillsMatched: readinessResult.skillsMatched,
+      skillsMissing: readinessResult.skillsMissing,
       breakdown: readinessResult.breakdown,
-      summary: readinessResult.summary,
-      edge_case: readinessResult.edge_case,
+      trigger: 'manual',
+      triggerDetails: 'Created during roadmap generation',
     });
+    console.log('[generateAndSaveRoadmap] Created snapshot with id:', snapshot._id);
+  } else {
+    console.log('[generateAndSaveRoadmap] Using existing snapshot:', snapshot._id);
   }
   
   const readinessId = snapshot._id;
+  console.log('[generateAndSaveRoadmap] Snapshot readinessId:', readinessId);
   
   // Generate roadmap (pure function)
+  console.log('[generateAndSaveRoadmap] Calling generateRoadmap with gaps:', readinessResult.gaps?.length || 0);
   const generated: GeneratedRoadmap = generateRoadmap({
     userId,
     roleId,
@@ -88,9 +108,11 @@ export async function generateAndSaveRoadmap(
     readinessResult,
     maxSteps,
   });
+  console.log('[generateAndSaveRoadmap] Generated roadmap with', generated.steps.length, 'steps');
   
   // Archive existing roadmaps if requested
   if (archiveExisting) {
+    console.log('[generateAndSaveRoadmap] Archiving existing roadmaps');
     await Roadmap.archiveExisting(userId, roleId);
   }
   
@@ -112,21 +134,27 @@ export async function generateAndSaveRoadmap(
   }));
   
   // Create and save roadmap
-  const roadmap = await Roadmap.create({
-    userId: new Types.ObjectId(userId),
-    roleId: new Types.ObjectId(roleId),
-    readinessId: readinessId,
-    status: 'active',
-    title: generated.title,
-    description: generated.description,
-    steps,
-    totalEstimatedHours: generated.totalEstimatedHours,
-    readinessAtGeneration: generated.readinessAtGeneration,
-    projectedReadiness: generated.projectedReadiness,
-    generatedAt: new Date(),
-  });
-  
-  return roadmap;
+  console.log('[generateAndSaveRoadmap] Creating roadmap document with', steps.length, 'steps');
+  try {
+    const roadmap = await Roadmap.create({
+      userId: new Types.ObjectId(userId),
+      roleId: new Types.ObjectId(roleId),
+      readinessId: readinessId,
+      status: 'active',
+      title: generated.title,
+      description: generated.description,
+      steps,
+      totalEstimatedHours: generated.totalEstimatedHours,
+      readinessAtGeneration: generated.readinessAtGeneration,
+      projectedReadiness: generated.projectedReadiness,
+      generatedAt: new Date(),
+    });
+    console.log('[generateAndSaveRoadmap] Roadmap created successfully with id:', roadmap._id);
+    return roadmap;
+  } catch (error) {
+    console.error('[generateAndSaveRoadmap] Error creating roadmap:', error);
+    throw error;
+  }
 }
 
 // ============================================================================

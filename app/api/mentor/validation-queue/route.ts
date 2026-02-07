@@ -4,13 +4,13 @@
  * GET /api/mentor/validation-queue
  * 
  * Returns pending skills that the mentor can validate.
- * - Admins can see all pending skills
- * - Mentors can only see skills from users assigned to them
+ * - All mentors and admins can see all pending skills from any user
+ * - Mentors cannot validate their own skills
  */
 
 import { NextRequest } from 'next/server';
 import connectDB from '@/lib/db/mongoose';
-import { UserSkill, User } from '@/lib/models';
+import { UserSkill } from '@/lib/models';
 import { successResponse, errors } from '@/lib/utils/api';
 import { requireMentorApi } from '@/lib/auth/utils';
 import { Types } from 'mongoose';
@@ -55,48 +55,9 @@ export async function GET(request: NextRequest) {
     // Mentor cannot validate their own skills
     query.userId = { $ne: new Types.ObjectId(user.id) };
 
-    // If not admin, can only see skills from assigned users
-    if (user.role !== 'admin') {
-      // Get users assigned to this mentor
-      const assignedUsers = await User.find({
-        assignedMentor: new Types.ObjectId(user.id),
-        isActive: true,
-      }).select('_id');
-
-      const assignedUserIds = assignedUsers.map((u) => u._id);
-
-      if (assignedUserIds.length === 0) {
-        // No users assigned to this mentor
-        return successResponse({
-          queue: [],
-          totalCount: 0,
-          message: 'No users assigned to you for validation',
-        });
-      }
-
-      query.userId = { 
-        $in: assignedUserIds,
-        $ne: new Types.ObjectId(user.id), // Still exclude mentor's own skills
-      };
-    }
-
     // Filter by specific user if provided
     if (userIdFilter) {
-      const targetUserId = new Types.ObjectId(userIdFilter);
-      
-      // If mentor (not admin), verify they have access to this user
-      if (user.role !== 'admin') {
-        const hasAccess = await User.exists({
-          _id: targetUserId,
-          assignedMentor: new Types.ObjectId(user.id),
-        });
-
-        if (!hasAccess) {
-          return errors.forbidden('You do not have access to validate this user\'s skills');
-        }
-      }
-
-      query.userId = targetUserId;
+      query.userId = new Types.ObjectId(userIdFilter);
     }
 
     // Fetch skills with user and skill details

@@ -20,6 +20,7 @@ interface UserSkill {
   yearsOfExperience?: number;
   isVerified: boolean;
   source: string;
+  validationStatus: 'none' | 'pending' | 'validated' | 'rejected';
 }
 
 interface AvailableSkill {
@@ -178,6 +179,31 @@ export default function SkillsContent() {
     }
   };
 
+  const handleRequestValidation = async (userSkillId: string) => {
+    try {
+      const response = await fetch(`/api/users/skills/${userSkillId}/request-validation`, {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update skill in state
+        setSkills(prev => prev.map(s => 
+          s.id === userSkillId 
+            ? { ...s, validationStatus: 'pending' as const }
+            : s
+        ));
+        addToast('success', 'Validation requested successfully');
+      } else {
+        addToast('error', data.error || 'Failed to request validation');
+      }
+    } catch (err) {
+      console.error('Failed to request validation:', err);
+      addToast('error', 'Failed to request validation');
+    }
+  };
+
   // Filter skills based on search
   const filteredSkills = (skills || []).filter(skill =>
     skill.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -280,6 +306,7 @@ export default function SkillsContent() {
                     skill={skill}
                     onUpdateProficiency={handleUpdateProficiency}
                     onRemove={handleRemoveSkill}
+                    onRequestValidation={handleRequestValidation}
                   />
                 ))}
               </div>
@@ -307,9 +334,10 @@ interface SkillCardProps {
   skill: UserSkill;
   onUpdateProficiency: (id: string, proficiency: number) => void;
   onRemove: (id: string) => void;
+  onRequestValidation: (id: string) => void;
 }
 
-function SkillCard({ skill, onUpdateProficiency, onRemove }: SkillCardProps) {
+function SkillCard({ skill, onUpdateProficiency, onRemove, onRequestValidation }: SkillCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [proficiency, setProficiency] = useState(skill.proficiency);
 
@@ -370,6 +398,28 @@ function SkillCard({ skill, onUpdateProficiency, onRemove }: SkillCardProps) {
         </div>
       </div>
 
+      {/* Validation Status Badge */}
+      {skill.validationStatus === 'pending' && (
+        <div className="mb-3">
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs rounded-full">
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+            </svg>
+            Pending Validation
+          </span>
+        </div>
+      )}
+      {skill.validationStatus === 'rejected' && (
+        <div className="mb-3">
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs rounded-full">
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            Validation Rejected
+          </span>
+        </div>
+      )}
+
       {isEditing ? (
         <div className="space-y-3">
           <div>
@@ -419,6 +469,21 @@ function SkillCard({ skill, onUpdateProficiency, onRemove }: SkillCardProps) {
               style={{ width: `${skill.proficiency}%` }}
             />
           </div>
+        </div>
+      )}
+
+      {/* Request Validation Button */}
+      {skill.source === 'self' && skill.validationStatus === 'none' && !isEditing && (
+        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+          <button
+            onClick={() => onRequestValidation(skill.id)}
+            className="w-full py-2 px-3 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-sm font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Request Mentor Validation
+          </button>
         </div>
       )}
     </div>

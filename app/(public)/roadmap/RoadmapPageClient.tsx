@@ -262,59 +262,44 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
         throw new Error(data.message || 'Failed to load roadmap');
       }
       
-      // Transform API response to match expected format
-      const roadmapData = data.data?.roadmap || data.roadmap || data.data;
+      // The API now returns { success, message, roadmap } in old project format
+      const roadmapData = data.roadmap || data.data?.roadmap;
       
-      if (roadmapData) {
-        // Map steps to items format
-        const items: RoadmapItem[] = (roadmapData.steps || roadmapData.items || []).map((step: {
-          _id?: string;
-          skillId?: { _id?: string; name?: string } | string;
-          skillName?: string;
-          skill_name?: string;
-          priority?: string;
-          stepType?: string;
-          type?: string;
-          category?: string;
-          reason?: string;
-          actionHint?: string;
-          action_hint?: string;
-          confidence?: string;
-        }) => ({
-          item_id: step._id?.toString(),
-          skill_id: typeof step.skillId === 'object' ? step.skillId?._id?.toString() : step.skillId,
-          skill_name: step.skillName || step.skill_name || (typeof step.skillId === 'object' ? step.skillId?.name : 'Unknown'),
-          priority: (step.priority || 'LOW').toUpperCase() as 'HIGH' | 'MEDIUM' | 'LOW',
-          category: mapStepTypeToCategory(step.stepType || step.type || step.category),
-          reason: step.reason || getDefaultReason(step.stepType || step.type),
-          action_hint: step.actionHint || step.action_hint,
-          confidence: step.confidence as 'validated' | 'rejected' | 'self' | undefined,
+      if (roadmapData && roadmapData.items && roadmapData.items.length > 0) {
+        // Map items directly - already in the correct format from API
+        const items: RoadmapItem[] = roadmapData.items.map((item: any) => ({
+          item_id: item.skill_id,
+          skill_id: item.skill_id,
+          skill_name: item.skill_name,
+          priority: item.priority as 'HIGH' | 'MEDIUM' | 'LOW',
+          category: item.category as 'rejected' | 'required_gap' | 'strengthen' | 'optional_gap',
+          reason: item.reason,
+          action_hint: item.details?.action_hint,
+          confidence: item.confidence as 'validated' | 'rejected' | 'self' | undefined,
         }));
         
-        // Count priorities
-        const highCount = items.filter(i => i.priority === 'HIGH').length;
-        const mediumCount = items.filter(i => i.priority === 'MEDIUM').length;
-        const lowCount = items.filter(i => i.priority === 'LOW').length;
-        
         setRoadmap({
-          roadmap_id: roadmapData._id?.toString(),
-          readiness_score: roadmapData.currentScore || roadmapData.readiness_score || 0,
-          role_name: roadmapData.roleName || roadmapData.role_name || 'Your Target Role',
+          roadmap_id: roadmapData.readiness_id?.toString(),
+          readiness_score: roadmapData.current_score || 0,
+          role_name: roadmapData.role_name || 'Your Target Role',
           items,
-          summary: {
-            high_priority: highCount,
-            medium_priority: mediumCount,
-            low_priority: lowCount,
-          },
+          summary: roadmapData.summary?.by_priority
+            ? {
+                high_priority: roadmapData.summary.by_priority.high || 0,
+                medium_priority: roadmapData.summary.by_priority.medium || 0,
+                low_priority: roadmapData.summary.by_priority.low || 0,
+                by_priority: roadmapData.summary.by_priority,
+              }
+            : undefined,
           edge_case: roadmapData.edge_case,
           rules_applied: roadmapData.rules_applied,
-          generated_at: roadmapData.updatedAt || roadmapData.generated_at || new Date().toISOString(),
+          generated_at: roadmapData.generated_at || new Date().toISOString(),
         });
-      } else if (data.noRoadmap) {
-        // No roadmap exists yet - user needs to calculate readiness first
+      } else {
+        // No roadmap items generated
         setError({
           type: 'no_roadmap',
-          message: 'No roadmap generated yet. Calculate your readiness score to generate a personalized roadmap.'
+          message: roadmapData?.edge_case?.message || 'No roadmap generated yet. Calculate your readiness score to generate a personalized roadmap.'
         });
       }
     } catch (err) {
@@ -328,36 +313,6 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
       setIsRefreshing(false);
     }
   }, [userId]);
-  
-  // Map step type to category
-  const mapStepTypeToCategory = (stepType: string | undefined): 'rejected' | 'required_gap' | 'strengthen' | 'optional_gap' => {
-    switch (stepType) {
-      case 'learn_new':
-        return 'required_gap';
-      case 'improve':
-        return 'strengthen';
-      case 'validate':
-        return 'optional_gap';
-      case 'rejected':
-        return 'rejected';
-      default:
-        return 'required_gap';
-    }
-  };
-  
-  // Get default reason based on step type
-  const getDefaultReason = (stepType: string | undefined): string => {
-    switch (stepType) {
-      case 'learn_new':
-        return 'This skill is required for your target role but you haven\'t added it yet.';
-      case 'improve':
-        return 'You have this skill but it could be strengthened.';
-      case 'validate':
-        return 'Consider getting this skill validated by a mentor.';
-      default:
-        return 'Work on this skill to improve your readiness.';
-    }
-  };
   
   // Refresh roadmap
   const handleRefresh = async () => {

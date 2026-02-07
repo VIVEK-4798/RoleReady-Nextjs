@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     // Get current active target role
     const targetRole = await TargetRole.findOne({
       userId: authUser.id,
-      status: 'active',
+      isActive: true,
     })
       .populate('roleId', 'name description colorClass')
       .lean();

@@ -19,12 +19,13 @@ interface SkillValidation {
   skillId: {
     _id: string;
     name: string;
-    category: string;
+    domain: string;
+    description?: string;
   };
   level: string;
   source: string;
   validationStatus: string;
-  requestedAt: string;
+  createdAt: string;
   targetRole?: {
     name: string;
   };
@@ -58,10 +59,11 @@ export default function ValidationQueueClient() {
       const data = await response.json();
 
       if (data.success) {
-        setQueue(data.data.queue || []);
+        // Use ungrouped array for flat list of skills
+        setQueue(data.data.ungrouped || []);
         setStats(prev => ({
           ...prev,
-          pending: data.data.pendingCount || data.data.queue?.length || 0,
+          pending: data.data.totalCount || 0,
         }));
       }
     } catch (error) {
@@ -297,9 +299,9 @@ export default function ValidationQueueClient() {
                       <div className="font-medium text-gray-900">
                         {skill.skillId?.name || 'Unknown Skill'}
                       </div>
-                      {skill.skillId?.category && (
-                        <div className="text-xs text-gray-500">
-                          {skill.skillId.category}
+                      {skill.skillId?.domain && (
+                        <div className="text-xs text-gray-500 capitalize">
+                          {skill.skillId.domain}
                         </div>
                       )}
                     </td>

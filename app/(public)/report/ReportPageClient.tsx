@@ -235,7 +235,86 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
             type: 'jpeg',
             quality: 0.98,
         } as const,
-        html2canvas: { scale: 2, useCORS: true },
+        html2canvas: { 
+            scale: 2, 
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff',
+            onclone: (clonedDoc: Document) => {
+                // Critical fix: Convert all LAB colors to RGB before html2canvas processes them
+                // html2canvas doesn't support modern CSS color functions (lab, oklch, lch)
+                
+                // Step 1: Remove external stylesheets that might contain LAB colors
+                const stylesheets = clonedDoc.querySelectorAll('link[rel="stylesheet"]');
+                stylesheets.forEach(sheet => sheet.remove());
+                
+                // Step 2: Get the report element in both original and cloned docs
+                const clonedReport = clonedDoc.getElementById('readiness-report');
+                const originalReport = document.getElementById('readiness-report');
+                
+                if (!clonedReport || !originalReport) return;
+                
+                // Step 3: Process every element - get computed RGB from original, apply to clone
+                const clonedElements = clonedReport.querySelectorAll('*');
+                const originalElements = originalReport.querySelectorAll('*');
+                
+                clonedElements.forEach((clonedEl, index) => {
+                    const originalEl = originalElements[index];
+                    if (!originalEl) return;
+                    
+                    try {
+                        const element = clonedEl as HTMLElement;
+                        const computed = window.getComputedStyle(originalEl);
+                        
+                        // Apply all color-related properties as inline styles
+                        const color = computed.color;
+                        const bgColor = computed.backgroundColor;
+                        const borderTopColor = computed.borderTopColor;
+                        const borderRightColor = computed.borderRightColor;
+                        const borderBottomColor = computed.borderBottomColor;
+                        const borderLeftColor = computed.borderLeftColor;
+                        
+                        // Only apply if not transparent/none
+                        if (color && color !== 'rgba(0, 0, 0, 0)') {
+                            element.style.color = color;
+                        }
+                        if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+                            element.style.backgroundColor = bgColor;
+                        }
+                        if (borderTopColor && borderTopColor !== 'rgba(0, 0, 0, 0)') {
+                            element.style.borderTopColor = borderTopColor;
+                        }
+                        if (borderRightColor && borderRightColor !== 'rgba(0, 0, 0, 0)') {
+                            element.style.borderRightColor = borderRightColor;
+                        }
+                        if (borderBottomColor && borderBottomColor !== 'rgba(0, 0, 0, 0)') {
+                            element.style.borderBottomColor = borderBottomColor;
+                        }
+                        if (borderLeftColor && borderLeftColor !== 'rgba(0, 0, 0, 0)') {
+                            element.style.borderLeftColor = borderLeftColor;
+                        }
+                        
+                        // Copy other essential styles
+                        element.style.fontFamily = computed.fontFamily;
+                        element.style.fontSize = computed.fontSize;
+                        element.style.fontWeight = computed.fontWeight;
+                        element.style.lineHeight = computed.lineHeight;
+                        element.style.textAlign = computed.textAlign;
+                        element.style.padding = computed.padding;
+                        element.style.margin = computed.margin;
+                        element.style.borderWidth = computed.borderWidth;
+                        element.style.borderStyle = computed.borderStyle;
+                        element.style.borderRadius = computed.borderRadius;
+                        element.style.display = computed.display;
+                        element.style.width = computed.width;
+                        element.style.height = computed.height;
+                    } catch (e) {
+                        // Skip problematic elements
+                        console.warn('Could not process element:', e);
+                    }
+                });
+            }
+        },
         jsPDF: {
             unit: 'mm',
             format: 'a4',
@@ -363,45 +442,95 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
   // Render: Main Page
   // ============================================================================
   return (
-    <>
-      {/* Action Bar - Hidden during print */}
-      <div className="print:hidden sticky top-0 z-50 bg-white border-b border-gray-200 py-3">
-        <div className="max-w-3xl mx-auto px-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">📊 Readiness Report</h1>
-              <p className="text-gray-500 text-sm">Your defensible proof of skill readiness</p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={handlePrint}
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2"
-              >
-                🖨️ Print
-              </button>
-              <button
-                onClick={handleExportPDF}
-                disabled={isExporting}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 inline-flex items-center gap-2"
-              >
-                {isExporting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Exporting...
-                  </>
-                ) : (
-                  <>📄 Export PDF</>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-      
+    <>      
       {/* Report Content */}
-      <div className="min-h-screen bg-gray-50 py-6 print:py-0 print:bg-white">
+      <div className="min-h-screen bg-gray-50 py-12 print:py-0 print:bg-white">
         <div className="max-w-3xl mx-auto px-4 print:px-0 print:max-w-full">
+          
+          {/* Page Header - Hidden during print */}
+          <div className="text-center mb-8 print:hidden">
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center justify-center gap-3">
+              <span>📊</span>
+              Readiness Report
+            </h1>
+            <p className="text-gray-600 mt-2">
+              Your defensible proof of skill readiness
+            </p>
+          </div>
+          
+          {/* Action Buttons - Hidden during print */}
+          <div className="flex justify-center gap-3 mb-6 print:hidden">
+            <button
+              onClick={handlePrint}
+              className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2"
+            >
+              🖨️ Print
+            </button>
+            <button
+              onClick={handleExportPDF}
+              disabled={isExporting}
+              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 inline-flex items-center gap-2"
+            >
+              {isExporting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Exporting...
+                </>
+              ) : (
+                <>📄 Export PDF</>
+              )}
+            </button>
+          </div>
+          
           <div ref={reportRef} id="readiness-report" className="font-sans">
+            
+            {/* PDF Export Color Fix - Override LAB colors with RGB */}
+            <style dangerouslySetInnerHTML={{__html: `
+              #readiness-report * {
+                /* Force RGB colors for PDF export compatibility */
+              }
+              #readiness-report .text-gray-500 { color: rgb(107, 114, 128) !important; }
+              #readiness-report .text-gray-600 { color: rgb(75, 85, 99) !important; }
+              #readiness-report .text-gray-700 { color: rgb(55, 65, 81) !important; }
+              #readiness-report .text-gray-800 { color: rgb(31, 41, 55) !important; }
+              #readiness-report .text-gray-900 { color: rgb(17, 24, 39) !important; }
+              #readiness-report .text-blue-600 { color: rgb(37, 99, 235) !important; }
+              #readiness-report .text-blue-700 { color: rgb(29, 78, 216) !important; }
+              #readiness-report .text-blue-800 { color: rgb(30, 64, 175) !important; }
+              #readiness-report .text-green-600 { color: rgb(22, 163, 74) !important; }
+              #readiness-report .text-green-700 { color: rgb(21, 128, 61) !important; }
+              #readiness-report .text-red-600 { color: rgb(220, 38, 38) !important; }
+              #readiness-report .text-red-700 { color: rgb(185, 28, 28) !important; }
+              #readiness-report .text-yellow-600 { color: rgb(202, 138, 4) !important; }
+              #readiness-report .text-yellow-700 { color: rgb(161, 98, 7) !important; }
+              #readiness-report .text-amber-500 { color: rgb(245, 158, 11) !important; }
+              #readiness-report .text-orange-600 { color: rgb(234, 88, 12) !important; }
+              #readiness-report .bg-white { background-color: rgb(255, 255, 255) !important; }
+              #readiness-report .bg-gray-50 { background-color: rgb(249, 250, 251) !important; }
+              #readiness-report .bg-gray-100 { background-color: rgb(243, 244, 246) !important; }
+              #readiness-report .bg-gray-200 { background-color: rgb(229, 231, 235) !important; }
+              #readiness-report .bg-blue-50 { background-color: rgb(239, 246, 255) !important; }
+              #readiness-report .bg-blue-100 { background-color: rgb(219, 234, 254) !important; }
+              #readiness-report .bg-blue-500 { background-color: rgb(59, 130, 246) !important; }
+              #readiness-report .bg-green-50 { background-color: rgb(240, 253, 244) !important; }
+              #readiness-report .bg-green-100 { background-color: rgb(220, 252, 231) !important; }
+              #readiness-report .bg-green-500 { background-color: rgb(34, 197, 94) !important; }
+              #readiness-report .bg-red-50 { background-color: rgb(254, 242, 242) !important; }
+              #readiness-report .bg-red-100 { background-color: rgb(254, 226, 226) !important; }
+              #readiness-report .bg-red-500 { background-color: rgb(239, 68, 68) !important; }
+              #readiness-report .bg-yellow-50 { background-color: rgb(254, 252, 232) !important; }
+              #readiness-report .bg-yellow-100 { background-color: rgb(254, 249, 195) !important; }
+              #readiness-report .bg-amber-500 { background-color: rgb(245, 158, 11) !important; }
+              #readiness-report .border-gray-100 { border-color: rgb(243, 244, 246) !important; }
+              #readiness-report .border-gray-200 { border-color: rgb(229, 231, 235) !important; }
+              #readiness-report .border-gray-300 { border-color: rgb(209, 213, 219) !important; }
+              #readiness-report .border-blue-500 { border-color: rgb(59, 130, 246) !important; }
+              #readiness-report .border-green-200 { border-color: rgb(187, 247, 208) !important; }
+              #readiness-report .border-green-500 { border-color: rgb(34, 197, 94) !important; }
+              #readiness-report .border-red-200 { border-color: rgb(254, 202, 202) !important; }
+              #readiness-report .border-red-500 { border-color: rgb(239, 68, 68) !important; }
+              #readiness-report .border-amber-500 { border-color: rgb(245, 158, 11) !important; }
+            `}} />
             
             {/* ═══════════════════════════════════════════════════════════════
                 SECTION 1: HEADER

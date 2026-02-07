@@ -21,20 +21,22 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
   if (user.role !== 'admin') {
     redirect('/dashboard');
   }
-
+  
   return (
     <div className="min-h-screen bg-white flex">
       {/* Sidebar Navigation */}
       <AdminNav />
       
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col lg:ml-64">
-        {/* Header */}
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col lg:ml-64 transition-all duration-300">
+        {/* Sticky Header */}
         <AdminHeader />
         
-        {/* Page Content */}
-        <main className="flex-1 p-6">
-          {children}
+        {/* Page Content with subtle gradient background */}
+        <main className="flex-1 p-4 md:p-6 lg:p-8 bg-gradient-to-b from-gray-50/50 to-white">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
       </div>
     </div>

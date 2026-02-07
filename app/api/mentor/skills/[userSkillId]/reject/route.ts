@@ -65,7 +65,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Find the user skill
     const userSkill = await UserSkill.findById(userSkillId)
-      .populate('userId', 'name email assignedMentor')
+      .populate('userId', 'name email')
       .populate('skillId', 'name domain');
 
     if (!userSkill) {
@@ -75,19 +75,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Cannot reject own skills
     if (userSkill.userId._id.toString() === user.id) {
       return errors.forbidden('Cannot reject your own skills');
-    }
-
-    // Check authorization: admin can reject anyone, mentor only assigned users
-    if (user.role !== 'admin') {
-      const skillOwner = userSkill.userId as unknown as { 
-        _id: Types.ObjectId; 
-        assignedMentor?: Types.ObjectId;
-      };
-      
-      if (!skillOwner.assignedMentor || 
-          skillOwner.assignedMentor.toString() !== user.id) {
-        return errors.forbidden('You are not assigned to validate this user\'s skills');
-      }
     }
 
     // Check if skill is in a valid state for rejection

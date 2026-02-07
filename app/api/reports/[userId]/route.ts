@@ -21,14 +21,14 @@ interface RouteContext {
   params: Promise<{ userId: string }>;
 }
 
-// Get status label and color from percentage
+// Get status label and color from percentage (matches old project labels)
 function getStatusInfo(percentage: number) {
-  if (percentage >= 70) {
-    return { label: 'Ready', color: 'success' };
+  if (percentage >= 80) {
+    return { label: 'Ready', color: 'success', emoji: '🟢' };
   } else if (percentage >= 40) {
-    return { label: 'Partially Ready', color: 'warning' };
+    return { label: 'Developing', color: 'warning', emoji: '🟡' };
   } else {
-    return { label: 'Not Ready', color: 'danger' };
+    return { label: 'Not Ready', color: 'danger', emoji: '🔴' };
   }
 }
 
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     // Get active target role
     const targetRole = await TargetRole.findOne({
       userId,
-      status: 'active',
+      isActive: true,
     }).populate('roleId', 'name description colorClass benchmarks').lean();
     
     if (!targetRole) {
@@ -111,10 +111,11 @@ export async function GET(request: NextRequest, context: RouteContext) {
       .map((b: any) => ({
         skill_id: b.skillId.toString(),
         skill_name: b.skillName,
-        source: b.source,
-        importance: b.importance,
         weight: b.weight,
+        source: b.source || 'self',
         is_validated: b.validationStatus === 'validated',
+        validation_status: b.validationStatus || 'none',
+        importance: b.importance || 'optional',
       }));
     
     const missingSkills = breakdown
@@ -122,15 +123,28 @@ export async function GET(request: NextRequest, context: RouteContext) {
       .map((b: any) => ({
         skill_id: b.skillId.toString(),
         skill_name: b.skillName,
-        source: null,
-        importance: b.importance,
         weight: b.weight,
+        source: 'unknown',
         is_validated: false,
+        validation_status: 'none',
+        importance: b.importance || 'optional',
       }));
     
-    // Count pending validations (skills waiting for mentor review)
+    // Count validation stats
     const pendingValidationCount = breakdown.filter(
       (b: any) => b.validationStatus === 'pending'
+    ).length;
+    const selfClaimedCount = breakdown.filter(
+      (b: any) => !b.isMissing && b.source === 'self'
+    ).length;
+    const resumeParsedCount = breakdown.filter(
+      (b: any) => !b.isMissing && b.source === 'resume'
+    ).length;
+    const mentorValidatedCount = breakdown.filter(
+      (b: any) => !b.isMissing && b.validationStatus === 'validated'
+    ).length;
+    const rejectedCount = breakdown.filter(
+      (b: any) => !b.isMissing && b.validationStatus === 'rejected'
     ).length;
     
     // Build history
@@ -144,6 +158,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         status_label: statusInfo.label,
         status_color: statusInfo.color,
         calculated_at: snap.createdAt,
+        role_name: roleName,
       };
     });
     
@@ -154,13 +169,16 @@ export async function GET(request: NextRequest, context: RouteContext) {
         priority: number;
         skillName: string;
         actionDescription?: string;
+        importance?: string;
       }>;
       
+      // priority: 1=HIGH, 2=MEDIUM, 3=LOW (from roadmap generator)
       const highPriority = steps.filter(s => s.priority === 1);
       const mediumPriority = steps.filter(s => s.priority === 2);
-      const lowPriority = steps.filter(s => s.priority === 3);
+      const lowPriority = steps.filter(s => s.priority >= 3);
       
       roadmapSummary = {
+        total_items: steps.length,
         by_priority: {
           high: highPriority.length,
           medium: mediumPriority.length,
@@ -168,7 +186,29 @@ export async function GET(request: NextRequest, context: RouteContext) {
         },
         high_priority_items: highPriority.slice(0, 3).map(s => ({
           skill_name: s.skillName,
-          reason: s.actionDescription || 'Required skill missing or needs improvement',
+          reason: s.actionDescription || `${s.skillName} is required for ${roleName} but missing from your profile`,
+          category: s.importance === 'required' ? 'required_gap' : 'optional_gap',
+        })),
+      };
+    } else {
+      // Generate roadmap summary from breakdown even without a saved roadmap
+      const missingRequired = breakdown.filter((b: any) => b.isMissing && b.importance === 'required');
+      const missingOptional = breakdown.filter((b: any) => b.isMissing && b.importance !== 'required');
+      const unvalidated = breakdown.filter((b: any) => !b.isMissing && b.validationStatus !== 'validated' && b.importance === 'required');
+      
+      roadmapSummary = {
+        roadmap_id: null,
+        generated_at: new Date().toISOString(),
+        total_items: missingRequired.length + unvalidated.length + missingOptional.length,
+        by_priority: {
+          high: missingRequired.length,
+          medium: unvalidated.length,
+          low: missingOptional.length,
+        },
+        high_priority_items: missingRequired.slice(0, 3).map((b: any) => ({
+          skill_name: b.skillName,
+          reason: `${b.skillName} is required for ${roleName} but missing from your profile`,
+          category: 'required_gap',
         })),
       };
     }
@@ -201,7 +241,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
           missing_skills: missingSkills,
         },
         validation: {
+          total_skills: metSkills.length,
+          self_claimed: selfClaimedCount,
+          resume_parsed: resumeParsedCount,
+          mentor_validated: mentorValidatedCount,
           pending_validation: pendingValidationCount,
+          rejected: rejectedCount,
         },
         roadmap: roadmapSummary,
         history,
