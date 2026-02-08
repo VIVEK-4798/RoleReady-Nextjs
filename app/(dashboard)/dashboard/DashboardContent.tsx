@@ -59,7 +59,7 @@ export default function DashboardContent() {
                 className="text-sm font-semibold text-[#5693C1] flex items-center gap-1 px-3 py-1 rounded-full"
                 style={{ backgroundColor: 'rgba(86, 147, 193, 0.1)' }}
               >
-                {user?.name?.split(' ')[0] || 'User'} 👋
+                {user?.name?.split(' ')[0] || 'User'}
               </span>
             </div>
           </div>

@@ -34,6 +34,7 @@ interface ExtendedSession extends Session {
 interface ExtendedJWT extends JWT {
   id?: string;
   role?: 'user' | 'mentor' | 'admin';
+  image?: string;
 }
 
 export const authConfig: NextAuthConfig = {
@@ -100,13 +101,20 @@ export const authConfig: NextAuthConfig = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }): Promise<ExtendedJWT> {
+    async jwt({ token, user, trigger, session }): Promise<ExtendedJWT> {
       // Initial sign in - add user data to token
       if (user) {
         const extUser = user as ExtendedUser;
         token.id = extUser.id;
         token.role = extUser.role;
+        token.image = extUser.image;
       }
+      
+      // Handle session updates (e.g., after profile image upload)
+      if (trigger === 'update' && session?.image) {
+        token.image = session.image;
+      }
+      
       return token as ExtendedJWT;
     },
     async session({ session, token }) {
@@ -117,6 +125,7 @@ export const authConfig: NextAuthConfig = {
         Object.assign(session.user, {
           id: extToken.id || '',
           role: extToken.role || 'user',
+          image: extToken.image || undefined,
         });
       }
       return session;

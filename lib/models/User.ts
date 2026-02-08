@@ -69,6 +69,13 @@ const CertificateSchema = new Schema({
   url: { type: String },
 }, { _id: false });
 
+const AchievementSchema = new Schema({
+  title: { type: String, required: true },
+  description: { type: String },
+  issuer: { type: String },
+  date: { type: Date },
+}, { _id: true });
+
 const ResumeSchema = new Schema({
   fileUrl: { type: String, required: true },
   fileName: { type: String, required: true },
@@ -89,6 +96,7 @@ const ProfileSchema = new Schema<IUserProfile>({
   experience: [ExperienceSchema],
   projects: [ProjectSchema],
   certificates: [CertificateSchema],
+  achievements: [AchievementSchema],
   resume: ResumeSchema,
   niche: { type: String },
 }, { _id: false });
@@ -152,7 +160,13 @@ const UserSchema = new Schema<IUserDocument>(
     },
     profile: {
       type: ProfileSchema,
-      default: () => ({}),
+      default: () => ({
+        education: [],
+        experience: [],
+        projects: [],
+        certificates: [],
+        achievements: [],
+      }),
     },
   },
   {

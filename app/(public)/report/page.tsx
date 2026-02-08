@@ -28,10 +28,12 @@ export default async function ReportPage() {
   }
   
   return (
-    <>
+    <div className="min-h-screen bg-white">
       <LandingHeader isAuthenticated={true} />
-      <ReportPageClient userId={session.user.id} userName={session.user.name || 'User'} />
+      <main className="pt-20"> {/* Adjust based on your header height */}
+        <ReportPageClient userId={session.user.id} userName={session.user.name || 'User'} />
+      </main>
       <FooterSection />
-    </>
+    </div>
   );
 }

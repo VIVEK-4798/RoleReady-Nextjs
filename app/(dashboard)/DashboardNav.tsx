@@ -99,16 +99,8 @@ export default function DashboardNav() {
     <>
       {/* Logo Section */}
       <div className="flex items-center h-16 px-6 border-b border-gray-200">
-        <Link href="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-[#5693C1] to-[#4a80b0] flex items-center justify-center text-white font-bold">
-            R
-          </div>
-          <div>
-            <span className="text-xl font-bold text-gray-900 block">
-              RoleReady
-            </span>
-            <span className="text-xs text-gray-500 block">Career Platform</span>
-          </div>
+        <Link href="/" className="flex items-center">
+          <img src="/img/logo/logo.png" alt="RoleReady Logo" className="w-32 h-10 lg:w-40 lg:h-12 object-contain" />
         </Link>
       </div>
 

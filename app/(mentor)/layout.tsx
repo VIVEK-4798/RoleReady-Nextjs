@@ -7,6 +7,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import MentorNav from './MentorNav';
+import MentorHeader from './MentorHeader';
 
 export default async function MentorLayout({
   children,
@@ -32,10 +33,14 @@ export default async function MentorLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <MentorNav />
       <main className="lg:pl-64">
-        <div className="p-6 lg:p-8">
+        <MentorHeader 
+          userName={session.user.name || undefined}
+          userEmail={session.user.email || undefined}
+        />
+        <div className="p-4 sm:p-6 lg:p-8">
           {children}
         </div>
       </main>

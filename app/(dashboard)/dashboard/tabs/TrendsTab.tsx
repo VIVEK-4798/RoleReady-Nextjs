@@ -31,8 +31,8 @@ export default function TrendsTab({ userId }: TrendsTabProps) {
       const response = await fetch(`/api/users/${userId}/readiness/history?limit=30`);
       const data = await response.json();
 
-      if (data.success && data.history) {
-        setHistory([...data.history].reverse());
+      if (data.success && data.data?.history) {
+        setHistory([...data.data.history].reverse());
       } else {
         setError(data.error || 'Failed to load trends');
       }

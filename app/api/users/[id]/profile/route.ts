@@ -43,6 +43,38 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return errors.notFound('User not found');
     }
 
+    console.log('[PROFILE-API] Raw user from DB:', JSON.stringify(user, null, 2));
+    console.log('[PROFILE-API] Profile exists:', !!user.profile);
+    console.log('[PROFILE-API] Profile.achievements exists:', !!user.profile?.achievements);
+
+    // Ensure profile object exists
+    if (!user.profile) {
+      user.profile = {} as any;
+      await user.save();
+    }
+    
+    // Ensure sub-arrays exist - initialize if undefined
+    if (!user.profile.achievements) {
+      user.profile.achievements = [];
+    }
+    if (!user.profile.certificates) {
+      user.profile.certificates = [];
+    }
+    if (!user.profile.education) {
+      user.profile.education = [];
+    }
+    if (!user.profile.experience) {
+      user.profile.experience = [];
+    }
+    if (!user.profile.projects) {
+      user.profile.projects = [];
+    }
+
+    console.log('[PROFILE-API] Profile data:', user.profile);
+    console.log('[PROFILE-API] Achievements:', user.profile.achievements);
+    console.log('[PROFILE-API] Achievements length:', user.profile.achievements?.length);
+    console.log('[PROFILE-API] Achievements array:', JSON.stringify(user.profile.achievements));
+
     return success({
       id: user._id,
       name: user.name,

@@ -46,8 +46,8 @@ export default function HistoryTab({ userId }: HistoryTabProps) {
         throw new Error(data.error || 'Failed to load history');
       }
 
-      if (data.success && data.history) {
-        setHistory(data.history);
+      if (data.success && data.data?.history) {
+        setHistory(data.data.history);
       } else {
         throw new Error(data.error || 'Failed to load history');
       }

@@ -1,37 +1,38 @@
 /**
- * Readiness Page (Public Route)
+ * Skills Page (Public Route)
  * 
- * URL: /readiness
+ * URL: /dashboard/skills
  * 
  * This page allows authenticated users to:
- * - View their readiness evaluation context
- * - See their current readiness score
- * - Calculate/recalculate their readiness
- * - View skill breakdown
+ * - View all their skills
+ * - Add new skills
+ * - Delete skills
+ * - See skill verification status
+ * - Filter and search skills
  */
 
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
-import ReadinessPageClient from './ReadinessPageClient';
+import SkillsPageClient from './ReadinessPageClient';
 import LandingHeader from '@/components/home/LandingHeader';
 import FooterSection from '@/components/home/FooterSection';
 
 export const metadata = {
-  title: 'Readiness Evaluation | RoleReady',
-  description: 'Evaluate your skills against industry benchmarks for your target role',
+  title: 'My Skills | RoleReady',
+  description: 'Manage and track your professional skills',
 };
 
-export default async function ReadinessPage() {
+export default async function SkillsPage() {
   const session = await auth();
   
   if (!session?.user?.id) {
-    redirect('/login?redirect=/readiness');
+    redirect('/login?redirect=/dashboard/skills');
   }
   
   return (
     <>
       <LandingHeader isAuthenticated={true} />
-      <ReadinessPageClient userId={session.user.id} />
+      <SkillsPageClient userId={session.user.id} />
       <FooterSection />
     </>
   );

@@ -5,23 +5,28 @@ import Link from 'next/link';
 import { ContributionGraph } from '@/components/activity';
 
 interface ReadinessData {
-  hasTargetRole: boolean;
-  snapshot: {
-    id: string;
-    roleId: string;
-    totalScore: number;
-    maxPossibleScore: number;
-    percentage: number;
-    hasAllRequired: boolean;
-    requiredSkillsMet: number;
-    requiredSkillsTotal: number;
-    totalBenchmarks: number;
-    skillsMatched: number;
-    skillsMissing: number;
-    trigger: string;
-    createdAt: string;
-    breakdown: SkillBreakdown[];
-  } | null;
+  success: boolean;
+  data: {
+    hasTargetRole: boolean;
+    roleId?: string;
+    roleName?: string;
+    snapshot: {
+      id: string;
+      roleId: string;
+      totalScore: number;
+      maxPossibleScore: number;
+      percentage: number;
+      hasAllRequired: boolean;
+      requiredSkillsMet: number;
+      requiredSkillsTotal: number;
+      totalBenchmarks: number;
+      skillsMatched: number;
+      skillsMissing: number;
+      trigger: string;
+      createdAt: string;
+      breakdown: SkillBreakdown[];
+    } | null;
+  };
   message?: string;
 }
 
@@ -252,7 +257,7 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
     );
   }
 
-  if (!readiness?.snapshot && !isCalculating) {
+  if (!readiness?.data?.snapshot && !isCalculating) {
     return (
       <div className="space-y-6">
         <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
@@ -295,7 +300,7 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
     );
   }
 
-  const snapshot = readiness?.snapshot;
+  const snapshot = readiness?.data?.snapshot;
   const percentage = snapshot?.percentage || 0;
   const status = getReadinessStatus(percentage);
 

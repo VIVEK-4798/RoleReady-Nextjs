@@ -29,10 +29,12 @@ export default async function RoadmapPage() {
   }
   
   return (
-    <>
+    <div className="min-h-screen bg-white">
       <LandingHeader isAuthenticated={true} />
-      <RoadmapPageClient userId={session.user.id} />
+      <main className="pt-20"> {/* Adjust based on your header height */}
+        <RoadmapPageClient userId={session.user.id} />
+      </main>
       <FooterSection />
-    </>
+    </div>
   );
 }

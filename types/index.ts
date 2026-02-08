@@ -63,6 +63,14 @@ export interface ICertificate {
   url?: string;
 }
 
+export interface IAchievement {
+  _id?: Types.ObjectId;
+  title: string;
+  description?: string;
+  issuer?: string;
+  date?: Date;
+}
+
 export interface IResume {
   fileUrl: string;
   fileName: string;
@@ -83,6 +91,7 @@ export interface IUserProfile {
   experience?: IExperience[];
   projects?: IProject[];
   certificates?: ICertificate[];
+  achievements?: IAchievement[];
   resume?: IResume;
   niche?: string;
 }

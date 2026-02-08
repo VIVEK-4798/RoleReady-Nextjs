@@ -339,11 +339,11 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
   // ============================================================================
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12">
-        <div className="max-w-3xl mx-auto px-4">
+      <div className="min-h-screen bg-white py-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-            <p className="text-gray-600">Loading your roadmap...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: '#5693C1' }}></div>
+            <p className="text-gray-600 mt-4">Loading your roadmap...</p>
           </div>
         </div>
       </div>
@@ -355,8 +355,8 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
   // ============================================================================
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12">
-        <div className="max-w-xl mx-auto px-4">
+      <div className="min-h-screen bg-white py-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 flex items-center justify-center gap-3">
@@ -384,7 +384,10 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
             {(error.type === 'no_readiness' || error.type === 'no_roadmap') && (
               <Link
                 href="/readiness"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors text-white"
+                style={{ backgroundColor: '#5693C1' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4682B4'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#5693C1'}
               >
                 Calculate Readiness First →
               </Link>
@@ -399,15 +402,15 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
   // Render: Main Page
   // ============================================================================
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-3xl mx-auto px-4">
+    <div className="min-h-screen bg-white py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 flex items-center justify-center gap-3">
             <span>🧭</span>
             Your Skill Roadmap
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-gray-600 mt-2 max-w-2xl mx-auto">
             A prioritized list of skills to focus on, based on your readiness analysis.
           </p>
         </div>
@@ -415,12 +418,12 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
         {roadmap && (
           <div>
             {/* Summary Card */}
-            <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
+            <div className="bg-white rounded-xl p-6 mb-6 shadow-sm border border-gray-200">
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
                   <p className="text-gray-500 text-sm mb-1">Based on your latest readiness score</p>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold text-indigo-600">
+                    <span className="text-4xl font-bold" style={{ color: '#5693C1' }}>
                       {roadmap.readiness_score || 0}%
                     </span>
                     <span className="text-gray-500 text-sm">
@@ -430,21 +433,21 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
                 </div>
                 
                 {/* Priority Stats */}
-                <div className="flex gap-4">
-                  <div className="text-center px-3">
-                    <div className="text-xl font-bold text-red-600">
+                <div className="flex gap-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-red-600">
                       {roadmap.summary?.high_priority || 0}
                     </div>
                     <div className="text-xs text-gray-500 uppercase tracking-wide">High</div>
                   </div>
-                  <div className="text-center px-3">
-                    <div className="text-xl font-bold text-amber-600">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-amber-600">
                       {roadmap.summary?.medium_priority || 0}
                     </div>
                     <div className="text-xs text-gray-500 uppercase tracking-wide">Medium</div>
                   </div>
-                  <div className="text-center px-3">
-                    <div className="text-xl font-bold text-green-600">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">
                       {roadmap.summary?.low_priority || 0}
                     </div>
                     <div className="text-xs text-gray-500 uppercase tracking-wide">Low</div>
@@ -453,12 +456,12 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
               </div>
               
               {/* Actions */}
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <div className="flex flex-wrap gap-2">
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <div className="flex flex-wrap gap-3">
                   <button
                     onClick={handleRefresh}
                     disabled={isRefreshing}
-                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 inline-flex items-center gap-2"
+                    className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2 text-sm"
                   >
                     {isRefreshing ? (
                       <>
@@ -472,20 +475,26 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
                   
                   <Link
                     href="/report"
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2"
+                    className="px-5 py-2.5 rounded-lg font-medium transition-colors inline-flex items-center gap-2 text-sm text-white"
+                    style={{ backgroundColor: '#5693C1' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4682B4'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#5693C1'}
                   >
                     📄 Export Report
                   </Link>
                   
                   <Link
                     href="/readiness"
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2"
+                    className="px-5 py-2.5 rounded-lg font-medium transition-colors inline-flex items-center gap-2 text-sm text-white"
+                    style={{ backgroundColor: '#5693C1' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4682B4'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#5693C1'}
                   >
                     🎯 View Readiness
                   </Link>
                 </div>
                 
-                <p className="text-xs text-gray-400 mt-2">
+                <p className="text-xs text-gray-400 mt-3">
                   Last generated: {new Date(roadmap.generated_at).toLocaleString()}
                 </p>
               </div>
@@ -496,14 +505,14 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
             
             {/* Fully Ready State */}
             {roadmap.edge_case?.is_fully_ready && (
-              <div className="text-center p-10 bg-green-100 rounded-2xl mb-8">
-                <div className="text-6xl mb-4">🎉</div>
+              <div className="text-center p-8 bg-green-50 rounded-xl mb-8 border border-green-200">
+                <div className="text-5xl mb-4">🎉</div>
                 <h2 className="text-2xl font-bold text-green-800 mb-3">You're Ready!</h2>
                 <p className="text-green-700 max-w-md mx-auto mb-6">
                   Congratulations! You've met all the skill requirements for{' '}
                   <strong>{roadmap.role_name}</strong>. Your readiness score reflects your preparation.
                 </p>
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-200 rounded-lg text-sm text-green-800">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 rounded-lg text-sm text-green-800">
                   ✓ All required skills met and validated
                 </div>
               </div>
@@ -511,49 +520,55 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
             
             {/* Priority Sections */}
             {!roadmap.edge_case?.is_fully_ready && (
-              <>
-                <PrioritySection
-                  title="High Priority"
-                  emoji="🔥"
-                  description="Focus on these first — they're blocking your readiness score."
-                  items={highPriorityItems}
-                  emptyMessage="✨ No high-priority items! Great job!"
-                  badgeColor="bg-red-100"
-                />
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-3">
+                  <PrioritySection
+                    title="High Priority"
+                    emoji="🔥"
+                    description="Focus on these first — they're blocking your readiness score."
+                    items={highPriorityItems}
+                    emptyMessage="✨ No high-priority items! Great job!"
+                    badgeColor="bg-red-100"
+                  />
+                </div>
                 
-                <PrioritySection
-                  title="Medium Priority"
-                  emoji="📈"
-                  description={
-                    roadmap.edge_case?.has_unvalidated_required 
-                      ? "These skills meet requirements but aren't mentor-validated yet. Validation could boost your score."
-                      : "Work on these next to strengthen your profile."
-                  }
-                  items={mediumPriorityItems}
-                  emptyMessage="No medium-priority items right now."
-                  badgeColor="bg-amber-100"
-                />
+                <div className="lg:col-span-2">
+                  <PrioritySection
+                    title="Medium Priority"
+                    emoji="📈"
+                    description={
+                      roadmap.edge_case?.has_unvalidated_required 
+                        ? "These skills meet requirements but aren't mentor-validated yet. Validation could boost your score."
+                        : "Work on these next to strengthen your profile."
+                    }
+                    items={mediumPriorityItems}
+                    emptyMessage="No medium-priority items right now."
+                    badgeColor="bg-amber-100"
+                  />
+                </div>
                 
-                <PrioritySection
-                  title="Low Priority"
-                  emoji="📋"
-                  description={
-                    roadmap.edge_case?.only_optional_gaps
-                      ? "These are optional enhancements — not required for your target role, but could differentiate you."
-                      : "Optional improvements — nice to have but not critical."
-                  }
-                  items={lowPriorityItems}
-                  emptyMessage="No low-priority items."
-                  badgeColor="bg-green-100"
-                />
-              </>
+                <div>
+                  <PrioritySection
+                    title="Low Priority"
+                    emoji="📋"
+                    description={
+                      roadmap.edge_case?.only_optional_gaps
+                        ? "These are optional enhancements — not required for your target role, but could differentiate you."
+                        : "Optional improvements — nice to have but not critical."
+                    }
+                    items={lowPriorityItems}
+                    emptyMessage="No low-priority items."
+                    badgeColor="bg-green-100"
+                  />
+                </div>
+              </div>
             )}
             
             {/* Rules Applied (Transparency) */}
             {roadmap.rules_applied && roadmap.rules_applied.length > 0 && (
-              <div className="mt-8 p-4 bg-gray-100 rounded-xl text-xs text-gray-500">
-                <strong>How this roadmap was generated:</strong>
-                <ul className="list-disc ml-4 mt-2">
+              <div className="mt-8 p-5 bg-gray-50 rounded-xl text-sm text-gray-600 border border-gray-200">
+                <strong className="text-gray-800">How this roadmap was generated:</strong>
+                <ul className="list-disc ml-5 mt-3 space-y-1">
                   {roadmap.rules_applied.map((rule, idx) => (
                     <li key={idx}>
                       {rule.description}: <strong>{rule.count}</strong> items
@@ -565,16 +580,19 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
             
             {/* No Items State */}
             {roadmap.items.length === 0 && !roadmap.edge_case?.is_fully_ready && (
-              <div className="text-center p-10 bg-gray-50 rounded-2xl">
+              <div className="text-center p-10 bg-gray-50 rounded-xl border border-gray-200">
                 <div className="text-5xl mb-4">📝</div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">No Roadmap Items</h3>
-                <p className="text-gray-600 mb-6">
+                <p className="text-gray-600 mb-6 max-w-md mx-auto">
                   Your roadmap is empty. This could mean you need to recalculate your readiness 
                   or there are no skill gaps detected.
                 </p>
                 <Link
                   href="/readiness"
-                  className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+                  className="px-6 py-3 rounded-lg font-medium transition-colors text-white inline-flex items-center gap-2"
+                  style={{ backgroundColor: '#5693C1' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4682B4'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#5693C1'}
                 >
                   Calculate Readiness
                 </Link>
@@ -584,16 +602,16 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
         )}
         
         {/* Navigation */}
-        <div className="flex justify-between mt-8">
+        <div className="flex flex-col sm:flex-row justify-between mt-8 gap-4">
           <Link
             href="/dashboard"
-            className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+            className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors text-center"
           >
             ← Back to Dashboard
           </Link>
           <Link
             href="/readiness"
-            className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+            className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors text-center"
           >
             Readiness Score →
           </Link>

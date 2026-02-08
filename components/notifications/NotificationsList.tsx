@@ -85,18 +85,16 @@ export default function NotificationsList({
   }, [notifications, unreadCount, onMarkAllAsRead]);
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="bg-white rounded-lg border border-gray-200">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Notifications
-            </h2>
+      <div className="p-6 border-b border-gray-200">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Notifications</h2>
             {unreadCount > 0 && (
-              <span className="px-2 py-0.5 text-xs font-medium bg-[#5693C1]/10 text-[#5693C1] rounded-full">
-                {unreadCount} unread
-              </span>
+              <p className="text-sm text-gray-600 mt-1">
+                {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
+              </p>
             )}
           </div>
           
@@ -104,79 +102,89 @@ export default function NotificationsList({
             <button
               onClick={handleMarkAllAsRead}
               disabled={isMarkingAll}
-              className="text-sm text-[#5693C1] hover:text-[#4a80b0] font-medium disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-2 rounded px-2 py-1"
+              className="px-4 py-2 bg-[#5693C1] hover:bg-[#4a82b0] text-white rounded-lg font-medium transition-colors disabled:opacity-50 text-sm inline-flex items-center gap-2 self-start"
             >
               {isMarkingAll ? (
-                <span className="flex items-center gap-2">
+                <>
                   <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  Marking...
-                </span>
-              ) : 'Mark all as read'}
+                  Marking all...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Mark all as read
+                </>
+              )}
             </button>
           )}
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex gap-4 mt-4">
+        <div className="flex gap-4 mt-6">
           <button
             onClick={() => setFilter('all')}
-            className={`text-sm font-medium pb-2 border-b-2 transition-colors focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-1 rounded-sm ${
+            className={`px-3 py-1.5 text-sm font-medium rounded transition-colors ${
               filter === 'all'
-                ? 'border-[#5693C1] text-[#5693C1]'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'bg-[#5693C1] text-white'
+                : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
-            All
+            All ({notifications.length})
           </button>
           <button
             onClick={() => setFilter('unread')}
-            className={`text-sm font-medium pb-2 border-b-2 transition-colors focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-1 rounded-sm ${
+            className={`px-3 py-1.5 text-sm font-medium rounded transition-colors ${
               filter === 'unread'
-                ? 'border-[#5693C1] text-[#5693C1]'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'bg-[#5693C1] text-white'
+                : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
-            Unread
+            Unread ({unreadCount})
           </button>
         </div>
       </div>
 
       {/* Notifications List */}
-      <div className="divide-y divide-gray-200">
+      <div>
         {filteredNotifications.length > 0 ? (
-          filteredNotifications.map((notification) => (
-            <NotificationItem
-              key={notification._id}
-              notification={notification}
-              onMarkAsRead={handleMarkAsRead}
-            />
-          ))
+          <div className="divide-y divide-gray-200">
+            {filteredNotifications.map((notification) => (
+              <div key={notification._id} className="hover:bg-gray-50 transition-colors">
+                <NotificationItem
+                  notification={notification}
+                  onMarkAsRead={handleMarkAsRead}
+                />
+              </div>
+            ))}
+          </div>
         ) : (
-          <div className="p-8 text-center">
-            <svg
-              className="w-12 h-12 mx-auto text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-              />
-            </svg>
-            <p className="mt-4 text-gray-600">
-              {filter === 'unread'
-                ? 'No unread notifications'
-                : 'No notifications yet'}
+          <div className="p-12 text-center">
+            <div className="w-16 h-16 mx-auto flex items-center justify-center rounded-full bg-gray-100 mb-4">
+              <svg
+                className="w-8 h-8 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                />
+              </svg>
+            </div>
+            <p className="text-gray-900 font-medium mb-2">
+              {filter === 'unread' ? 'No unread notifications' : 'No notifications yet'}
             </p>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="text-gray-600 text-sm">
               {filter === 'unread'
-                ? 'You\'re all caught up!'
+                ? "You're all caught up!"
                 : 'Notifications will appear here when you have updates'}
             </p>
           </div>
@@ -185,12 +193,12 @@ export default function NotificationsList({
 
       {/* Footer */}
       {filteredNotifications.length > 0 && (
-        <div className="p-4 border-t border-gray-200 bg-gray-50">
+        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-600">
-              Showing {filteredNotifications.length} notification{filteredNotifications.length !== 1 ? 's' : ''}
+              Showing {filteredNotifications.length} of {notifications.length} notifications
             </p>
-            <p className="text-sm text-[#5693C1] font-medium">
+            <p className="text-sm font-medium text-[#5693C1]">
               {unreadCount} unread
             </p>
           </div>
