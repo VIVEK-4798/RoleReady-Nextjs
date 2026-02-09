@@ -109,3 +109,72 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return handleError(error);
   }
 }
+
+/**
+ * PUT /api/users/[id]/education
+ * Update an existing education entry
+ */
+export async function PUT(request: NextRequest, context: RouteContext) {
+  try {
+    const { id } = await context.params;
+    
+    const session = await auth();
+    if (!session?.user) {
+      return errors.unauthorized();
+    }
+
+    const sessionUser = session.user as { id?: string; role?: string };
+    if (sessionUser.id !== id && sessionUser.role !== 'admin') {
+      return errors.forbidden('You can only update your own education');
+    }
+
+    const body = await request.json();
+
+    // Validate required fields
+    if (!body._id) {
+      return errors.badRequest('Education ID is required for update');
+    }
+    if (!body.institution || !body.degree) {
+      return errors.badRequest('Institution and degree are required');
+    }
+
+    await connectDB();
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      return errors.notFound('User not found');
+    }
+
+    // Find the education entry to update
+    if (!user.profile?.education) {
+      return errors.notFound('No education entries found');
+    }
+
+    const educationIndex = user.profile.education.findIndex(
+      (edu: any) => edu._id.toString() === body._id.toString()
+    );
+
+    if (educationIndex === -1) {
+      return errors.notFound('Education entry not found');
+    }
+
+    // Update the education entry
+    user.profile.education[educationIndex] = {
+      ...user.profile.education[educationIndex],
+      institution: body.institution,
+      degree: body.degree,
+      fieldOfStudy: body.fieldOfStudy,
+      startDate: body.startDate ? new Date(body.startDate) : undefined,
+      endDate: body.endDate ? new Date(body.endDate) : undefined,
+      grade: body.grade,
+      description: body.description,
+    };
+
+    await user.save();
+
+    return success(user.profile.education[educationIndex], 'Education updated successfully');
+  } catch (error) {
+    return handleError(error);
+  }
+}

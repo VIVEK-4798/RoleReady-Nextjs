@@ -102,6 +102,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     await connectDB();
 
+    // Deactivate all previous resumes for this user
+    await Resume.updateMany(
+      { userId: id, isActive: true },
+      { $set: { isActive: false } }
+    );
+
     // Get next version number
     const lastResume = await Resume.findOne({ userId: id })
       .sort({ version: -1 })
@@ -120,6 +126,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     await writeFile(filePath, buffer);
+    
+    console.log(`[resumeUpload] Saved file: ${filePath} (${buffer.length} bytes)`);
 
     // Create resume record
     const resume = await Resume.create({
@@ -133,6 +141,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
       isActive: true,
       version: nextVersion,
     });
+    
+    console.log(`[resumeUpload] Created resume record: ${resume._id}, status: ${resume.status}`);
 
     // Log activity for contribution graph
     await ActivityLog.logActivity(id, 'user', 'resume_uploaded', {

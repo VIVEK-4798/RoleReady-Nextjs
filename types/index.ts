@@ -106,6 +106,23 @@ export interface IUser {
   image?: string;
   isActive: boolean;
   assignedMentor?: Types.ObjectId; // Mentor assigned for skill validation
+  emailPreferences?: {
+    skillReminders: boolean;
+    roadmapUpdates: boolean;
+    weeklyReports: boolean;
+    mentorMessages: boolean;
+    systemAnnouncements: boolean;
+    marketingEmails: boolean;
+  };
+  privacySettings?: {
+    profileVisibility: 'public' | 'private' | 'connections';
+    showEmail: boolean;
+    showSkills: boolean;
+    showProgress: boolean;
+    allowMentorRequests: boolean;
+    showInSearch: boolean;
+  };
+  passwordChangedAt?: Date;
   profile: IUserProfile;
   createdAt: Date;
   updatedAt: Date;

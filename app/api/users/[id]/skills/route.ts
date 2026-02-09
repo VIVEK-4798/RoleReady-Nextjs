@@ -78,8 +78,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const skills = filteredSkills.map((us) => {
       const skill = us.skillId as unknown as PopulatedSkill;
       return {
+        _id: us._id.toString(),
         id: us._id,
         skillId: skill._id,
+        skillName: skill.name, // Frontend expects skillName
         name: skill.name,
         domain: skill.domain,
         category: skill.domain, // Map domain to category for frontend compatibility
@@ -91,6 +93,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         validationStatus: us.validationStatus,
         validatedBy: us.validatedBy,
         validatedAt: us.validatedAt,
+        rejectionReason: us.rejectionReason,
       };
     });
 

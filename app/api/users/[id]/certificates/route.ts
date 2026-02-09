@@ -107,3 +107,80 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return handleError(error);
   }
 }
+
+/**
+ * PUT /api/users/[id]/certificates
+ * Update an existing certificate entry
+ */
+export async function PUT(request: NextRequest, context: RouteContext) {
+  try {
+    const { id } = await context.params;
+    
+    const session = await auth();
+    if (!session?.user) {
+      return errors.unauthorized();
+    }
+
+    const sessionUser = session.user as { id?: string; role?: string };
+    if (sessionUser.id !== id && sessionUser.role !== 'admin') {
+      return errors.forbidden('You can only update your own certificates');
+    }
+
+    const body = await request.json();
+
+    // Validate required fields
+    if (body._id === undefined && body._id === null) {
+      return errors.badRequest('Certificate ID is required for update');
+    }
+    if (!body.name) {
+      return errors.badRequest('Certificate name is required');
+    }
+
+    await connectDB();
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      return errors.notFound('User not found');
+    }
+
+    // Find the certificate entry to update
+    if (!user.profile?.certificates) {
+      return errors.notFound('No certificate entries found');
+    }
+
+    // Handle both index-based and _id-based updates
+    let certificateIndex = -1;
+    if (typeof body._id === 'number') {
+      // Index-based update
+      certificateIndex = body._id;
+      if (certificateIndex < 0 || certificateIndex >= user.profile.certificates.length) {
+        return errors.notFound('Certificate entry not found');
+      }
+    } else {
+      // _id-based update
+      certificateIndex = user.profile.certificates.findIndex(
+        (cert: any) => cert._id && cert._id.toString() === body._id.toString()
+      );
+      if (certificateIndex === -1) {
+        return errors.notFound('Certificate entry not found');
+      }
+    }
+
+    // Update the certificate entry
+    user.profile.certificates[certificateIndex] = {
+      ...user.profile.certificates[certificateIndex],
+      name: body.name,
+      issuer: body.issuer,
+      issueDate: body.issueDate ? new Date(body.issueDate) : undefined,
+      expiryDate: body.expiryDate ? new Date(body.expiryDate) : undefined,
+      url: body.url,
+    };
+
+    await user.save();
+
+    return success(user.profile.certificates[certificateIndex], 'Certificate updated successfully');
+  } catch (error) {
+    return handleError(error);
+  }
+}

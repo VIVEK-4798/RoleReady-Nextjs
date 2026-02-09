@@ -7,15 +7,19 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "create-admin": "tsx scripts/create-admin.ts"
+    "create-admin": "tsx scripts/create-admin.ts",
+    "seed-skills": "tsx scripts/seedSkills.ts"
   },
   "dependencies": {
     "@types/uuid": "^10.0.0",
     "bcryptjs": "^3.0.3",
     "html2pdf.js": "^0.14.0",
+    "mammoth": "^1.11.0",
     "mongoose": "^9.1.5",
     "next": "16.1.6",
     "next-auth": "^5.0.0-beta.30",
+    "pdf-parse": "^1.1.1",
+    "pdf2json": "^4.0.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "uuid": "^13.0.0"

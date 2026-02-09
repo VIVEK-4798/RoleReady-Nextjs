@@ -110,3 +110,73 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return handleError(error);
   }
 }
+
+/**
+ * PUT /api/users/[id]/experience
+ * Update an existing experience entry
+ */
+export async function PUT(request: NextRequest, context: RouteContext) {
+  try {
+    const { id } = await context.params;
+    
+    const session = await auth();
+    if (!session?.user) {
+      return errors.unauthorized();
+    }
+
+    const sessionUser = session.user as { id?: string; role?: string };
+    if (sessionUser.id !== id && sessionUser.role !== 'admin') {
+      return errors.forbidden('You can only update your own experience');
+    }
+
+    const body = await request.json();
+
+    // Validate required fields
+    if (!body._id) {
+      return errors.badRequest('Experience ID is required for update');
+    }
+    if (!body.company || !body.title) {
+      return errors.badRequest('Company and title are required');
+    }
+
+    await connectDB();
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      return errors.notFound('User not found');
+    }
+
+    // Find the experience entry to update
+    if (!user.profile?.experience) {
+      return errors.notFound('No experience entries found');
+    }
+
+    const experienceIndex = user.profile.experience.findIndex(
+      (exp: any) => exp._id.toString() === body._id.toString()
+    );
+
+    if (experienceIndex === -1) {
+      return errors.notFound('Experience entry not found');
+    }
+
+    // Update the experience entry
+    user.profile.experience[experienceIndex] = {
+      ...user.profile.experience[experienceIndex],
+      company: body.company,
+      title: body.title,
+      location: body.location,
+      startDate: body.startDate ? new Date(body.startDate) : undefined,
+      endDate: body.endDate ? new Date(body.endDate) : undefined,
+      isCurrent: body.isCurrent || false,
+      description: body.description,
+      skills: body.skills || [],
+    };
+
+    await user.save();
+
+    return success(user.profile.experience[experienceIndex], 'Experience updated successfully');
+  } catch (error) {
+    return handleError(error);
+  }
+}

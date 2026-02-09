@@ -110,3 +110,73 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return handleError(error);
   }
 }
+
+/**
+ * PUT /api/users/[id]/projects
+ * Update an existing project entry
+ */
+export async function PUT(request: NextRequest, context: RouteContext) {
+  try {
+    const { id } = await context.params;
+    
+    const session = await auth();
+    if (!session?.user) {
+      return errors.unauthorized();
+    }
+
+    const sessionUser = session.user as { id?: string; role?: string };
+    if (sessionUser.id !== id && sessionUser.role !== 'admin') {
+      return errors.forbidden('You can only update your own projects');
+    }
+
+    const body = await request.json();
+
+    // Validate required fields
+    if (!body._id) {
+      return errors.badRequest('Project ID is required for update');
+    }
+    if (!body.name) {
+      return errors.badRequest('Project name is required');
+    }
+
+    await connectDB();
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      return errors.notFound('User not found');
+    }
+
+    // Find the project entry to update
+    if (!user.profile?.projects) {
+      return errors.notFound('No project entries found');
+    }
+
+    const projectIndex = user.profile.projects.findIndex(
+      (proj: any) => proj._id.toString() === body._id.toString()
+    );
+
+    if (projectIndex === -1) {
+      return errors.notFound('Project entry not found');
+    }
+
+    // Update the project entry
+    user.profile.projects[projectIndex] = {
+      ...user.profile.projects[projectIndex],
+      name: body.name,
+      description: body.description,
+      url: body.url,
+      githubUrl: body.githubUrl,
+      technologies: body.technologies || [],
+      startDate: body.startDate ? new Date(body.startDate) : undefined,
+      endDate: body.endDate ? new Date(body.endDate) : undefined,
+      isOngoing: body.isOngoing || false,
+    };
+
+    await user.save();
+
+    return success(user.profile.projects[projectIndex], 'Project updated successfully');
+  } catch (error) {
+    return handleError(error);
+  }
+}

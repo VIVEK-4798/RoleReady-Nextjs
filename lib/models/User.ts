@@ -158,6 +158,48 @@ const UserSchema = new Schema<IUserDocument>(
       type: Schema.Types.ObjectId,
       ref: 'User',
     },
+    // Email notification preferences
+    emailPreferences: {
+      type: {
+        skillReminders: { type: Boolean, default: true },
+        roadmapUpdates: { type: Boolean, default: true },
+        weeklyReports: { type: Boolean, default: true },
+        mentorMessages: { type: Boolean, default: true },
+        systemAnnouncements: { type: Boolean, default: true },
+        marketingEmails: { type: Boolean, default: false },
+      },
+      default: () => ({
+        skillReminders: true,
+        roadmapUpdates: true,
+        weeklyReports: true,
+        mentorMessages: true,
+        systemAnnouncements: true,
+        marketingEmails: false,
+      }),
+    },
+    // Privacy and visibility settings
+    privacySettings: {
+      type: {
+        profileVisibility: { type: String, enum: ['public', 'private', 'connections'], default: 'public' },
+        showEmail: { type: Boolean, default: false },
+        showSkills: { type: Boolean, default: true },
+        showProgress: { type: Boolean, default: true },
+        allowMentorRequests: { type: Boolean, default: true },
+        showInSearch: { type: Boolean, default: true },
+      },
+      default: () => ({
+        profileVisibility: 'public',
+        showEmail: false,
+        showSkills: true,
+        showProgress: true,
+        allowMentorRequests: true,
+        showInSearch: true,
+      }),
+    },
+    // Track when password was last changed
+    passwordChangedAt: {
+      type: Date,
+    },
     profile: {
       type: ProfileSchema,
       default: () => ({

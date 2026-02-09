@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useAuth } from '@/hooks';
 import { SkeletonPage, useToast } from '@/components/ui';
+import SkillSuggestionsReview from './SkillSuggestionsReview';
 
 // Types
 interface ProfileData {
@@ -120,6 +121,80 @@ export default function NewProfileContent() {
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const [editData, setEditData] = useState<Record<string, unknown>>({});
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Resume upload state
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploadingResume, setIsUploadingResume] = useState(false);
+
+  // Helper function to format dates
+  const formatDate = (dateString: string | Date | undefined): string => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+    } catch {
+      return String(dateString);
+    }
+  };
+
+  // Handle resume file selection
+  const handleResumeFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      ];
+      
+      if (!allowedTypes.includes(file.type)) {
+        addToast('error', 'Please upload a PDF or Word document');
+        return;
+      }
+      
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        addToast('error', 'File size must be less than 5MB');
+        return;
+      }
+      
+      setSelectedFile(file);
+    }
+  };
+
+  // Handle resume upload
+  const handleResumeUpload = async () => {
+    if (!selectedFile || !user?.id) return;
+    
+    try {
+      setIsUploadingResume(true);
+      
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      
+      const response = await fetch(`/api/users/${user.id}/resume`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        addToast('success', 'Resume uploaded successfully');
+        setActiveModal(null);
+        setSelectedFile(null);
+        await fetchProfile(); // Refresh profile data
+      } else {
+        addToast('error', data.error || 'Failed to upload resume');
+      }
+    } catch (error) {
+      console.error('Resume upload error:', error);
+      addToast('error', 'Failed to upload resume');
+    } finally {
+      setIsUploadingResume(false);
+    }
+  };
 
   // Fetch all profile data
   const fetchProfile = useCallback(async () => {
@@ -155,8 +230,9 @@ export default function NewProfileContent() {
         };
         setProfile(profileWithDefaults);
       }
-      if (skillsData.success && skillsData.skills) {
-        setSkills(skillsData.skills);
+      if (skillsData.success && skillsData.data) {
+        console.log('[PROFILE-FETCH] Skills data:', skillsData.data);
+        setSkills(skillsData.data.skills || []);
       }
       if (resumeData.success && Array.isArray(resumeData.data) && resumeData.data.length > 0) {
         const latestResume = resumeData.data[0];
@@ -243,6 +319,7 @@ export default function NewProfileContent() {
         case 'certificate':
           endpoint = `/api/users/${user.id}/certificates`;
           body = {
+            _id: data._id,
             name: data.title,
             issuer: data.organization,
             issueDate: data.issuedDate,
@@ -393,6 +470,9 @@ export default function NewProfileContent() {
     return <SkeletonPage />;
   }
 
+  console.log('[PROFILE-RENDER] Skills count:', skills.length);
+  console.log('[PROFILE-RENDER] Skills data:', skills);
+
   const primaryEducation = profile?.profile?.education?.[0];
   
   return (
@@ -521,9 +601,12 @@ export default function NewProfileContent() {
                   setEditData({ bio: profile?.profile?.bio || '' });
                   setActiveModal('about');
                 }}
-                className="text-sm font-medium text-[#5693C1] hover:text-[#4a82b0] transition-colors"
+                className="p-1.5 text-[#5693C1] hover:text-[#4a82b0] hover:bg-blue-50 rounded-lg transition-colors"
+                title="Edit About"
               >
-                Edit
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
               </button>
             </div>
             
@@ -538,15 +621,59 @@ export default function NewProfileContent() {
             )}
           </div>
 
+          {/* Resume Section */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Resume</h3>
+              <button
+                onClick={() => setActiveModal('resume')}
+                className="p-1.5 text-[#5693C1] hover:text-[#4a82b0] hover:bg-blue-50 rounded-lg transition-colors"
+                title={resume?.hasResume ? 'Update Resume' : 'Upload Resume'}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+              </button>
+            </div>
+            
+            {resume?.hasResume ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <svg className="w-10 h-10 text-[#5693C1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900">{resume.fileName}</p>
+                    {resume.uploadedAt && (
+                      <p className="text-sm text-gray-500">
+                        Uploaded: {new Date(resume.uploadedAt).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Extract Skills Button - Always visible when resume exists */}
+                <SkillSuggestionsReview onSkillsAdded={() => fetchProfile()} />
+              </div>
+            ) : (
+              <div className="text-gray-500 italic">
+                <p>Upload your resume for better job matching</p>
+              </div>
+            )}
+          </div>
+
           {/* Skills Section */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Skills</h3>
               <button
                 onClick={() => router.push('/dashboard/skills')}
-                className="text-sm font-medium text-[#5693C1] hover:text-[#4a82b0] transition-colors"
+                className="p-1.5 text-[#5693C1] hover:text-[#4a82b0] hover:bg-blue-50 rounded-lg transition-colors"
+                title={skills.length > 0 ? 'Manage Skills' : 'Add Skills'}
               >
-                {skills.length > 0 ? 'Manage' : 'Add Skills'}
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
               </button>
             </div>
             
@@ -557,7 +684,7 @@ export default function NewProfileContent() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-gray-900">{skill.skillName}</span>
-                        {skill.validationStatus === 'approved' && (
+                        {skill.validationStatus === 'validated' && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 text-green-700 rounded text-xs font-medium">
                             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -573,6 +700,11 @@ export default function NewProfileContent() {
                         {skill.validationStatus === 'rejected' && (
                           <span className="inline-flex items-center px-2 py-0.5 bg-red-50 text-red-700 rounded text-xs font-medium">
                             Rejected
+                          </span>
+                        )}
+                        {skill.validationStatus === 'none' && (
+                          <span className="inline-flex items-center px-2 py-0.5 bg-gray-50 text-gray-600 rounded text-xs font-medium">
+                            Not Validated
                           </span>
                         )}
                       </div>
@@ -622,9 +754,12 @@ export default function NewProfileContent() {
                   }
                   setActiveModal('experience');
                 }}
-                className="text-sm font-medium text-[#5693C1] hover:text-[#4a82b0] transition-colors"
+                className="p-1.5 text-[#5693C1] hover:text-[#4a82b0] hover:bg-blue-50 rounded-lg transition-colors"
+                title={profile?.profile?.experience?.length ? 'Edit Experience' : 'Add Experience'}
               >
-                {profile?.profile?.experience?.length ? 'Edit' : 'Add Experience'}
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={profile?.profile?.experience?.length ? "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" : "M12 6v6m0 0v6m0-6h6m-6 0H6"} />
+                </svg>
               </button>
             </div>
             
@@ -640,7 +775,7 @@ export default function NewProfileContent() {
                       </div>
                       {exp.startDate && (
                         <span className="text-sm text-gray-500">
-                          {exp.startDate} {exp.endDate ? `- ${exp.endDate}` : '- Present'}
+                          {formatDate(exp.startDate)} {exp.endDate ? `- ${formatDate(exp.endDate)}` : '- Present'}
                         </span>
                       )}
                     </div>
@@ -689,9 +824,12 @@ export default function NewProfileContent() {
                   }
                   setActiveModal('education');
                 }}
-                className="text-sm font-medium text-[#5693C1] hover:text-[#4a82b0] transition-colors"
+                className="p-1.5 text-[#5693C1] hover:text-[#4a82b0] hover:bg-blue-50 rounded-lg transition-colors"
+                title={profile?.profile?.education?.length ? 'Edit Education' : 'Add Education'}
               >
-                {profile?.profile?.education?.length ? 'Edit' : 'Add Education'}
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={profile?.profile?.education?.length ? "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" : "M12 6v6m0 0v6m0-6h6m-6 0H6"} />
+                </svg>
               </button>
             </div>
             
@@ -707,7 +845,7 @@ export default function NewProfileContent() {
                       </div>
                       {edu.startDate && (
                         <span className="text-sm text-gray-500">
-                          {edu.startDate} {edu.endDate ? `- ${edu.endDate}` : '- Present'}
+                          {formatDate(edu.startDate)} {edu.endDate ? `- ${formatDate(edu.endDate)}` : '- Present'}
                         </span>
                       )}
                     </div>
@@ -724,39 +862,6 @@ export default function NewProfileContent() {
             )}
           </div>
 
-          {/* Resume Section */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Resume</h3>
-              <button
-                onClick={() => setActiveModal('resume')}
-                className="text-sm font-medium text-[#5693C1] hover:text-[#4a82b0] transition-colors"
-              >
-                {resume?.hasResume ? 'Update' : 'Upload'}
-              </button>
-            </div>
-            
-            {resume?.hasResume ? (
-              <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <svg className="w-10 h-10 text-[#5693C1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">{resume.fileName}</p>
-                  {resume.uploadedAt && (
-                    <p className="text-sm text-gray-500">
-                      Uploaded: {new Date(resume.uploadedAt).toLocaleDateString()}
-                    </p>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="text-gray-500 italic">
-                <p>Upload your resume for better job matching</p>
-              </div>
-            )}
-          </div>
-
           {/* Certificates Section */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
@@ -766,9 +871,12 @@ export default function NewProfileContent() {
                   setEditData({});
                   setActiveModal('certificate');
                 }}
-                className="text-sm font-medium text-[#5693C1] hover:text-[#4a82b0] transition-colors"
+                className="p-1.5 text-[#5693C1] hover:text-[#4a82b0] hover:bg-blue-50 rounded-lg transition-colors"
+                title="Add Certificate"
               >
-                Add Certificate
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
               </button>
             </div>
             
@@ -798,9 +906,12 @@ export default function NewProfileContent() {
                           });
                           setActiveModal('certificate');
                         }}
-                        className="text-xs font-medium text-[#5693C1] hover:text-[#4a82b0] transition-colors whitespace-nowrap"
+                        className="p-1.5 text-[#5693C1] hover:text-[#4a82b0] hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Edit Certificate"
                       >
-                        Edit
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
                       </button>
                     </div>
                   </div>
@@ -822,9 +933,12 @@ export default function NewProfileContent() {
                   setEditData({});
                   setActiveModal('project');
                 }}
-                className="text-sm font-medium text-[#5693C1] hover:text-[#4a82b0] transition-colors"
+                className="p-1.5 text-[#5693C1] hover:text-[#4a82b0] hover:bg-blue-50 rounded-lg transition-colors"
+                title="Add Project"
               >
-                Add Project
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
               </button>
             </div>
             
@@ -851,9 +965,12 @@ export default function NewProfileContent() {
                               });
                               setActiveModal('project');
                             }}
-                            className="text-xs font-medium text-[#5693C1] hover:text-[#4a82b0] transition-colors whitespace-nowrap"
+                            className="p-1.5 text-[#5693C1] hover:text-[#4a82b0] hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Edit Project"
                           >
-                            Edit
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
                           </button>
                         </div>
                         {project.description && (
@@ -870,7 +987,7 @@ export default function NewProfileContent() {
                         )}
                         {project.startDate && (
                           <p className="text-sm text-gray-500 mt-2">
-                            {project.startDate} {project.endDate ? `- ${project.endDate}` : project.isOngoing ? '- Ongoing' : ''}
+                            {formatDate(project.startDate)} {project.endDate ? `- ${formatDate(project.endDate)}` : project.isOngoing ? '- Ongoing' : ''}
                           </p>
                         )}
                       </div>
@@ -894,9 +1011,12 @@ export default function NewProfileContent() {
                   setEditData({});
                   setActiveModal('achievement');
                 }}
-                className="text-sm font-medium text-[#5693C1] hover:text-[#4a82b0] transition-colors"
+                className="p-1.5 text-[#5693C1] hover:text-[#4a82b0] hover:bg-blue-50 rounded-lg transition-colors"
+                title="Add Achievement"
               >
-                Add Achievement
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
               </button>
             </div>
             
@@ -908,7 +1028,7 @@ export default function NewProfileContent() {
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="font-medium text-gray-900">{achievement.title}</h4>
-                          <div className="flex gap-2">
+                          <div className="flex gap-1">
                             <button
                               onClick={() => {
                                 // Format date for date input (YYYY-MM-DD)
@@ -927,15 +1047,21 @@ export default function NewProfileContent() {
                                 });
                                 setActiveModal('achievement');
                               }}
-                              className="text-xs font-medium text-[#5693C1] hover:text-[#4a82b0] transition-colors"
+                              className="p-1.5 text-[#5693C1] hover:text-[#4a82b0] hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Edit Achievement"
                             >
-                              Edit
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
                             </button>
                             <button
                               onClick={() => handleDeleteAchievement(achievement._id || index)}
-                              className="text-xs font-medium text-red-600 hover:text-red-800 transition-colors"
+                              className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Delete Achievement"
                             >
-                              Delete
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
                             </button>
                           </div>
                         </div>
@@ -964,6 +1090,99 @@ export default function NewProfileContent() {
         </div>
 
         {/* ===== MODALS ===== */}
+        {/* Resume Modal */}
+        {activeModal === 'resume' && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {resume?.hasResume ? 'Update Resume' : 'Upload Resume'}
+                  </h3>
+                  <button onClick={() => {
+                    setActiveModal(null);
+                    setSelectedFile(null);
+                  }} className="text-gray-400 hover:text-gray-500">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Choose Resume File
+                    </label>
+                    <div className="flex items-center justify-center w-full">
+                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <svg className="w-8 h-8 mb-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                          </svg>
+                          {selectedFile ? (
+                            <p className="text-sm text-gray-700 font-medium">{selectedFile.name}</p>
+                          ) : (
+                            <>
+                              <p className="mb-1 text-sm text-gray-500"><span className="font-semibold">Click to upload</span></p>
+                              <p className="text-xs text-gray-500">PDF or Word (Max 5MB)</p>
+                            </>
+                          )}
+                        </div>
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                          onChange={handleResumeFileChange}
+                        />
+                      </label>
+                    </div>
+                    {selectedFile && (
+                      <div className="mt-2 text-xs text-gray-500">
+                        Size: {(selectedFile.size / 1024).toFixed(2)} KB
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <div className="flex">
+                      <svg className="w-5 h-5 text-blue-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                      <div className="text-xs text-blue-700">
+                        <p className="font-medium mb-1">Supported formats:</p>
+                        <ul className="list-disc list-inside space-y-0.5">
+                          <li>PDF (.pdf)</li>
+                          <li>Microsoft Word (.doc, .docx)</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                  <button
+                    onClick={() => {
+                      setActiveModal(null);
+                      setSelectedFile(null);
+                    }}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium flex-1 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleResumeUpload}
+                    disabled={!selectedFile || isUploadingResume}
+                    className="px-4 py-2 bg-[#5693C1] hover:bg-[#4a82b0] text-white rounded-lg font-medium flex-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isUploadingResume ? 'Uploading...' : 'Upload Resume'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* About Modal */}
         {activeModal === 'about' && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

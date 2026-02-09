@@ -90,7 +90,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 /**
  * DELETE /api/users/[id]
  * 
- * Soft delete - sets isActive to false
+ * Query param: ?permanent=true for hard delete (account deletion)
+ * Default: Soft delete - sets isActive to false
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
@@ -102,17 +103,51 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     await connectDB();
 
-    const user = await User.findByIdAndUpdate(
-      id,
-      { isActive: false },
-      { new: true }
-    );
+    // Check if permanent deletion is requested
+    const url = new URL(request.url);
+    const isPermanent = url.searchParams.get('permanent') === 'true';
 
-    if (!user) {
-      return errors.notFound('User');
+    if (isPermanent) {
+      // Hard delete: Remove user and all associated data
+      const user = await User.findById(id);
+      if (!user) {
+        return errors.notFound('User');
+      }
+
+      // Import models dynamically to avoid circular dependencies
+      const { default: UserSkill } = await import('@/lib/models/UserSkill');
+      const { default: Roadmap } = await import('@/lib/models/Roadmap');
+      const { default: ReadinessSnapshot } = await import('@/lib/models/ReadinessSnapshot');
+      const { default: Resume } = await import('@/lib/models/Resume');
+      const { default: TargetRole } = await import('@/lib/models/TargetRole');
+
+      // Delete all user-related data in parallel
+      await Promise.all([
+        UserSkill.deleteMany({ user_id: id }),
+        Roadmap.deleteMany({ user_id: id }),
+        ReadinessSnapshot.deleteMany({ user_id: id }),
+        TargetRole.deleteMany({ user_id: id }),
+        Resume.deleteMany({ user_id: id }),
+      ]);
+
+      // Finally, delete the user account
+      await User.findByIdAndDelete(id);
+
+      return successResponse(null, 'Account permanently deleted');
+    } else {
+      // Soft delete: Set isActive to false
+      const user = await User.findByIdAndUpdate(
+        id,
+        { isActive: false },
+        { new: true }
+      );
+
+      if (!user) {
+        return errors.notFound('User');
+      }
+
+      return successResponse(null, 'User deleted successfully');
     }
-
-    return successResponse(null, 'User deleted successfully');
   } catch (error) {
     console.error('DELETE /api/users/[id] error:', error);
     return errors.serverError('Failed to delete user');
