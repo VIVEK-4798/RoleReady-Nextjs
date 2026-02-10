@@ -1,9 +1,3 @@
-/**
- * Login Form Component
- * 
- * Client component handling login form state and submission.
- */
-
 'use client';
 
 import { useState, Suspense } from 'react';

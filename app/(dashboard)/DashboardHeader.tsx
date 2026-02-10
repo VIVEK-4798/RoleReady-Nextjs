@@ -102,22 +102,15 @@ export default function DashboardHeader() {
           <NotificationBell />
         </div>
 
-        {/* User Avatar Dropdown */}
+        {/* User Profile Section - Enhanced */}
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center gap-3 hover:opacity-80 transition-opacity group"
+            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-all group"
             aria-label="User menu"
           >
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium text-gray-900">
-                {user?.name || 'User'}
-              </p>
-              <p className="text-xs text-gray-500">
-                {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User'}
-              </p>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#5693C1] to-[#4a80b0] flex items-center justify-center text-white font-medium overflow-hidden ring-2 ring-white ring-offset-2 group-hover:ring-[#5693C1] transition-all relative">
+            {/* User Avatar */}
+            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#5693C1] to-[#4a80b0] flex items-center justify-center text-white font-medium overflow-hidden ring-2 ring-white ring-offset-2 group-hover:ring-[#5693C1] transition-all relative shrink-0">
               {user?.image ? (
                 <Image 
                   key={user.image}
@@ -134,6 +127,26 @@ export default function DashboardHeader() {
                 </span>
               )}
             </div>
+            
+            {/* User Info - Always visible */}
+            <div className="text-left">
+              <p className="text-sm font-semibold text-gray-900 leading-tight">
+                {user?.name || 'User'}
+              </p>
+              <p className="text-xs text-gray-500 leading-tight mt-0.5 max-w-[150px] truncate">
+                {user?.email || 'user@example.com'}
+              </p>
+            </div>
+
+            {/* Dropdown Arrow */}
+            <svg 
+              className={`w-4 h-4 text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
           </button>
 
           {/* Dropdown Menu */}
