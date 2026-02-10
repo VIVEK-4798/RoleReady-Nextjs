@@ -100,10 +100,11 @@ export interface IUser {
   _id: Types.ObjectId;
   name: string;
   email: string;
-  password: string;
+  password?: string | null; // Optional for OAuth users
   role: UserRole;
   mobile?: string;
   image?: string;
+  emailVerified?: Date | null; // Set for OAuth users, null for credentials users
   isActive: boolean;
   assignedMentor?: Types.ObjectId; // Mentor assigned for skill validation
   emailPreferences?: {

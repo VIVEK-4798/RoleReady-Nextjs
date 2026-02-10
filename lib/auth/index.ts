@@ -13,3 +13,5 @@ export {
   hasRole,
   isAuthenticated,
 } from './utils';
+export { signInWithGoogle, getRedirectUrlByRole } from './client';
+

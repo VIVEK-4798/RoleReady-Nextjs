@@ -130,9 +130,15 @@ const UserSchema = new Schema<IUserDocument>(
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
+      // Optional for OAuth users (Google, etc)
       minlength: [6, 'Password must be at least 6 characters'],
       select: false, // Don't include password in queries by default
+      default: null,
+    },
+    emailVerified: {
+      type: Date,
+      // Set for OAuth users, null for credentials users until verified
+      default: null,
     },
     role: {
       type: String,
@@ -247,7 +253,11 @@ UserSchema.index({ name: 'text' });
 UserSchema.methods.comparePassword = async function (
   candidatePassword: string
 ): Promise<boolean> {
-  // Placeholder - will be implemented with bcrypt in auth phase
+  // OAuth users without password cannot use password-based auth
+  if (!this.password) {
+    return false;
+  }
+  
   const bcrypt = await import('bcryptjs');
   return bcrypt.compare(candidatePassword, this.password);
 };
@@ -258,10 +268,11 @@ UserSchema.methods.comparePassword = async function (
 
 /**
  * Hash password before saving
+ * Only hash if password is modified and exists (for OAuth users without password)
  */
 UserSchema.pre('save', async function () {
-  // Only hash if password is modified
-  if (!this.isModified('password')) {
+  // Only hash if password is modified and not null
+  if (!this.isModified('password') || !this.password) {
     return;
   }
 
