@@ -67,7 +67,7 @@ export const authConfig: NextAuthConfig = {
           // Lazy load database modules to avoid Edge Runtime issues
           const connectDB = (await import('@/lib/db/mongoose')).default;
           const { User } = await import('@/lib/models');
-          
+
           await connectDB();
 
           // Find user by email and role, include password for verification
@@ -112,14 +112,14 @@ export const authConfig: NextAuthConfig = {
       console.log('=== SIGNIN CALLBACK START ===');
       console.log('signIn - user:', { id: user.id, email: user.email, name: user.name });
       console.log('signIn - account provider:', account?.provider);
-      
+
       // Only process OAuth providers
       if (account?.provider === 'google') {
         try {
           // Lazy load database modules
           const connectDB = (await import('@/lib/db/mongoose')).default;
           const { User } = await import('@/lib/models');
-          
+
           await connectDB();
           console.log('signIn - Database connected');
 
@@ -146,7 +146,7 @@ export const authConfig: NextAuthConfig = {
               await existingUser.save();
               console.log('signIn - Updated user image');
             }
-            
+
             // Update user ID for NextAuth
             user.id = existingUser._id.toString();
             console.log('signIn - Returning existing user:', { id: user.id, email: user.email });
@@ -175,7 +175,12 @@ export const authConfig: NextAuthConfig = {
           console.log('=== SIGNIN CALLBACK END ===');
           return true;
         } catch (error) {
+          console.error('=== SIGNIN CALLBACK ERROR ===');
           console.error('signIn - Google OAuth error:', error);
+          console.error('Error name:', error instanceof Error ? error.name : 'Unknown');
+          console.error('Error message:', error instanceof Error ? error.message : String(error));
+          console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+          console.error('=== END SIGNIN CALLBACK ERROR ===');
           return false;
         }
       }
@@ -191,23 +196,23 @@ export const authConfig: NextAuthConfig = {
       if (user) {
         console.log('jwt - User object:', { id: user.id, email: user.email, name: user.name });
       }
-      
+
       // Always fetch from database to ensure we have the latest role
       const email = token.email || (user?.email);
-      
+
       if (email) {
         try {
           console.log('jwt - Fetching user from DB with email:', email);
           const connectDB = (await import('@/lib/db/mongoose')).default;
           const { User } = await import('@/lib/models');
-          
+
           await connectDB();
-          
+
           const dbUser = await User.findOne({
             email: email.toLowerCase(),
             isActive: true,
           });
-          
+
           if (dbUser) {
             console.log('jwt - User found in DB:', { id: dbUser._id.toString(), role: dbUser.role, name: dbUser.name });
             token.id = dbUser._id.toString();
@@ -222,19 +227,19 @@ export const authConfig: NextAuthConfig = {
           console.error('jwt - Database fetch error:', error);
         }
       }
-      
+
       // Fallback: if still no role, default to user
       if (!token.role) {
         console.log('jwt - No role found, defaulting to user');
         token.role = 'user';
       }
-      
+
       // Handle session updates (e.g., after profile image upload)
       if (trigger === 'update' && session?.image) {
         token.image = session.image;
         console.log('jwt - Session image updated');
       }
-      
+
       console.log('jwt - Final token:', { id: token.id, role: token.role, email: token.email });
       console.log('=== JWT CALLBACK END ===');
       return token as ExtendedJWT;
@@ -243,7 +248,7 @@ export const authConfig: NextAuthConfig = {
       console.log('=== SESSION CALLBACK START ===');
       console.log('session - Token:', { id: token.id, role: token.role, email: token.email });
       console.log('session - User before:', session.user);
-      
+
       const extToken = token as ExtendedJWT;
       if (session.user) {
         // Ensure all properties are set
@@ -254,12 +259,12 @@ export const authConfig: NextAuthConfig = {
         session.user.role = extToken.role || 'user';
         // @ts-ignore - Add image property
         session.user.image = extToken.image || session.user.image;
-        
+
         console.log('session - User after:', { id: session.user.id, role: (session.user as any).role, email: session.user.email });
       } else {
         console.warn('session - No user in session');
       }
-      
+
       console.log('=== SESSION CALLBACK END ===');
       return session;
     },
@@ -331,6 +336,7 @@ export const authConfig: NextAuthConfig = {
     strategy: 'jwt',
     maxAge: 7 * 24 * 60 * 60, // 7 days
   },
+  debug: true, // Enable debug mode to see detailed logs
   trustHost: true,
 };
 

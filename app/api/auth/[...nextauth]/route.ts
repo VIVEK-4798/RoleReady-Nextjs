@@ -11,6 +11,19 @@
  */
 
 import { handlers } from '@/lib/auth';
+import { NextRequest } from 'next/server';
 
-export const GET = handlers.GET;
-export const POST = handlers.POST;
+// Wrap handlers with logging
+export async function GET(request: NextRequest) {
+    console.log('🔵 NextAuth GET:', request.nextUrl.pathname + request.nextUrl.search);
+    const response = await handlers.GET(request);
+    console.log('🔵 NextAuth GET Response:', response.status);
+    return response;
+}
+
+export async function POST(request: NextRequest) {
+    console.log('🔵 NextAuth POST:', request.nextUrl.pathname + request.nextUrl.search);
+    const response = await handlers.POST(request);
+    console.log('🔵 NextAuth POST Response:', response.status);
+    return response;
+}

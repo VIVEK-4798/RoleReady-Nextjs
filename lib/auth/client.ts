@@ -24,31 +24,13 @@ export async function signInWithGoogle(
 ): Promise<void> {
   try {
     console.log('CLIENT: signInWithGoogle - Starting...');
-    const result = await nextAuthSignIn('google', {
-      redirect: false,
+    // Let NextAuth handle the full OAuth flow including redirects
+    // This will redirect to Google, then back to /api/auth/callback/google
+    // NextAuth will then redirect to the callbackUrl or default page
+    await nextAuthSignIn('google', {
+      callbackUrl: '/role-redirect',
     });
-
-    console.log('CLIENT: signInWithGoogle - Result:', result);
-
-    if (result?.error) {
-      console.error('CLIENT: signInWithGoogle - Error from NextAuth:', result.error);
-      const errorMessage = getGoogleErrorMessage(result.error);
-      onError?.(errorMessage);
-      return;
-    }
-
-    if (result?.ok) {
-      console.log('CLIENT: signInWithGoogle - Authentication successful');
-      // Use a small delay to ensure session is fully established
-      setTimeout(() => {
-        console.log('CLIENT: signInWithGoogle - Redirecting to /role-redirect');
-        window.location.href = '/role-redirect';
-      }, 500);
-      return;
-    }
-
-    console.error('CLIENT: signInWithGoogle - Unexpected result:', result);
-    onError?.('Authentication failed. Please try again.');
+    // Note: Code after this won't execute because the page will redirect
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Google sign-in failed';
     console.error('CLIENT: signInWithGoogle - Exception:', error);
@@ -76,7 +58,7 @@ function getGoogleErrorMessage(error: string): string {
  * Determine redirect URL based on user role
  * Call this on a redirect page after Google OAuth completes
  */
-export async function getRedirectUrlByRole(userRole: UserRole): string {
+export async function getRedirectUrlByRole(userRole: UserRole): Promise<string> {
   switch (userRole) {
     case 'admin':
       return '/admin';
@@ -87,3 +69,4 @@ export async function getRedirectUrlByRole(userRole: UserRole): string {
       return '/dashboard';
   }
 }
+

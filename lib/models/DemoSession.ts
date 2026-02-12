@@ -91,7 +91,7 @@ const DemoSessionSchema = new Schema<IDemoSession>(
       type: Date,
       required: true,
       // TTL index: MongoDB will automatically delete documents when expiresAt is reached
-      index: { expires: 0 },
+      // Index is defined below using DemoSessionSchema.index() to avoid duplication
     },
   },
   {
