@@ -4,7 +4,7 @@
  * POST /api/auth/send-otp
  * 
  * Generates and sends an OTP to the user's email for password reset.
- * In production, this would send an actual email.
+ * Uses the new secure OTP schema with hashing.
  */
 
 import { NextRequest } from 'next/server';
@@ -13,30 +13,19 @@ import { User } from '@/lib/models';
 import Otp from '@/lib/models/Otp';
 import { successResponse, errors } from '@/lib/utils/api';
 import config from '@/config';
-
-/**
- * Generate a 6-digit OTP
- */
-function generateOtp(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
+import { generateOTP, hashOTP, getOTPExpiry } from '@/lib/utils/otp';
+import { sendPasswordResetOTP } from '@/lib/utils/email';
 
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
     const body = await request.json();
-    const { email, role = 'user', purpose = 'password-reset' } = body;
+    const { email, purpose = 'password-reset' } = body;
 
     // Validate required fields
     if (!email) {
       return errors.validationError('Email is required');
-    }
-
-    // Validate role
-    const allowedRoles = ['user', 'mentor', 'admin'];
-    if (!allowedRoles.includes(role)) {
-      return errors.validationError('Invalid role');
     }
 
     // Validate purpose
@@ -45,10 +34,12 @@ export async function POST(request: NextRequest) {
       return errors.validationError('Invalid purpose');
     }
 
+    // Sanitize email
+    const sanitizedEmail = email.toLowerCase().trim();
+
     // Check if user exists
     const user = await User.findOne({
-      email: email.toLowerCase(),
-      role,
+      email: sanitizedEmail,
       isActive: true,
     });
 
@@ -60,38 +51,54 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Delete any existing unused OTPs for this email/role/purpose
-    await Otp.deleteMany({
-      email: email.toLowerCase(),
-      role,
-      purpose,
-      isUsed: false,
-    });
+    // Delete any existing unused OTPs for this email/purpose
+    await Otp.updateMany(
+      {
+        email: sanitizedEmail,
+        purpose,
+        used: false,
+      },
+      {
+        $set: { used: true },
+      }
+    );
 
     // Generate new OTP
-    const otp = generateOtp();
-    const expiresAt = new Date(Date.now() + config.auth.otpExpiryMinutes * 60 * 1000);
+    const otp = generateOTP();
+    const otpHash = hashOTP(otp);
+    const expiresAt = getOTPExpiry(config.auth.otpExpiryMinutes || 10);
 
-    // Save OTP to database
+    // Save OTP to database with new schema
     await Otp.create({
-      email: email.toLowerCase(),
-      otp,
-      role,
+      email: sanitizedEmail,
+      otpHash,
       purpose,
       expiresAt,
-      isUsed: false,
+      used: false,
+      attempts: 0,
     });
 
-    // TODO: In production, send actual email here
-    // For development, log the OTP
-    console.log(`[DEV] OTP for ${email} (${role}): ${otp}`);
+    // Send OTP via email (only for password reset)
+    if (purpose === 'password-reset') {
+      const emailSent = await sendPasswordResetOTP(
+        sanitizedEmail,
+        otp,
+        config.auth.otpExpiryMinutes || 10
+      );
 
-    // In development, include OTP in response for testing
-    // Remove this in production!
+      if (!emailSent) {
+        console.error('Failed to send OTP email to:', sanitizedEmail);
+      }
+    }
+
+    // Log OTP in development
     const isDevelopment = process.env.NODE_ENV === 'development';
+    if (isDevelopment) {
+      console.log(`[DEV] OTP for ${sanitizedEmail}: ${otp}`);
+    }
 
     return successResponse(
-      isDevelopment ? { otp, expiresInMinutes: config.auth.otpExpiryMinutes } : null,
+      isDevelopment ? { otp, expiresInMinutes: config.auth.otpExpiryMinutes || 10 } : null,
       'If an account exists with this email, an OTP has been sent.'
     );
   } catch (error) {

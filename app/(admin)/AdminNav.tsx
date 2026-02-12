@@ -53,6 +53,13 @@ const CompassIcon = () => (
   </svg>
 );
 
+const MailIcon = () => (
+  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+  </svg>
+);
+
 const LogoutIcon = () => (
   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
     <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
@@ -60,9 +67,9 @@ const LogoutIcon = () => (
 );
 
 const ChevronDownIcon = ({ isOpen }: { isOpen: boolean }) => (
-  <svg 
-    className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} 
-    fill="currentColor" 
+  <svg
+    className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+    fill="currentColor"
     viewBox="0 0 20 20"
   >
     <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -114,6 +121,11 @@ const sidebarData: SidebarItem[] = [
     ],
   },
   {
+    icon: <MailIcon />,
+    title: 'Email Management',
+    href: '/admin/email',
+  },
+  {
     icon: <SettingsIcon />,
     title: 'Profile',
     href: '/admin/profile',
@@ -159,20 +171,20 @@ export default function AdminNav() {
         <Link href="/admin" className="flex items-center gap-3">
           {isCollapsed ? (
             <div className="flex items-center justify-center w-10 h-10 rounded-xl overflow-hidden">
-              <Image 
-                src="/img/logo/logo.png" 
-                alt="RoleReady Logo" 
-                width={40} 
+              <Image
+                src="/img/logo/logo.png"
+                alt="RoleReady Logo"
+                width={40}
                 height={40}
                 className="object-contain"
               />
             </div>
           ) : (
             <div>
-              <Image 
-                src="/img/logo/logo.png" 
-                alt="RoleReady" 
-                width={120} 
+              <Image
+                src="/img/logo/logo.png"
+                alt="RoleReady"
+                width={120}
                 height={32}
                 className="object-contain"
               />
@@ -180,7 +192,7 @@ export default function AdminNav() {
             </div>
           )}
         </Link>
-        
+
         {/* Collapse Toggle - Desktop */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
@@ -196,11 +208,10 @@ export default function AdminNav() {
       <div className="px-4 py-3">
         <Link
           href="/admin"
-          className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 group ${
-            pathname === '/admin'
+          className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 group ${pathname === '/admin'
               ? 'bg-gradient-to-r from-[#5693C1] to-blue-400 text-white shadow-lg shadow-blue-100'
               : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:shadow-sm'
-          }`}
+            }`}
         >
           <DashboardIcon />
           {!isCollapsed && <span className="font-medium">Dashboard</span>}
@@ -218,16 +229,14 @@ export default function AdminNav() {
               <div key={index} className="space-y-1">
                 <button
                   onClick={() => toggleDropdown(index)}
-                  className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-300 group ${
-                    hasActiveChild
+                  className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-300 group ${hasActiveChild
                       ? 'bg-blue-50 text-[#5693C1]'
                       : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`p-1.5 rounded-lg group-hover:bg-white/50 ${
-                      hasActiveChild ? 'bg-white/80' : 'bg-gray-100'
-                    }`}>
+                    <div className={`p-1.5 rounded-lg group-hover:bg-white/50 ${hasActiveChild ? 'bg-white/80' : 'bg-gray-100'
+                      }`}>
                       {item.icon}
                     </div>
                     {!isCollapsed && (
@@ -250,20 +259,18 @@ export default function AdminNav() {
 
                 {/* Dropdown content */}
                 <div
-                  className={`overflow-hidden transition-all duration-300 ${
-                    isOpen ? 'max-h-64' : 'max-h-0'
-                  }`}
+                  className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-64' : 'max-h-0'
+                    }`}
                 >
                   <ul className={`${isCollapsed ? 'pl-0' : 'pl-12'} py-2 space-y-1`}>
                     {item.links.map((link, linkIndex) => (
                       <li key={linkIndex}>
                         <Link
                           href={link.href}
-                          className={`flex items-center justify-between py-2 px-4 rounded-lg text-sm transition-all duration-200 group ${
-                            isActiveLink(link.href)
+                          className={`flex items-center justify-between py-2 px-4 rounded-lg text-sm transition-all duration-200 group ${isActiveLink(link.href)
                               ? 'bg-gradient-to-r from-[#5693C1]/10 to-blue-400/10 text-[#5693C1]'
                               : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                          }`}
+                            }`}
                         >
                           <span className="truncate">{link.title}</span>
                           {link.badge && (
@@ -283,15 +290,13 @@ export default function AdminNav() {
               <Link
                 key={index}
                 href={item.href || '#'}
-                className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 group ${
-                  isActiveLink(item.href || '')
+                className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 group ${isActiveLink(item.href || '')
                     ? 'bg-gradient-to-r from-[#5693C1] to-blue-400 text-white shadow-lg shadow-blue-100'
                     : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:shadow-sm'
-                }`}
+                  }`}
               >
-                <div className={`p-1.5 rounded-lg group-hover:bg-white/50 ${
-                  isActiveLink(item.href || '') ? 'bg-white/30' : 'bg-gray-100'
-                }`}>
+                <div className={`p-1.5 rounded-lg group-hover:bg-white/50 ${isActiveLink(item.href || '') ? 'bg-white/30' : 'bg-gray-100'
+                  }`}>
                   {item.icon}
                 </div>
                 {!isCollapsed && (
@@ -328,15 +333,14 @@ export default function AdminNav() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className={`hidden lg:flex lg:flex-col fixed inset-y-0 left-0 bg-white border-r border-gray-100 z-40 transition-all duration-300 ${
-        isCollapsed ? 'w-20' : 'w-64'
-      }`}>
+      <aside className={`hidden lg:flex lg:flex-col fixed inset-y-0 left-0 bg-white border-r border-gray-100 z-40 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'
+        }`}>
         <SidebarContent />
       </aside>
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div 
+        <div
           className="lg:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
           onClick={() => setIsMobileMenuOpen(false)}
         />
@@ -344,9 +348,8 @@ export default function AdminNav() {
 
       {/* Mobile Sidebar */}
       <aside
-        className={`lg:hidden fixed inset-y-0 left-0 w-72 bg-white border-r border-gray-100 z-50 transform transition-transform duration-300 shadow-2xl ${
-          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`lg:hidden fixed inset-y-0 left-0 w-72 bg-white border-r border-gray-100 z-50 transform transition-transform duration-300 shadow-2xl ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         <SidebarContent />
       </aside>

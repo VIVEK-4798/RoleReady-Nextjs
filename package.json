@@ -8,9 +8,11 @@
     "start": "next start",
     "lint": "eslint",
     "create-admin": "tsx scripts/create-admin.ts",
-    "seed-skills": "tsx scripts/seedSkills.ts"
+    "seed-skills": "tsx scripts/seedSkills.ts",
+    "seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
+    "@types/nodemailer": "^7.0.9",
     "@types/uuid": "^10.0.0",
     "bcryptjs": "^3.0.3",
     "html2pdf.js": "^0.14.0",
@@ -19,6 +21,7 @@
     "mongoose": "^9.1.5",
     "next": "16.1.6",
     "next-auth": "^5.0.0-beta.30",
+    "nodemailer": "^8.0.1",
     "pdf-parse": "^1.1.1",
     "pdf2json": "^4.0.2",
     "react": "19.2.3",
@@ -28,13 +31,14 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
-    "@types/node": "^20",
+    "@types/node": "^20.19.33",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "dotenv": "^17.2.3",
+    "dotenv": "^17.2.4",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
     "typescript": "^5"
   }

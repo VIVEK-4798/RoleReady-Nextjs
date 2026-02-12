@@ -2,54 +2,66 @@
  * OTP (One-Time Password) Model
  * 
  * Stores temporary OTPs for password reset and email verification.
- * OTPs automatically expire after a configurable time.
+ * OTPs are hashed for security and automatically expire.
+ * 
+ * Security Features:
+ * - OTP stored as hash (never plain text)
+ * - Max 5 verification attempts
+ * - Auto-expiry via TTL index
+ * - One-time use enforcement
  */
 
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IOtp {
   email: string;
-  otp: string;
-  role: 'user' | 'mentor' | 'admin';
+  otpHash: string; // Hashed OTP (never store plain text)
   purpose: 'password-reset' | 'email-verification';
   expiresAt: Date;
-  isUsed: boolean;
+  used: boolean;
+  attempts: number; // Track failed verification attempts
   createdAt: Date;
   updatedAt: Date;
 }
 
-export interface IOtpDocument extends IOtp, Document {}
+export interface IOtpDocument extends IOtp, Document { }
 
 const OtpSchema = new Schema<IOtpDocument>(
   {
     email: {
       type: String,
-      required: true,
+      required: [true, 'Email is required'],
       lowercase: true,
       trim: true,
+      index: true,
     },
-    otp: {
+    otpHash: {
       type: String,
-      required: true,
-    },
-    role: {
-      type: String,
-      enum: ['user', 'mentor', 'admin'],
-      required: true,
+      required: [true, 'OTP hash is required'],
     },
     purpose: {
       type: String,
-      enum: ['password-reset', 'email-verification'],
-      required: true,
+      enum: {
+        values: ['password-reset', 'email-verification'],
+        message: '{VALUE} is not a valid purpose',
+      },
+      required: [true, 'Purpose is required'],
     },
     expiresAt: {
       type: Date,
-      required: true,
-      index: { expires: 0 }, // TTL index - document deleted when expiresAt is reached
+      required: [true, 'Expiry date is required'],
+      index: { expires: 0 }, // TTL index - auto-delete when expired
     },
-    isUsed: {
+    used: {
       type: Boolean,
       default: false,
+      index: true,
+    },
+    attempts: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
     },
   },
   {
@@ -57,8 +69,9 @@ const OtpSchema = new Schema<IOtpDocument>(
   }
 );
 
-// Compound index for lookup
-OtpSchema.index({ email: 1, role: 1, purpose: 1 });
+// Compound index for efficient lookups
+OtpSchema.index({ email: 1, purpose: 1, used: 1 });
+OtpSchema.index({ email: 1, purpose: 1, createdAt: -1 });
 
 const Otp: Model<IOtpDocument> =
   mongoose.models.Otp || mongoose.model<IOtpDocument>('Otp', OtpSchema);
