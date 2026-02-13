@@ -104,6 +104,7 @@ export interface IUser {
   role: UserRole;
   mobile?: string;
   image?: string;
+  linkedinId?: string; // LinkedIn OAuth ID
   emailVerified?: Date | null; // Set for OAuth users, null for credentials users
   isActive: boolean;
   assignedMentor?: Types.ObjectId; // Mentor assigned for skill validation
@@ -133,7 +134,7 @@ export interface IUser {
 // Skill Types
 // ============================================================================
 
-export type SkillDomain = 
+export type SkillDomain =
   | 'technical'
   | 'soft-skills'
   | 'tools'

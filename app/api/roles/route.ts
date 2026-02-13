@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     // Build query
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const query: Record<string, any> = { isActive: active };
-    
+
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -43,8 +43,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Build projection
-    const projection = withBenchmarks 
-      ? {} 
+    const projection = withBenchmarks
+      ? {}
       : { benchmarks: 0 }; // Exclude benchmarks by default for list view
 
     // Execute query with pagination
@@ -58,10 +58,26 @@ export async function GET(request: NextRequest) {
       rolesQuery = rolesQuery.populate('benchmarks.skillId', 'name domain');
     }
 
-    const [roles, totalItems] = await Promise.all([
+    const [rolesData, totalItems] = await Promise.all([
       rolesQuery,
       Role.countDocuments(query),
     ]);
+
+    // Format roles to include skillName in benchmarks
+    const roles = rolesData.map(role => {
+      const roleObj = role.toObject();
+      if (withBenchmarks && roleObj.benchmarks) {
+        roleObj.benchmarks = roleObj.benchmarks.map((benchmark: any) => ({
+          skillId: benchmark.skillId?._id?.toString() || benchmark.skillId,
+          skillName: benchmark.skillId?.name || 'Unknown Skill',
+          importance: benchmark.importance,
+          weight: benchmark.weight,
+          requiredLevel: benchmark.requiredLevel,
+          isActive: benchmark.isActive,
+        }));
+      }
+      return roleObj;
+    });
 
     const pagination = createPagination(page, limit, totalItems);
 
@@ -90,8 +106,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for duplicate
-    const existingRole = await Role.findOne({ 
-      name: { $regex: `^${name.trim()}$`, $options: 'i' } 
+    const existingRole = await Role.findOne({
+      name: { $regex: `^${name.trim()}$`, $options: 'i' }
     });
     if (existingRole) {
       return errors.conflict('Role already exists');
@@ -110,11 +126,11 @@ export async function POST(request: NextRequest) {
     return successResponse(role, 'Role created successfully', 201);
   } catch (error) {
     console.error('POST /api/roles error:', error);
-    
+
     if (error instanceof Error && error.name === 'ValidationError') {
       return errors.validationError(error.message);
     }
-    
+
     return errors.serverError('Failed to create role');
   }
 }

@@ -1,32 +1,7 @@
-/**
- * User Model
- * 
- * Design Decisions:
- * 
- * 1. EMBEDDED PROFILE: Profile data is embedded directly in the User document
- *    rather than in a separate collection. This is optimal because:
- *    - Profile is always accessed with user data (1:1 relationship)
- *    - Reduces database queries
- *    - Atomic updates for user + profile
- * 
- * 2. ROLE-BASED ACCESS: Single 'role' field instead of separate tables for
- *    mentor_profile_info, admin_profile_info. The profile subdocument handles
- *    all role types uniformly.
- * 
- * 3. ARRAYS FOR COLLECTIONS: education, experience, projects, certificates
- *    are embedded arrays. In MongoDB, this is preferred for bounded lists
- *    that are always accessed together.
- * 
- * 4. PASSWORD HASHING: Done via pre-save middleware (not implemented here,
- *    will be added with auth layer).
- */
-
 import mongoose, { Schema, Document, Model } from 'mongoose';
 import type { IUser, IUserProfile, UserRole } from '@/types';
 
-// ============================================================================
-// Sub-Schemas (Embedded Documents)
-// ============================================================================
+
 
 const EducationSchema = new Schema({
   institution: { type: String, required: true },
@@ -155,6 +130,10 @@ const UserSchema = new Schema<IUserDocument>(
     image: {
       type: String,
     },
+    linkedinId: {
+      type: String,
+      sparse: true, // Allow multiple null values but unique non-null values
+    },
     isActive: {
       type: Boolean,
       default: true,
@@ -257,7 +236,7 @@ UserSchema.methods.comparePassword = async function (
   if (!this.password) {
     return false;
   }
-  
+
   const bcrypt = await import('bcryptjs');
   return bcrypt.compare(candidatePassword, this.password);
 };

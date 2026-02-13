@@ -39,13 +39,40 @@ export async function signInWithGoogle(
 }
 
 /**
- * User-friendly error message for Google OAuth errors
+ * Sign in with LinkedIn OAuth
+ * 
+ * Performs LinkedIn OAuth sign-in and redirects based on user role.
+ * New users are created with 'user' role and email verified status.
+ * 
+ * @returns Promise that resolves when sign-in is complete
  */
-function getGoogleErrorMessage(error: string): string {
+export async function signInWithLinkedIn(
+  onError?: (error: string) => void
+): Promise<void> {
+  try {
+    console.log('CLIENT: signInWithLinkedIn - Starting...');
+    // Let NextAuth handle the full OAuth flow including redirects
+    // This will redirect to LinkedIn, then back to /api/auth/callback/linkedin
+    // NextAuth will then redirect to the callbackUrl or default page
+    await nextAuthSignIn('linkedin', {
+      callbackUrl: '/role-redirect',
+    });
+    // Note: Code after this won't execute because the page will redirect
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'LinkedIn sign-in failed';
+    console.error('CLIENT: signInWithLinkedIn - Exception:', error);
+    onError?.(errorMessage);
+  }
+}
+
+/**
+ * User-friendly error message for OAuth errors
+ */
+function getOAuthErrorMessage(error: string): string {
   const errorMap: Record<string, string> = {
-    'OAuthSignin': 'Failed to connect to Google. Please try again.',
-    'OAuthCallback': 'Google sign-in was cancelled or failed. Please try again.',
-    'OAuthCreateAccount': 'Could not create account with Google. Please try again.',
+    'OAuthSignin': 'Failed to connect to OAuth provider. Please try again.',
+    'OAuthCallback': 'OAuth sign-in was cancelled or failed. Please try again.',
+    'OAuthCreateAccount': 'Could not create account with OAuth. Please try again.',
     'EmailSignInError': 'Email sign-in failed. Please try again.',
     'CredentialsSignin': 'Invalid credentials. Please try again.',
     'AccessDenied': 'Access denied. You may not have permission to access this service.',
@@ -53,6 +80,7 @@ function getGoogleErrorMessage(error: string): string {
 
   return errorMap[error] || 'Authentication failed. Please try again.';
 }
+
 
 /**
  * Determine redirect URL based on user role

@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from 'react';
 import { useAuth, UserRole } from '@/hooks';
-import { signInWithGoogle } from '@/lib/auth/client';
+import { signInWithGoogle, signInWithLinkedIn } from '@/lib/auth/client';
 import { useSearchParams } from 'next/navigation';
 
 const roles: { value: UserRole; label: string }[] = [
@@ -24,6 +24,7 @@ function LoginFormContent() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isLinkedInLoading, setIsLinkedInLoading] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -40,7 +41,7 @@ function LoginFormContent() {
 
     try {
       const result = await login(formData.email, formData.password, formData.role);
-      
+
       if (!result.success) {
         setError(result.error || 'Login failed. Please check your credentials.');
       }
@@ -55,7 +56,7 @@ function LoginFormContent() {
   const handleGoogleSignIn = async () => {
     setError('');
     setIsGoogleLoading(true);
-    
+
     try {
       await signInWithGoogle((errorMsg) => {
         setError(errorMsg);
@@ -65,6 +66,22 @@ function LoginFormContent() {
       setError('Google sign-in failed. Please try again.');
       console.error('Google sign-in error:', err);
       setIsGoogleLoading(false);
+    }
+  };
+
+  const handleLinkedInSignIn = async () => {
+    setError('');
+    setIsLinkedInLoading(true);
+
+    try {
+      await signInWithLinkedIn((errorMsg) => {
+        setError(errorMsg);
+        setIsLinkedInLoading(false);
+      });
+    } catch (err) {
+      setError('LinkedIn sign-in failed. Please try again.');
+      console.error('LinkedIn sign-in error:', err);
+      setIsLinkedInLoading(false);
     }
   };
 
@@ -135,6 +152,56 @@ function LoginFormContent() {
               />
             </svg>
             Continue with Google
+          </>
+        )}
+      </button>
+
+      {/* LinkedIn Sign In Button */}
+      <button
+        type="button"
+        onClick={handleLinkedInSignIn}
+        disabled={isLinkedInLoading || isLoading}
+        className="w-full py-3 px-4 border border-gray-300 rounded-lg bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-2 disabled:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 flex items-center justify-center gap-2"
+      >
+        {isLinkedInLoading ? (
+          <>
+            <svg
+              className="animate-spin h-5 w-5 text-gray-700"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
+            </svg>
+            Signing in...
+          </>
+        ) : (
+          <>
+            {/* LinkedIn Icon */}
+            <svg
+              className="w-5 h-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"
+                fill="#0A66C2"
+              />
+            </svg>
+            Continue with LinkedIn
           </>
         )}
       </button>

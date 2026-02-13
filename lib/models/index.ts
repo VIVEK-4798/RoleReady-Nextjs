@@ -20,6 +20,7 @@ export { default as Internship } from './Internship';
 export { default as Job } from './Job';
 export { default as ActivityLog } from './ActivityLog';
 export { default as DemoSession } from './DemoSession';
+export { UserEmailEvent } from './UserEmailEvent';
 
 // Re-export document interfaces for convenience
 export type { IUserDocument } from './User';
@@ -37,3 +38,4 @@ export type { IInternship } from './Internship';
 export type { IJob } from './Job';
 export type { IActivityLogDocument, ActionType, ActivityRole, UserActionType, MentorActionType } from './ActivityLog';
 export type { IDemoSession, IDemoSkill } from './DemoSession';
+export type { IUserEmailEvent, IUserEmailEventDocument } from './UserEmailEvent';

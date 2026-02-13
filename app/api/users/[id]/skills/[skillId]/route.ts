@@ -33,7 +33,7 @@ interface RouteContext {
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { id, skillId } = await context.params;
-    
+
     const session = await auth();
     if (!session?.user) {
       return errors.unauthorized();
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 export async function PUT(request: NextRequest, context: RouteContext) {
   try {
     const { id, skillId } = await context.params;
-    
+
     const session = await auth();
     if (!session?.user) {
       return errors.unauthorized();
@@ -148,6 +148,25 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       });
     }
 
+    // Trigger skill validated email if mentor/admin validated the skill
+    if (isMentorOrAdmin && body.validationStatus === 'validated') {
+      // Populate skill for email
+      await userSkill.populate('skillId', 'name');
+      const populatedSkill = userSkill.skillId as unknown as PopulatedSkill;
+
+      import('@/lib/email/emailEventService').then(({ triggerEmailEvent }) => {
+        triggerEmailEvent({
+          userId: id,
+          event: 'MENTOR_SKILL_VALIDATED',
+          metadata: {
+            skillName: populatedSkill.name,
+            skillId: populatedSkill._id.toString(),
+            mentorName: session.user?.name,
+          },
+        }).catch(err => console.error('[SkillValidation] Validation email failed:', err));
+      }).catch(err => console.error('[SkillValidation] Email module import failed:', err));
+    }
+
     // Trigger readiness_outdated notification if user has a target role
     const targetRole = await TargetRole.getActiveForUser(id);
     if (targetRole) {
@@ -192,7 +211,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
     const { id, skillId } = await context.params;
-    
+
     const session = await auth();
     if (!session?.user) {
       return errors.unauthorized();

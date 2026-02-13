@@ -31,7 +31,7 @@ interface PopulatedRole {
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
-    
+
     const session = await auth();
     if (!session?.user) {
       return errors.unauthorized();
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 export async function PUT(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
-    
+
     const session = await auth();
     if (!session?.user) {
       return errors.unauthorized();
@@ -122,7 +122,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     // Get current target role to check if it's the same
     const currentTargetRole = await TargetRole.getActiveForUser(id);
-    
+
     // Check if selecting the same role (no-op)
     if (currentTargetRole) {
       const currentRoleId = (currentTargetRole.roleId as unknown as PopulatedRole)._id;
@@ -159,8 +159,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     await ActivityLog.logActivity(id, 'user', 'role_changed', {
       roleId: populatedRole._id,
       roleName: populatedRole.name,
-      previousRoleId: currentTargetRole 
-        ? (currentTargetRole.roleId as unknown as PopulatedRole)._id 
+      previousRoleId: currentTargetRole
+        ? (currentTargetRole.roleId as unknown as PopulatedRole)._id
         : null,
     });
 
@@ -172,8 +172,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       metadata: {
         roleId: populatedRole._id,
         roleName: populatedRole.name,
-        previousRoleId: currentTargetRole 
-          ? (currentTargetRole.roleId as unknown as PopulatedRole)._id 
+        previousRoleId: currentTargetRole
+          ? (currentTargetRole.roleId as unknown as PopulatedRole)._id
           : null,
       },
     });
@@ -181,25 +181,37 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     // Also create a role_changed notification
     await Notification.createOrUpdate(id, 'role_changed', {
       title: 'Target role updated',
-      message: currentTargetRole 
+      message: currentTargetRole
         ? `You've switched from "${(currentTargetRole.roleId as unknown as PopulatedRole).name}" to "${populatedRole.name}".`
         : `You've selected "${populatedRole.name}" as your target role.`,
       actionUrl: '/dashboard',
       metadata: {
         roleId: populatedRole._id,
         roleName: populatedRole.name,
-        previousRoleId: currentTargetRole 
-          ? (currentTargetRole.roleId as unknown as PopulatedRole)._id 
+        previousRoleId: currentTargetRole
+          ? (currentTargetRole.roleId as unknown as PopulatedRole)._id
           : null,
       },
     });
+
+    // Trigger role selected email (async, non-blocking)
+    import('@/lib/email/emailEventService').then(({ triggerEmailEvent }) => {
+      triggerEmailEvent({
+        userId: id,
+        event: 'ROLE_SELECTED',
+        metadata: {
+          roleName: populatedRole.name,
+          roleId: populatedRole._id.toString(),
+        },
+      }).catch(err => console.error('[TargetRole] Role selected email failed:', err));
+    }).catch(err => console.error('[TargetRole] Email module import failed:', err));
 
     return success({
       changed: true,
       message: 'Target role changed successfully',
       readinessOutdated: true, // Signal that readiness needs recalculation
-      previousRoleId: currentTargetRole 
-        ? (currentTargetRole.roleId as unknown as PopulatedRole)._id 
+      previousRoleId: currentTargetRole
+        ? (currentTargetRole.roleId as unknown as PopulatedRole)._id
         : null,
       targetRole: {
         id: newTargetRole._id,
