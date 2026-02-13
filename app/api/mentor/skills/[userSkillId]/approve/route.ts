@@ -122,6 +122,22 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }
     );
 
+    // Trigger skill validated email (async, non-blocking)
+    const skillName = (userSkill.skillId as unknown as { name: string }).name;
+    const userId = userSkill.userId._id.toString();
+
+    import('@/lib/email/emailEventService').then(({ triggerEmailEvent }) => {
+      triggerEmailEvent({
+        userId: userId,
+        event: 'MENTOR_SKILL_VALIDATED',
+        metadata: {
+          skillName: skillName,
+          skillId: (userSkill.skillId as unknown as { _id: Types.ObjectId })._id.toString(),
+          mentorName: user.name,
+        },
+      }).catch(err => console.error('[MentorApprove] Validation email failed:', err));
+    }).catch(err => console.error('[MentorApprove] Email module import failed:', err));
+
     return successResponse(
       {
         userSkill: {

@@ -5,14 +5,27 @@
  */
 
 import type {
-    EmailEventType,
-    EmailEventMetadata,
-    EmailTemplate,
-    RoleSelectedMetadata,
-    ReadinessFirstMetadata,
-    ReadinessMajorImprovementMetadata,
-    MentorSkillValidatedMetadata,
+  EmailEventType,
+  EmailEventMetadata,
+  EmailTemplate,
+  RoleSelectedMetadata,
+  ReadinessFirstMetadata,
+  ReadinessMajorImprovementMetadata,
+  MentorSkillValidatedMetadata,
+  MentorSkillRejectedMetadata,
+  RoadmapCreatedMetadata,
+  UserInactiveMetadata,
+  PlacementSeasonAlertMetadata,
+  WeeklyProgressDigestMetadata,
 } from '@/types/email-events';
+
+import {
+  getMentorSkillRejectedTemplate,
+  getRoadmapCreatedTemplate,
+  getUserInactiveTemplate,
+  getPlacementSeasonAlertTemplate,
+  getWeeklyProgressDigestTemplate,
+} from './advancedTemplates';
 
 const APP_NAME = 'RoleReady';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
@@ -22,38 +35,59 @@ const BRAND_COLOR = '#5693C1';
  * Get email template for a specific event
  */
 export function getTemplate(
-    event: EmailEventType,
-    metadata: EmailEventMetadata = {},
-    userName: string = 'there'
+  event: EmailEventType,
+  metadata: EmailEventMetadata = {},
+  userName: string = 'there'
 ): EmailTemplate {
-    switch (event) {
-        case 'WELCOME_USER':
-            return getWelcomeUserTemplate(userName);
+  switch (event) {
+    case 'WELCOME_USER':
+      return getWelcomeUserTemplate(userName);
 
-        case 'ROLE_SELECTED':
-            return getRoleSelectedTemplate(userName, metadata as RoleSelectedMetadata);
+    case 'ROLE_SELECTED':
+      return getRoleSelectedTemplate(userName, metadata as RoleSelectedMetadata);
 
-        case 'READINESS_FIRST':
-            return getReadinessFirstTemplate(userName, metadata as ReadinessFirstMetadata);
+    case 'READINESS_FIRST':
+      return getReadinessFirstTemplate(userName, metadata as ReadinessFirstMetadata);
 
-        case 'READINESS_MAJOR_IMPROVEMENT':
-            return getReadinessMajorImprovementTemplate(userName, metadata as ReadinessMajorImprovementMetadata);
+    case 'READINESS_MAJOR_IMPROVEMENT':
+      return getReadinessMajorImprovementTemplate(userName, metadata as ReadinessMajorImprovementMetadata);
 
-        case 'MENTOR_SKILL_VALIDATED':
-            return getMentorSkillValidatedTemplate(userName, metadata as MentorSkillValidatedMetadata);
+    case 'MENTOR_SKILL_VALIDATED':
+      return getMentorSkillValidatedTemplate(userName, metadata as MentorSkillValidatedMetadata);
 
-        default:
-            throw new Error(`Unknown email event: ${event}`);
-    }
+    case 'MENTOR_SKILL_REJECTED':
+      return getMentorSkillRejectedTemplate(userName, metadata as MentorSkillRejectedMetadata);
+
+    case 'ROADMAP_CREATED':
+      return getRoadmapCreatedTemplate(userName, metadata as RoadmapCreatedMetadata);
+
+    case 'USER_INACTIVE_7':
+      return getUserInactiveTemplate(userName, metadata as UserInactiveMetadata, 7);
+
+    case 'USER_INACTIVE_14':
+      return getUserInactiveTemplate(userName, metadata as UserInactiveMetadata, 14);
+
+    case 'USER_INACTIVE_30':
+      return getUserInactiveTemplate(userName, metadata as UserInactiveMetadata, 30);
+
+    case 'PLACEMENT_SEASON_ALERT':
+      return getPlacementSeasonAlertTemplate(userName, metadata as PlacementSeasonAlertMetadata);
+
+    case 'WEEKLY_PROGRESS_DIGEST':
+      return getWeeklyProgressDigestTemplate(userName, metadata as WeeklyProgressDigestMetadata);
+
+    default:
+      throw new Error(`Unknown email event: ${event}`);
+  }
 }
 
 /**
  * WELCOME_USER Template
  */
 function getWelcomeUserTemplate(userName: string): EmailTemplate {
-    return {
-        subject: `Welcome to ${APP_NAME}! 🎉`,
-        html: `
+  return {
+    subject: `Welcome to ${APP_NAME}! 🎉`,
+    html: `
       <!DOCTYPE html>
       <html>
         <head>
@@ -140,18 +174,18 @@ function getWelcomeUserTemplate(userName: string): EmailTemplate {
         </body>
       </html>
     `,
-    };
+  };
 }
 
 /**
  * ROLE_SELECTED Template
  */
 function getRoleSelectedTemplate(userName: string, metadata: RoleSelectedMetadata): EmailTemplate {
-    const { roleName } = metadata;
+  const { roleName } = metadata;
 
-    return {
-        subject: `You've selected ${roleName} as your target role! 🎯`,
-        html: `
+  return {
+    subject: `You've selected ${roleName} as your target role! 🎯`,
+    html: `
       <!DOCTYPE html>
       <html>
         <head>
@@ -235,19 +269,19 @@ function getRoleSelectedTemplate(userName: string, metadata: RoleSelectedMetadat
         </body>
       </html>
     `,
-    };
+  };
 }
 
 /**
  * READINESS_FIRST Template
  */
 function getReadinessFirstTemplate(userName: string, metadata: ReadinessFirstMetadata): EmailTemplate {
-    const { score, roleName } = metadata;
-    const scorePercent = Math.round(score);
+  const { score, roleName } = metadata;
+  const scorePercent = Math.round(score);
 
-    return {
-        subject: `Your ${roleName} readiness score: ${scorePercent}% 📊`,
-        html: `
+  return {
+    subject: `Your ${roleName} readiness score: ${scorePercent}% 📊`,
+    html: `
       <!DOCTYPE html>
       <html>
         <head>
@@ -334,39 +368,39 @@ function getReadinessFirstTemplate(userName: string, metadata: ReadinessFirstMet
         </body>
       </html>
     `,
-    };
+  };
 }
 
 /**
  * READINESS_MAJOR_IMPROVEMENT Template
  */
 function getReadinessMajorImprovementTemplate(
-    userName: string,
-    metadata: ReadinessMajorImprovementMetadata
+  userName: string,
+  metadata: ReadinessMajorImprovementMetadata
 ): EmailTemplate {
-    const { oldScore, newScore, roleName } = metadata;
-    const oldPercent = Math.round(oldScore);
-    const newPercent = Math.round(newScore);
-    const improvement = newPercent - oldPercent;
+  const { oldScore, newScore, roleName } = metadata;
+  const oldPercent = Math.round(oldScore);
+  const newPercent = Math.round(newScore);
+  const improvement = newPercent - oldPercent;
 
-    // Special milestones
-    const crossed70 = oldScore < 70 && newScore >= 70;
-    const crossed80 = oldScore < 80 && newScore >= 80;
+  // Special milestones
+  const crossed70 = oldScore < 70 && newScore >= 70;
+  const crossed80 = oldScore < 80 && newScore >= 80;
 
-    let milestoneMessage = '';
-    let emoji = '🎉';
+  let milestoneMessage = '';
+  let emoji = '🎉';
 
-    if (crossed80) {
-        milestoneMessage = '<div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;"><strong style="font-size: 18px;">🏆 Outstanding! You\'ve crossed 80% readiness!</strong><p style="margin: 10px 0 0; font-size: 14px;">You\'re highly prepared for this role!</p></div>';
-        emoji = '🏆';
-    } else if (crossed70) {
-        milestoneMessage = '<div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;"><strong style="font-size: 18px;">🌟 Excellent! You\'ve crossed 70% readiness!</strong><p style="margin: 10px 0 0; font-size: 14px;">You\'re well on your way to being role-ready!</p></div>';
-        emoji = '🌟';
-    }
+  if (crossed80) {
+    milestoneMessage = '<div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;"><strong style="font-size: 18px;">🏆 Outstanding! You\'ve crossed 80% readiness!</strong><p style="margin: 10px 0 0; font-size: 14px;">You\'re highly prepared for this role!</p></div>';
+    emoji = '🏆';
+  } else if (crossed70) {
+    milestoneMessage = '<div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;"><strong style="font-size: 18px;">🌟 Excellent! You\'ve crossed 70% readiness!</strong><p style="margin: 10px 0 0; font-size: 14px;">You\'re well on your way to being role-ready!</p></div>';
+    emoji = '🌟';
+  }
 
-    return {
-        subject: `Great progress! Your ${roleName} readiness improved by ${improvement}% ${emoji}`,
-        html: `
+  return {
+    subject: `Great progress! Your ${roleName} readiness improved by ${improvement}% ${emoji}`,
+    html: `
       <!DOCTYPE html>
       <html>
         <head>
@@ -454,22 +488,22 @@ function getReadinessMajorImprovementTemplate(
         </body>
       </html>
     `,
-    };
+  };
 }
 
 /**
  * MENTOR_SKILL_VALIDATED Template
  */
 function getMentorSkillValidatedTemplate(
-    userName: string,
-    metadata: MentorSkillValidatedMetadata
+  userName: string,
+  metadata: MentorSkillValidatedMetadata
 ): EmailTemplate {
-    const { skillName, mentorName } = metadata;
-    const mentorText = mentorName ? `by ${mentorName}` : 'by a mentor';
+  const { skillName, mentorName } = metadata;
+  const mentorText = mentorName ? `by ${mentorName}` : 'by a mentor';
 
-    return {
-        subject: `Your ${skillName} skill has been validated! ✅`,
-        html: `
+  return {
+    subject: `Your ${skillName} skill has been validated! ✅`,
+    html: `
       <!DOCTYPE html>
       <html>
         <head>
@@ -559,5 +593,5 @@ function getMentorSkillValidatedTemplate(
         </body>
       </html>
     `,
-    };
+  };
 }

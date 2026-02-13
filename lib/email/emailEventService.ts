@@ -169,12 +169,25 @@ function shouldSendEmail(
         case 'ROLE_SELECTED':
         case 'READINESS_FIRST':
         case 'READINESS_MAJOR_IMPROVEMENT':
+        case 'ROADMAP_CREATED':
             // Controlled by roadmapUpdates preference
             return preferences.roadmapUpdates !== false;
 
         case 'MENTOR_SKILL_VALIDATED':
+        case 'MENTOR_SKILL_REJECTED':
             // Controlled by mentorMessages preference
             return preferences.mentorMessages !== false;
+
+        case 'USER_INACTIVE_7':
+        case 'USER_INACTIVE_14':
+        case 'USER_INACTIVE_30':
+        case 'PLACEMENT_SEASON_ALERT':
+            // Controlled by systemAnnouncements preference
+            return preferences.systemAnnouncements !== false;
+
+        case 'WEEKLY_PROGRESS_DIGEST':
+            // Controlled by weeklyReports preference
+            return preferences.weeklyReports !== false;
 
         default:
             // Default to sending

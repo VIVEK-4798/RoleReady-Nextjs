@@ -104,6 +104,15 @@ const sidebarData: SidebarItem[] = [
     ],
   },
   {
+    icon: (
+      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+      </svg>
+    ),
+    title: 'Support Tickets',
+    href: '/admin/tickets',
+  },
+  {
     icon: <SettingsIcon />,
     title: 'Categories',
     links: [
@@ -209,8 +218,8 @@ export default function AdminNav() {
         <Link
           href="/admin"
           className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 group ${pathname === '/admin'
-              ? 'bg-gradient-to-r from-[#5693C1] to-blue-400 text-white shadow-lg shadow-blue-100'
-              : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:shadow-sm'
+            ? 'bg-gradient-to-r from-[#5693C1] to-blue-400 text-white shadow-lg shadow-blue-100'
+            : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:shadow-sm'
             }`}
         >
           <DashboardIcon />
@@ -230,8 +239,8 @@ export default function AdminNav() {
                 <button
                   onClick={() => toggleDropdown(index)}
                   className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-300 group ${hasActiveChild
-                      ? 'bg-blue-50 text-[#5693C1]'
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'bg-blue-50 text-[#5693C1]'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                 >
                   <div className="flex items-center gap-3">
@@ -268,8 +277,8 @@ export default function AdminNav() {
                         <Link
                           href={link.href}
                           className={`flex items-center justify-between py-2 px-4 rounded-lg text-sm transition-all duration-200 group ${isActiveLink(link.href)
-                              ? 'bg-gradient-to-r from-[#5693C1]/10 to-blue-400/10 text-[#5693C1]'
-                              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                            ? 'bg-gradient-to-r from-[#5693C1]/10 to-blue-400/10 text-[#5693C1]'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                             }`}
                         >
                           <span className="truncate">{link.title}</span>
@@ -291,8 +300,8 @@ export default function AdminNav() {
                 key={index}
                 href={item.href || '#'}
                 className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 group ${isActiveLink(item.href || '')
-                    ? 'bg-gradient-to-r from-[#5693C1] to-blue-400 text-white shadow-lg shadow-blue-100'
-                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:shadow-sm'
+                  ? 'bg-gradient-to-r from-[#5693C1] to-blue-400 text-white shadow-lg shadow-blue-100'
+                  : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:shadow-sm'
                   }`}
               >
                 <div className={`p-1.5 rounded-lg group-hover:bg-white/50 ${isActiveLink(item.href || '') ? 'bg-white/30' : 'bg-gray-100'

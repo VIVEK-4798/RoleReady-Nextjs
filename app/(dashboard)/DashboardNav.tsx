@@ -19,6 +19,7 @@ const navItems = [
   { href: '/dashboard/profile', label: 'Profile', icon: 'user' },
   { href: '/dashboard/skills', label: 'My Skills', icon: 'skills' },
   { href: '/dashboard/reports', label: 'Reports', icon: 'report' },
+  { href: '/dashboard/tickets', label: 'Support', icon: 'support' },
   { href: '/dashboard/notifications', label: 'Notifications', icon: 'notifications' },
   { href: '/dashboard/settings', label: 'Settings', icon: 'settings' },
 ];
@@ -53,6 +54,11 @@ const iconMap: Record<string, ReactNode> = {
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  ),
+  support: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
     </svg>
   ),
   logout: (
@@ -114,17 +120,16 @@ export default function DashboardNav() {
       {/* Navigation Links */}
       <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
         {navItems.map((item) => {
-          const isActive = pathname === item.href || 
+          const isActive = pathname === item.href ||
             (item.href !== '/dashboard' && pathname.startsWith(item.href));
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-4 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                isActive
-                  ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-[#5693C1] border-l-4 border-[#5693C1] -ml-1 pl-5 shadow-sm'
-                  : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:border-l-4 hover:border-gray-200 hover:-ml-1 hover:pl-5'
-              }`}
+              className={`flex items-center gap-4 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
+                ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-[#5693C1] border-l-4 border-[#5693C1] -ml-1 pl-5 shadow-sm'
+                : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:border-l-4 hover:border-gray-200 hover:-ml-1 hover:pl-5'
+                }`}
             >
               <span className={isActive ? 'text-[#5693C1]' : 'text-gray-500 group-hover:text-gray-700'}>
                 {iconMap[item.icon]}
@@ -144,10 +149,10 @@ export default function DashboardNav() {
         <div className="flex items-center gap-3 mb-4 px-2 py-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
           <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#5693C1] to-[#4a80b0] flex items-center justify-center text-white font-medium overflow-hidden ring-2 ring-white">
             {user?.image ? (
-              <Image 
-                src={user.image} 
-                alt={user.name || 'User'} 
-                width={48} 
+              <Image
+                src={user.image}
+                alt={user.name || 'User'}
+                width={48}
                 height={48}
                 className="w-full h-full object-cover"
               />
@@ -196,9 +201,8 @@ export default function DashboardNav() {
 
       {/* Mobile Sidebar */}
       <aside
-        className={`lg:hidden fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 shadow-xl transform transition-transform duration-300 ease-in-out flex flex-col ${
-          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`lg:hidden fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 shadow-xl transform transition-transform duration-300 ease-in-out flex flex-col ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         {/* Close button */}
         <button

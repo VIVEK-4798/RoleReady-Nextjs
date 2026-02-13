@@ -51,13 +51,18 @@ const iconMap: Record<string, ReactNode | ((isOpen: boolean) => ReactNode)> = {
     </svg>
   ),
   chevronDown: (isOpen: boolean) => (
-    <svg 
-      className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} 
-      fill="none" 
-      stroke="currentColor" 
+    <svg
+      className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+      fill="none"
+      stroke="currentColor"
       viewBox="0 0 24 24"
     >
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    </svg>
+  ),
+  support: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
     </svg>
   ),
 };
@@ -108,6 +113,11 @@ const navItems = [
     icon: 'notifications',
   },
   {
+    href: '/mentor/tickets',
+    label: 'Support',
+    icon: 'support',
+  },
+  {
     href: '/mentor/profile',
     label: 'Profile',
     icon: 'profile',
@@ -137,7 +147,7 @@ export default function MentorNav() {
     const newOpenSubmenus: Record<string, boolean> = {};
     navItems.forEach((item) => {
       if (item.submenu) {
-        const isActive = item.submenu.some((subitem) => 
+        const isActive = item.submenu.some((subitem) =>
           pathname === subitem.href || pathname.startsWith(subitem.href + '/')
         );
         if (isActive) {
@@ -185,7 +195,7 @@ export default function MentorNav() {
   };
 
   const isSubmenuActive = (submenu: SubMenuItem[]) => {
-    return submenu.some((subitem) => 
+    return submenu.some((subitem) =>
       pathname === subitem.href || pathname.startsWith(subitem.href + '/')
     );
   };
@@ -197,7 +207,7 @@ export default function MentorNav() {
         <Link href="/" className="flex items-center">
           <img src="/img/logo/logo.png" alt="RoleReady Logo" className="w-32 h-10 lg:w-40 lg:h-12 object-contain" />
         </Link>
-        
+
         {/* Close button for mobile */}
         <button
           onClick={() => setIsMobileMenuOpen(false)}
@@ -221,11 +231,10 @@ export default function MentorNav() {
               <div key={item.label} className="space-y-1">
                 <button
                   onClick={() => toggleSubmenu(item.label)}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    submenuActive || openSubmenus[item.label]
-                      ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-[#5693C1] border-l-4 border-[#5693C1] -ml-1 pl-5 shadow-sm'
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:border-l-4 hover:border-gray-200 hover:-ml-1 hover:pl-5'
-                  }`}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${submenuActive || openSubmenus[item.label]
+                    ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-[#5693C1] border-l-4 border-[#5693C1] -ml-1 pl-5 shadow-sm'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:border-l-4 hover:border-gray-200 hover:-ml-1 hover:pl-5'
+                    }`}
                 >
                   <div className="flex items-center gap-4">
                     <span className={submenuActive || openSubmenus[item.label] ? 'text-[#5693C1]' : 'text-gray-500'}>
@@ -237,12 +246,11 @@ export default function MentorNav() {
                     {renderIcon('chevronDown', openSubmenus[item.label] || false)}
                   </span>
                 </button>
-                
+
                 {/* Submenu */}
                 <div
-                  className={`overflow-hidden transition-all duration-200 ${
-                    openSubmenus[item.label] ? 'max-h-48' : 'max-h-0'
-                  }`}
+                  className={`overflow-hidden transition-all duration-200 ${openSubmenus[item.label] ? 'max-h-48' : 'max-h-0'
+                    }`}
                 >
                   <div className="space-y-1 ml-12 mt-1 py-1">
                     {item.submenu.map((subitem) => {
@@ -251,11 +259,10 @@ export default function MentorNav() {
                         <Link
                           key={subitem.label}
                           href={subitem.href}
-                          className={`block py-2 px-3 rounded-lg text-sm transition-colors ${
-                            isSubActive
-                              ? 'text-[#5693C1] font-medium bg-[#5693C1]/10'
-                              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                          }`}
+                          className={`block py-2 px-3 rounded-lg text-sm transition-colors ${isSubActive
+                            ? 'text-[#5693C1] font-medium bg-[#5693C1]/10'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                            }`}
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
                           {subitem.label}
@@ -272,11 +279,10 @@ export default function MentorNav() {
             <Link
               key={item.label}
               href={item.href}
-              className={`flex items-center gap-4 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                active
-                  ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-[#5693C1] border-l-4 border-[#5693C1] -ml-1 pl-5 shadow-sm'
-                  : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:border-l-4 hover:border-gray-200 hover:-ml-1 hover:pl-5'
-              }`}
+              className={`flex items-center gap-4 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${active
+                ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-[#5693C1] border-l-4 border-[#5693C1] -ml-1 pl-5 shadow-sm'
+                : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:border-l-4 hover:border-gray-200 hover:-ml-1 hover:pl-5'
+                }`}
               onClick={() => setIsMobileMenuOpen(false)}
             >
               <span className={active ? 'text-[#5693C1]' : 'text-gray-500 group-hover:text-gray-700'}>
@@ -331,9 +337,8 @@ export default function MentorNav() {
 
       {/* Mobile Sidebar */}
       <aside
-        className={`lg:hidden fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 shadow-xl transform transition-transform duration-300 ease-in-out flex flex-col ${
-          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`lg:hidden fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 shadow-xl transform transition-transform duration-300 ease-in-out flex flex-col ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         <NavContent />
       </aside>

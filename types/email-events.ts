@@ -9,7 +9,14 @@ export type EmailEventType =
     | 'ROLE_SELECTED'
     | 'READINESS_FIRST'
     | 'READINESS_MAJOR_IMPROVEMENT'
-    | 'MENTOR_SKILL_VALIDATED';
+    | 'MENTOR_SKILL_VALIDATED'
+    | 'MENTOR_SKILL_REJECTED'
+    | 'ROADMAP_CREATED'
+    | 'USER_INACTIVE_7'
+    | 'USER_INACTIVE_14'
+    | 'USER_INACTIVE_30'
+    | 'PLACEMENT_SEASON_ALERT'
+    | 'WEEKLY_PROGRESS_DIGEST';
 
 export interface BaseEmailEventMetadata {
     [key: string]: unknown;
@@ -43,12 +50,48 @@ export interface MentorSkillValidatedMetadata extends BaseEmailEventMetadata {
     mentorName?: string;
 }
 
+export interface MentorSkillRejectedMetadata extends BaseEmailEventMetadata {
+    skillName: string;
+    skillId: string;
+    mentorName?: string;
+    rejectionNote?: string;
+}
+
+export interface RoadmapCreatedMetadata extends BaseEmailEventMetadata {
+    roleName: string;
+    roleId: string;
+    stepCount?: number;
+}
+
+export interface UserInactiveMetadata extends BaseEmailEventMetadata {
+    daysSinceLastLogin: number;
+    lastLoginDate?: string;
+}
+
+export interface PlacementSeasonAlertMetadata extends BaseEmailEventMetadata {
+    season?: string;
+    year?: number;
+}
+
+export interface WeeklyProgressDigestMetadata extends BaseEmailEventMetadata {
+    currentScore?: number;
+    scoreChange?: number;
+    skillsValidated?: number;
+    activitiesCompleted?: number;
+    roleName?: string;
+}
+
 export type EmailEventMetadata =
     | WelcomeUserMetadata
     | RoleSelectedMetadata
     | ReadinessFirstMetadata
     | ReadinessMajorImprovementMetadata
-    | MentorSkillValidatedMetadata;
+    | MentorSkillValidatedMetadata
+    | MentorSkillRejectedMetadata
+    | RoadmapCreatedMetadata
+    | UserInactiveMetadata
+    | PlacementSeasonAlertMetadata
+    | WeeklyProgressDigestMetadata;
 
 export interface EmailTemplate {
     subject: string;

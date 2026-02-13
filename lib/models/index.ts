@@ -21,6 +21,8 @@ export { default as Job } from './Job';
 export { default as ActivityLog } from './ActivityLog';
 export { default as DemoSession } from './DemoSession';
 export { UserEmailEvent } from './UserEmailEvent';
+export { default as Ticket } from './Ticket';
+export { default as TicketMessage } from './TicketMessage';
 
 // Re-export document interfaces for convenience
 export type { IUserDocument } from './User';
@@ -39,3 +41,5 @@ export type { IJob } from './Job';
 export type { IActivityLogDocument, ActionType, ActivityRole, UserActionType, MentorActionType } from './ActivityLog';
 export type { IDemoSession, IDemoSkill } from './DemoSession';
 export type { IUserEmailEvent, IUserEmailEventDocument } from './UserEmailEvent';
+export type { ITicket, ITicketDocument, TicketCategory, TicketPriority, TicketStatus, TicketRole } from './Ticket';
+export type { ITicketMessage, ITicketMessageDocument, MessageSenderRole } from './TicketMessage';

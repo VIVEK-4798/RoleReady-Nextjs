@@ -180,6 +180,14 @@ export const authConfig: NextAuthConfig = {
 
           await newUser.save();
 
+          // Trigger welcome email (async, non-blocking)
+          import('@/lib/email/emailEventService').then(({ triggerEmailEvent }) => {
+            triggerEmailEvent({
+              userId: newUser._id.toString(),
+              event: 'WELCOME_USER',
+            }).catch(err => console.error('[Auth] Welcome email failed:', err));
+          }).catch(err => console.error('[Auth] Email module import failed:', err));
+
           // Update user ID for NextAuth
           user.id = newUser._id.toString();;
           return true;

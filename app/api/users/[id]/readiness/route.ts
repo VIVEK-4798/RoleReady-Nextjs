@@ -31,7 +31,7 @@ interface RouteContext {
 
 function formatSnapshotResponse(snapshot: Awaited<ReturnType<typeof getLatestSnapshot>>) {
   if (!snapshot) return null;
-  
+
   return {
     id: snapshot._id.toString(),
     roleId: snapshot.roleId.toString(),
@@ -74,7 +74,7 @@ function formatSnapshotResponse(snapshot: Awaited<ReturnType<typeof getLatestSna
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { id: userId } = await context.params;
-    
+
     // 1. Auth check
     const session = await auth();
     if (!session?.user) {
@@ -82,14 +82,14 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     const sessionUser = session.user as { id?: string; role?: string };
-    
+
     // 2. Authorization: Users can only view their own readiness
     if (sessionUser.id !== userId && sessionUser.role !== 'admin') {
       return errors.forbidden('You can only view your own readiness');
     }
-    
+
     await connectDB();
-    
+
     // 3. Get user's active target role
     const targetRole = await TargetRole.getActiveForUser(userId);
     if (!targetRole) {
@@ -99,21 +99,21 @@ export async function GET(request: NextRequest, context: RouteContext) {
         message: 'No target role selected. Select a target role to see readiness.',
       });
     }
-    
+
     // 4. Get latest snapshot
     const snapshot = await getLatestSnapshot(userId, (typeof targetRole.roleId === 'object' ? targetRole.roleId._id.toString() : targetRole.roleId.toString()));
-    
+
     // 5. Check if fresh calculation is needed via query param
     const searchParams = request.nextUrl.searchParams;
     const preview = searchParams.get('preview') === 'true';
-    
+
     if (preview && !snapshot) {
       // Calculate without persisting (preview mode)
       const previewResult = await calculateReadinessOnly(
         userId,
         (typeof targetRole.roleId === 'object' ? targetRole.roleId._id.toString() : targetRole.roleId.toString())
       );
-      
+
       return success({
         hasTargetRole: true,
         roleId: (typeof targetRole.roleId === 'object' ? targetRole.roleId._id.toString() : targetRole.roleId.toString()),
@@ -128,7 +128,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         message: 'No snapshot yet. Showing preview calculation.',
       });
     }
-    
+
     return success({
       hasTargetRole: true,
       roleId: (typeof targetRole.roleId === 'object' ? targetRole.roleId._id.toString() : targetRole.roleId.toString()),
@@ -155,7 +155,7 @@ interface RecalculateBody {
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const { id: userId } = await context.params;
-    
+
     // 1. Auth check
     const session = await auth();
     if (!session?.user) {
@@ -163,24 +163,24 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     const sessionUser = session.user as { id?: string; role?: string };
-    
+
     // 2. Authorization
     if (sessionUser.id !== userId && sessionUser.role !== 'admin') {
       return errors.forbidden('You can only recalculate your own readiness');
     }
-    
+
     await connectDB();
-    
+
     // 3. Get user's active target role
     const targetRole = await TargetRole.getActiveForUser(userId);
     if (!targetRole) {
       return errors.badRequest('No target role selected. Select a target role first.');
     }
-    
+
     // 4. Parse body for trigger info
     let trigger: SnapshotTrigger = 'manual';
     let triggerDetails: string | undefined;
-    
+
     try {
       const body: RecalculateBody = await request.json();
       if (body.trigger && ['role_change', 'skill_update', 'validation', 'manual'].includes(body.trigger)) {
@@ -192,7 +192,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     } catch {
       // Empty body is fine, use defaults
     }
-    
+
     // 5. Calculate and save snapshot
     const result = await calculateAndSnapshot({
       userId,
@@ -207,7 +207,55 @@ export async function POST(request: NextRequest, context: RouteContext) {
       percentage: result.snapshot.percentage,
       trigger,
     });
-    
+
+    // Trigger readiness emails (async, non-blocking)
+    const roleId = (typeof targetRole.roleId === 'object' ? targetRole.roleId._id.toString() : targetRole.roleId.toString());
+    const roleName = targetRole.roleId && typeof targetRole.roleId === 'object' && 'name' in targetRole.roleId
+      ? (targetRole.roleId as { name: string }).name
+      : 'Unknown Role';
+    const currentScore = result.snapshot.percentage;
+
+    // Import ReadinessSnapshot to check for previous snapshots
+    import('@/lib/models').then(async ({ ReadinessSnapshot }) => {
+      // Get previous snapshot (skip 1 to get the one before current)
+      const previousSnapshot = await ReadinessSnapshot.findOne({
+        userId,
+        roleId,
+        isActive: true,
+      }).sort({ createdAt: -1 }).skip(1).lean();
+
+      const { triggerEmailEvent } = await import('@/lib/email/emailEventService');
+
+      if (!previousSnapshot) {
+        // First readiness calculation
+        triggerEmailEvent({
+          userId,
+          event: 'READINESS_FIRST',
+          metadata: {
+            score: currentScore,
+            roleName: roleName,
+            roleId: roleId,
+          },
+        }).catch(err => console.error('[Readiness] First readiness email failed:', err));
+      } else {
+        // Check for major improvement (15% or more)
+        const improvement = currentScore - previousSnapshot.percentage;
+
+        if (improvement >= 15) {
+          triggerEmailEvent({
+            userId,
+            event: 'READINESS_MAJOR_IMPROVEMENT',
+            metadata: {
+              oldScore: previousSnapshot.percentage,
+              newScore: currentScore,
+              roleName: roleName,
+              roleId: roleId,
+            },
+          }).catch(err => console.error('[Readiness] Improvement email failed:', err));
+        }
+      }
+    }).catch(err => console.error('[Readiness] Email module import failed:', err));
+
     return success({
       snapshot: result.snapshot,
       gaps: result.gaps,
