@@ -9,6 +9,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
+import NotificationBell from '@/components/notifications/NotificationBell';
 
 const NotificationIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -17,10 +18,10 @@ const NotificationIcon = () => (
 );
 
 const ChevronDownIcon = ({ isOpen }: { isOpen: boolean }) => (
-  <svg 
-    className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} 
-    fill="none" 
-    stroke="currentColor" 
+  <svg
+    className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+    fill="none"
+    stroke="currentColor"
     viewBox="0 0 24 24"
   >
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -57,20 +58,18 @@ interface MentorHeaderProps {
   userEmail?: string;
 }
 
-export default function MentorHeader({ 
-  userName: propUserName, 
-  userEmail: propUserEmail 
+export default function MentorHeader({
+  userName: propUserName,
+  userEmail: propUserEmail
 }: MentorHeaderProps) {
   const { data: session } = useSession();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const notificationRef = useRef<HTMLDivElement>(null);
 
   // Get user data from session or props
   const userName = propUserName || session?.user?.name || 'Mentor';
   const userEmail = propUserEmail || session?.user?.email || 'mentor@roleready.com';
-  
+
   // Get first letter of name for avatar
   const userInitial = userName.charAt(0).toUpperCase();
 
@@ -79,9 +78,6 @@ export default function MentorHeader({
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
-      }
-      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
-        setIsNotificationOpen(false);
       }
     };
 
@@ -103,49 +99,7 @@ export default function MentorHeader({
           {/* Right side - User profile and notifications */}
           <div className="flex items-center gap-4">
             {/* Notifications */}
-            <div className="relative" ref={notificationRef}>
-              <button
-                onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors relative"
-                aria-label="Notifications"
-              >
-                <NotificationIcon />
-                {/* Notification badge */}
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
-
-              {/* Notification dropdown */}
-              {isNotificationOpen && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                  <div className="px-4 py-2 border-b border-gray-200">
-                    <h3 className="font-semibold text-gray-900">Notifications</h3>
-                  </div>
-                  <div className="max-h-96 overflow-y-auto">
-                    {/* Sample notifications */}
-                    <div className="px-4 py-3 hover:bg-gray-50 border-b border-gray-100">
-                      <p className="text-sm text-gray-800">New skill validation request from John Doe</p>
-                      <span className="text-xs text-gray-500">2 minutes ago</span>
-                    </div>
-                    <div className="px-4 py-3 hover:bg-gray-50 border-b border-gray-100">
-                      <p className="text-sm text-gray-800">Internship application requires your review</p>
-                      <span className="text-xs text-gray-500">1 hour ago</span>
-                    </div>
-                    <div className="px-4 py-3 hover:bg-gray-50">
-                      <p className="text-sm text-gray-800">Weekly mentorship summary is ready</p>
-                      <span className="text-xs text-gray-500">Yesterday</span>
-                    </div>
-                  </div>
-                  <div className="px-4 py-2 border-t border-gray-200">
-                    <Link 
-                      href="/mentor/notifications" 
-                      className="text-sm text-[#5693C1] hover:text-[#4579a1] font-medium"
-                    >
-                      View all notifications
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </div>
+            <NotificationBell />
 
             {/* User profile dropdown */}
             <div className="relative" ref={dropdownRef}>

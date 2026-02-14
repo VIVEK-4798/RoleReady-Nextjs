@@ -231,7 +231,7 @@ export default function AdminTicketDetail({ ticketId }: AdminTicketDetailProps) 
                                 value={replyMessage}
                                 onChange={(e) => setReplyMessage(e.target.value)}
                                 placeholder={isInternal ? "Add an internal note..." : "Type a public reply..."}
-                                className={`w-full rounded-lg border-gray-300 focus:ring-2 resize-none py-3 px-4 text-sm ${isInternal
+                                className={`w-full rounded-lg border-gray-300 focus:ring-2 resize-none py-3 px-4 text-sm text-gray-900 placeholder-gray-400 ${isInternal
                                     ? 'bg-yellow-50 focus:border-yellow-500 focus:ring-yellow-200'
                                     : 'focus:border-[#5693C1] focus:ring-[#5693C1]/20'
                                     }`}
@@ -265,7 +265,7 @@ export default function AdminTicketDetail({ ticketId }: AdminTicketDetailProps) 
                         value={ticket.status}
                         onChange={(e) => handleStatusChange(e.target.value)}
                         disabled={statusUpdating}
-                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-[#5693C1] focus:ring-[#5693C1] sm:text-sm p-2 border"
+                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-[#5693C1] focus:ring-[#5693C1] sm:text-sm p-2 border text-gray-900"
                     >
                         <option value="open">Open</option>
                         <option value="in_progress">In Progress</option>

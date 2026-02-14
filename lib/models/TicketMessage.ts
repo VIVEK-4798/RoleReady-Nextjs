@@ -65,9 +65,8 @@ const TicketMessageSchema = new Schema<ITicketMessageDocument, ITicketMessageMod
     }
 );
 
-// Indexes for performance
+// Compound indexes for performance (single-field indexes already defined inline)
 TicketMessageSchema.index({ ticketId: 1, createdAt: 1 });
-TicketMessageSchema.index({ senderId: 1 });
 TicketMessageSchema.index({ ticketId: 1, isInternal: 1 });
 
 /**

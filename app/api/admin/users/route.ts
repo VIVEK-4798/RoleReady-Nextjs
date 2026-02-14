@@ -13,7 +13,7 @@ import { User } from '@/lib/models';
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
-    
+
     // Check admin access
     if (!session?.user || (session.user as { role?: string }).role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -26,10 +26,12 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const search = searchParams.get('search') || '';
     const role = searchParams.get('role') || '';
+    const filter = searchParams.get('filter') || '';
+    const status = searchParams.get('status') || '';
 
     // Build query
     const query: Record<string, unknown> = {};
-    
+
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -41,11 +43,22 @@ export async function GET(request: NextRequest) {
       query.role = role;
     }
 
+    if (status && status !== 'all') {
+      if (status === 'active') query.isActive = true;
+      if (status === 'inactive') query.isActive = false;
+    }
+
+    if (filter === 'unassigned') {
+      query.role = 'user';
+      query.mentorId = null;
+      query.isActive = true;
+    }
+
     const skip = (page - 1) * limit;
 
     const [results, total] = await Promise.all([
       User.find(query)
-        .select('name email mobile role isActive createdAt')
+        .select('name email mobile role isActive createdAt mentorId')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -74,7 +87,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
-    
+
     // Check admin access
     if (!session?.user || (session.user as { role?: string }).role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -113,7 +126,7 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { 
+      {
         message: 'User created successfully',
         user: {
           _id: newUser._id,

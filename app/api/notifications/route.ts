@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
     // Execute query with pagination
     const [notifications, totalItems, unreadCount] = await Promise.all([
       Notification.find(query)
+        .populate('userId', 'firstName lastName email profileImage')
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 }),
@@ -60,8 +61,9 @@ export async function GET(request: NextRequest) {
     const pagination = createPagination(page, limit, totalItems);
 
     return paginatedResponse(
-      notifications.map((n) => ({
+      notifications.map((n: any) => ({
         _id: n._id,
+        userId: n.userId, // This is now populated
         type: n.type,
         title: n.title,
         message: n.message,
@@ -97,7 +99,7 @@ export async function PATCH(request: NextRequest) {
     await connectDB();
 
     let notificationIds: string[] | undefined;
-    
+
     try {
       const body = await request.json();
       notificationIds = body.notificationIds;
@@ -110,9 +112,9 @@ export async function PATCH(request: NextRequest) {
     const modifiedCount = await Notification.markAsRead(user.id, notificationIds);
 
     return successResponse(
-      { 
+      {
         markedAsRead: modifiedCount,
-        message: notificationIds 
+        message: notificationIds
           ? `Marked ${modifiedCount} notification(s) as read`
           : 'Marked all notifications as read'
       },

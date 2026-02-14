@@ -134,11 +134,47 @@ const UserSchema = new Schema<IUserDocument>(
       type: String,
       sparse: true, // Allow multiple null values but unique non-null values
     },
+    githubId: {
+      type: String,
+      sparse: true,
+    },
+    githubUsername: {
+      type: String,
+      trim: true,
+    },
+    githubAccessToken: {
+      type: String,
+      select: false, // Security: Don't include in default queries
+    },
+    authProvider: {
+      type: String,
+      lowercase: true,
+      trim: true,
+    },
     isActive: {
       type: Boolean,
       default: true,
     },
-    // Assigned mentor for skill validation (optional - if null, any mentor can validate)
+    // Mentor Ownership Model
+    // If mentorId is set, this user is owned by that mentor
+    // All validation requests go ONLY to the assigned mentor
+    // If null, validation requests go to admin queue
+    mentorId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+      index: true, // Critical for mentor queries
+    },
+    mentorAssignedAt: {
+      type: Date,
+      default: null,
+    },
+    mentorAssignedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User', // Admin who assigned the mentor
+      default: null,
+    },
+    // Legacy field - keep for backward compatibility, will be deprecated
     assignedMentor: {
       type: Schema.Types.ObjectId,
       ref: 'User',
@@ -250,14 +286,15 @@ UserSchema.methods.comparePassword = async function (
  * Only hash if password is modified and exists (for OAuth users without password)
  */
 UserSchema.pre('save', async function () {
+  const user = this as IUserDocument;
   // Only hash if password is modified and not null
-  if (!this.isModified('password') || !this.password) {
+  if (!user.isModified('password') || !user.password) {
     return;
   }
 
   const bcrypt = await import('bcryptjs');
   const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+  user.password = await bcrypt.hash(user.password, salt);
 });
 
 // ============================================================================

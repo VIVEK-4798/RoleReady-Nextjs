@@ -30,12 +30,13 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') || 'all';
 
     // Build query - mentors see their own internships, admins see all
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const query: Record<string, any> = {};
-
+    const mentorQuery: Record<string, any> = {};
     if (user.role !== 'admin') {
-      query.createdBy = new Types.ObjectId(user.id);
+      mentorQuery.createdBy = new Types.ObjectId(user.id);
     }
+
+    // Filtered query for search/status
+    const query: Record<string, any> = { ...mentorQuery };
 
     if (search) {
       query.$or = [
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    const [internships, total] = await Promise.all([
+    const [internships, total, activeCount, featuredCount] = await Promise.all([
       Internship.find(query)
         .populate('category', 'name colorClass')
         .sort({ createdAt: -1 })
@@ -61,16 +62,27 @@ export async function GET(request: NextRequest) {
         .limit(limit)
         .lean(),
       Internship.countDocuments(query),
+      Internship.countDocuments({ ...mentorQuery, isActive: true }),
+      Internship.countDocuments({ ...mentorQuery, isFeatured: true }),
     ]);
+
+    // Total for this mentor specifically (not filtered by search/status)
+    const mentorTotal = await Internship.countDocuments(mentorQuery);
 
     return NextResponse.json({
       success: true,
       data: {
         internships,
+        stats: {
+          total: mentorTotal,
+          active: activeCount,
+          featured: featuredCount,
+          applications: 0, // Applications count can be added when Application model is ready
+        },
         pagination: {
           page,
           limit,
-          total,
+          total, // This is the filtered total
           pages: Math.ceil(total / limit),
         },
       },

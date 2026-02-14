@@ -17,6 +17,8 @@ interface Stats {
   jobsCount: number;
   activeStudents: number;
   completionRate: number;
+  avgResponseTime: string;
+  satisfaction: string;
 }
 
 interface RecentActivity {
@@ -29,21 +31,41 @@ interface RecentActivity {
 
 export default function MentorDashboardClient({ userName }: { userName: string }) {
   const [stats, setStats] = useState<Stats>({
-    pendingValidations: 12,
-    validatedToday: 8,
-    totalValidations: 156,
-    internshipsCount: 5,
-    jobsCount: 3,
-    activeStudents: 24,
-    completionRate: 85,
+    pendingValidations: 0,
+    validatedToday: 0,
+    totalValidations: 0,
+    internshipsCount: 0,
+    jobsCount: 0,
+    activeStudents: 0,
+    completionRate: 100,
+    avgResponseTime: '0h',
+    satisfaction: '5.0',
   });
-  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([
-    { id: '1', studentName: 'John Doe', skill: 'React.js', action: 'validated', time: '2 hours ago' },
-    { id: '2', studentName: 'Jane Smith', skill: 'Node.js', action: 'validated', time: '4 hours ago' },
-    { id: '3', studentName: 'Bob Wilson', skill: 'Python', action: 'rejected', time: '1 day ago' },
-    { id: '4', studentName: 'Alice Brown', skill: 'TypeScript', action: 'validated', time: '2 days ago' },
-  ]);
-  const [loading, setLoading] = useState(false);
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+  const [pendingTasks, setPendingTasks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/mentor/dashboard');
+        const result = await response.json();
+
+        if (result.success) {
+          setStats(result.data.stats);
+          setRecentActivities(result.data.recentActivity);
+          setPendingTasks(result.data.pendingTasks);
+        }
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   const statCards = [
     {
@@ -51,12 +73,12 @@ export default function MentorDashboardClient({ userName }: { userName: string }
       value: stats.pendingValidations,
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 01118 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
       color: 'bg-yellow-50 text-yellow-600',
       borderColor: 'border-yellow-200',
-      href: '/mentor/skill-validation',
+      href: '/mentor/validations',
     },
     {
       title: 'Validated Today',
@@ -68,7 +90,7 @@ export default function MentorDashboardClient({ userName }: { userName: string }
       ),
       color: 'bg-green-50 text-green-600',
       borderColor: 'border-green-200',
-      href: '/mentor/skill-validation',
+      href: '/mentor/validations',
     },
     {
       title: 'Active Students',
@@ -80,7 +102,7 @@ export default function MentorDashboardClient({ userName }: { userName: string }
       ),
       color: 'bg-blue-50 text-blue-600',
       borderColor: 'border-blue-200',
-      href: '/mentor/students',
+      href: '/mentor/validations',
     },
     {
       title: 'Completion Rate',
@@ -92,7 +114,7 @@ export default function MentorDashboardClient({ userName }: { userName: string }
       ),
       color: 'bg-purple-50 text-purple-600',
       borderColor: 'border-purple-200',
-      href: '/mentor/analytics',
+      href: '/mentor/validations',
     },
   ];
 
@@ -100,38 +122,33 @@ export default function MentorDashboardClient({ userName }: { userName: string }
     {
       title: 'Review Skills',
       description: 'Validate pending skill requests from students',
-      href: '/mentor/skill-validation',
+      href: '/mentor/validations',
       icon: '🎓',
       color: 'bg-blue-50 border-blue-200',
     },
     {
       title: 'Add Internship',
       description: 'Post a new internship opportunity',
-      href: '/mentor/internships/add',
+      href: '/mentor/internships',
       icon: '💼',
       color: 'bg-green-50 border-green-200',
     },
     {
       title: 'Add Job',
       description: 'Post a new job opening',
-      href: '/mentor/jobs/add',
+      href: '/mentor/jobs',
       icon: '🏢',
       color: 'bg-purple-50 border-purple-200',
     },
     {
-      title: 'View Students',
-      description: 'Check student profiles and progress',
-      href: '/mentor/students',
-      icon: '👥',
+      title: 'My Profile',
+      description: 'Update your mentoring preferences',
+      href: '/mentor/profile',
+      icon: '👤',
       color: 'bg-yellow-50 border-yellow-200',
     },
   ];
 
-  const pendingTasks = [
-    { id: 1, title: 'Review React.js skills', student: 'John Doe', time: 'Due today' },
-    { id: 2, title: 'Validate Node.js project', student: 'Jane Smith', time: 'Due tomorrow' },
-    { id: 3, title: 'Check Python assignments', student: 'Bob Wilson', time: 'In 2 days' },
-  ];
 
   return (
     <div className="space-y-6">
@@ -182,7 +199,7 @@ export default function MentorDashboardClient({ userName }: { userName: string }
             <h2 className="text-xl font-bold text-gray-900">Quick Actions</h2>
             <span className="text-sm text-gray-500">4 available actions</span>
           </div>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {quickActions.map((action, index) => (
               <Link
@@ -216,7 +233,7 @@ export default function MentorDashboardClient({ userName }: { userName: string }
               {pendingTasks.length} pending
             </span>
           </div>
-          
+
           <div className="space-y-4">
             {pendingTasks.map((task) => (
               <div key={task.id} className="p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
@@ -248,7 +265,7 @@ export default function MentorDashboardClient({ userName }: { userName: string }
               View all →
             </Link>
           </div>
-          
+
           <div className="space-y-4">
             {recentActivities.map((activity) => (
               <div key={activity.id} className="flex items-center gap-3 p-3 border border-gray-100 rounded-lg">
@@ -271,16 +288,16 @@ export default function MentorDashboardClient({ userName }: { userName: string }
         {/* Performance Summary */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-6">Performance Summary</h2>
-          
+
           <div className="space-y-6">
             {/* Validation Stats */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">Validation Accuracy</span>
-                <span className="text-sm font-bold text-gray-900">94%</span>
+                <span className="text-sm font-medium text-gray-700">Completion Progress</span>
+                <span className="text-sm font-bold text-gray-900">{stats.completionRate}%</span>
               </div>
               <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div className="h-full bg-green-500 rounded-full" style={{ width: '94%' }}></div>
+                <div className="h-full bg-green-500 rounded-full transition-all duration-500" style={{ width: `${stats.completionRate}%` }}></div>
               </div>
             </div>
 
@@ -288,7 +305,7 @@ export default function MentorDashboardClient({ userName }: { userName: string }
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-700">Avg Response Time</span>
-                <span className="text-sm font-bold text-gray-900">2.4 hours</span>
+                <span className="text-sm font-bold text-gray-900">{stats.avgResponseTime}</span>
               </div>
               <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div className="h-full bg-blue-500 rounded-full" style={{ width: '85%' }}></div>
@@ -299,7 +316,7 @@ export default function MentorDashboardClient({ userName }: { userName: string }
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-700">Student Satisfaction</span>
-                <span className="text-sm font-bold text-gray-900">4.8/5</span>
+                <span className="text-sm font-bold text-gray-900">{stats.satisfaction}/5</span>
               </div>
               <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div className="h-full bg-purple-500 rounded-full" style={{ width: '96%' }}></div>
@@ -324,12 +341,12 @@ export default function MentorDashboardClient({ userName }: { userName: string }
       {/* Upcoming Events */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900">Upcoming Events</h2>
-          <Link href="/mentor/calendar" className="text-sm text-[#5693C1] hover:text-[#4a80b0] font-medium">
+          <h2 className="text-xl font-bold text-gray-900">Upcoming Features</h2>
+          {/* <Link href="/mentor/calendar" className="text-sm text-[#5693C1] hover:text-[#4a80b0] font-medium">
             View calendar →
-          </Link>
+          </Link> */}
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
             { title: 'Skill Validation Workshop', date: 'Tomorrow, 2:00 PM', type: 'workshop' },

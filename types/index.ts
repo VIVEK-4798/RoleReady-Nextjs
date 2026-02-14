@@ -105,9 +105,16 @@ export interface IUser {
   mobile?: string;
   image?: string;
   linkedinId?: string; // LinkedIn OAuth ID
+  githubId?: string; // GitHub OAuth ID
+  githubUsername?: string; // GitHub username
+  githubAccessToken?: string; // GitHub access token (stored on server ONLY)
+  authProvider?: string; // Type of auth used (google, linkedin, github, credentials)
   emailVerified?: Date | null; // Set for OAuth users, null for credentials users
   isActive: boolean;
-  assignedMentor?: Types.ObjectId; // Mentor assigned for skill validation
+  mentorId?: Types.ObjectId; // Critical for mentor queries
+  mentorAssignedAt?: Date;
+  mentorAssignedBy?: Types.ObjectId;
+  assignedMentor?: Types.ObjectId; // Legacy support
   emailPreferences?: {
     skillReminders: boolean;
     roadmapUpdates: boolean;
@@ -238,4 +245,30 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
     totalItems: number;
     itemsPerPage: number;
   };
+}
+
+// GitHub Import Types
+// ============================================================================
+
+export interface IGitHubRepo {
+  id: string;
+  name: string;
+  description: string | null;
+  htmlUrl: string;
+  primaryLanguage: string | null;
+  topics: string[];
+  stars: number;
+  forks: number;
+  updatedAt: string;
+  isFork: boolean;
+}
+
+export interface IImportRequest {
+  repoIds: string[];
+}
+
+export interface IImportResult {
+  importedCount: number;
+  skippedCount: number;
+  projects: any[]; // Using any for now, could be project items
 }

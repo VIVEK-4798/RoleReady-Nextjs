@@ -66,6 +66,33 @@ export async function signInWithLinkedIn(
 }
 
 /**
+ * Sign in with GitHub OAuth
+ * 
+ * Performs GitHub OAuth sign-in and redirects based on user role.
+ * New users are created with 'user' role and email verified status.
+ * 
+ * @returns Promise that resolves when sign-in is complete
+ */
+export async function signInWithGitHub(
+  onError?: (error: string) => void
+): Promise<void> {
+  try {
+    console.log('CLIENT: signInWithGitHub - Starting...');
+    // Let NextAuth handle the full OAuth flow including redirects
+    // This will redirect to GitHub, then back to /api/auth/callback/github
+    // NextAuth will then redirect to the callbackUrl or default page
+    await nextAuthSignIn('github', {
+      callbackUrl: '/role-redirect',
+    });
+    // Note: Code after this won't execute because the page will redirect
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'GitHub sign-in failed';
+    console.error('CLIENT: signInWithGitHub - Exception:', error);
+    onError?.(errorMessage);
+  }
+}
+
+/**
  * User-friendly error message for OAuth errors
  */
 function getOAuthErrorMessage(error: string): string {

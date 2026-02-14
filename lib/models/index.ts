@@ -23,6 +23,7 @@ export { default as DemoSession } from './DemoSession';
 export { UserEmailEvent } from './UserEmailEvent';
 export { default as Ticket } from './Ticket';
 export { default as TicketMessage } from './TicketMessage';
+export { default as MentorRoleRequest } from './MentorRoleRequest';
 
 // Re-export document interfaces for convenience
 export type { IUserDocument } from './User';

@@ -9,6 +9,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AdminDataTable } from '@/components/admin';
+import MentorAssignmentDropdown from '@/components/admin/MentorAssignmentDropdown';
 import Link from 'next/link';
 
 interface User {
@@ -20,6 +21,7 @@ interface User {
   isActive: boolean;
   createdAt: string;
   lastLogin?: string;
+  mentorId?: string;
 }
 
 interface PaginationData {
@@ -58,7 +60,7 @@ export default function AdminUsersClient() {
 
       const response = await fetch(`/api/admin/users?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch users');
-      
+
       const data: UsersResponse = await response.json();
       setUsers(data.results);
       setPagination(data.pagination);
@@ -73,7 +75,7 @@ export default function AdminUsersClient() {
     const timer = setTimeout(() => {
       fetchUsers();
     }, 300);
-    
+
     return () => clearTimeout(timer);
   }, [fetchUsers]);
 
@@ -86,7 +88,7 @@ export default function AdminUsersClient() {
       });
 
       if (!response.ok) throw new Error('Failed to delete user');
-      
+
       fetchUsers();
     } catch (error) {
       console.error('Error deleting user:', error);
@@ -103,7 +105,7 @@ export default function AdminUsersClient() {
       });
 
       if (!response.ok) throw new Error('Failed to update user');
-      
+
       fetchUsers();
     } catch (error) {
       console.error('Error updating user:', error);
@@ -128,7 +130,7 @@ export default function AdminUsersClient() {
       });
 
       if (!response.ok) throw new Error('Failed to perform bulk action');
-      
+
       setSelectedIds([]);
       fetchUsers();
     } catch (error) {
@@ -146,8 +148,8 @@ export default function AdminUsersClient() {
   };
 
   const toggleSelect = (id: string) => {
-    setSelectedIds(prev => 
-      prev.includes(id) 
+    setSelectedIds(prev =>
+      prev.includes(id)
         ? prev.filter(userId => userId !== id)
         : [...prev, id]
     );
@@ -217,11 +219,10 @@ export default function AdminUsersClient() {
       key: 'role',
       label: 'Role',
       render: (user: User) => (
-        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-          user.role === 'admin' ? 'bg-red-100 text-red-800 border border-red-200' :
+        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${user.role === 'admin' ? 'bg-red-100 text-red-800 border border-red-200' :
           user.role === 'mentor' ? 'bg-purple-100 text-purple-800 border border-purple-200' :
-          'bg-blue-100 text-blue-800 border border-blue-200'
-        }`}>
+            'bg-blue-100 text-blue-800 border border-blue-200'
+          }`}>
           {user.role === 'admin' && (
             <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -230,18 +231,40 @@ export default function AdminUsersClient() {
           {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
         </span>
       ),
-      width: 'w-32',
+      width: 'w-24',
+    },
+    {
+      key: 'mentor',
+      label: 'Assigned Mentor',
+      render: (user: User) => {
+        if (user.role !== 'user') return <span className="text-gray-400 text-xs">-</span>;
+
+        return (
+          <div onClick={(e) => e.stopPropagation()}>
+            <MentorAssignmentDropdown
+              userId={user._id}
+              currentMentorId={user.mentorId}
+              onAssign={() => {
+                // Refresh list on assignment to update stats if any
+                // Optional: show toast message
+              }}
+              className="w-48 text-sm"
+              showWorkload={false}
+            />
+          </div>
+        );
+      },
+      width: 'w-56',
     },
     {
       key: 'status',
       label: 'Status',
       render: (user: User) => (
         <div className="space-y-1">
-          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-            user.isActive 
-              ? 'bg-green-100 text-green-800 border border-green-200'
-              : 'bg-gray-100 text-gray-800 border border-gray-200'
-          }`}>
+          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${user.isActive
+            ? 'bg-green-100 text-green-800 border border-green-200'
+            : 'bg-gray-100 text-gray-800 border border-gray-200'
+            }`}>
             <span className={`w-2 h-2 rounded-full mr-2 ${user.isActive ? 'bg-green-500' : 'bg-gray-400'}`}></span>
             {user.isActive ? 'Active' : 'Inactive'}
           </span>
@@ -293,16 +316,15 @@ export default function AdminUsersClient() {
           </button>
           <button
             onClick={() => handleToggleStatus(user._id, user.isActive)}
-            className={`p-1.5 rounded-lg transition-colors ${
-              user.isActive 
-                ? 'text-gray-500 hover:text-orange-600 hover:bg-orange-50'
-                : 'text-gray-500 hover:text-green-600 hover:bg-green-50'
-            }`}
+            className={`p-1.5 rounded-lg transition-colors ${user.isActive
+              ? 'text-gray-500 hover:text-orange-600 hover:bg-orange-50'
+              : 'text-gray-500 hover:text-green-600 hover:bg-green-50'
+              }`}
             title={user.isActive ? 'Deactivate' : 'Activate'}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={
-                user.isActive 
+                user.isActive
                   ? "M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
                   : "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
               } />
@@ -435,7 +457,7 @@ export default function AdminUsersClient() {
                 placeholder="Search users by name or email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent text-gray-900 placeholder-gray-500"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent text-black placeholder-gray-500"
               />
             </div>
           </div>
@@ -445,7 +467,7 @@ export default function AdminUsersClient() {
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent text-gray-900"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent text-black"
             >
               <option value="all">All Roles</option>
               <option value="user">Users</option>
@@ -459,7 +481,7 @@ export default function AdminUsersClient() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent text-gray-900"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent text-black"
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
@@ -469,7 +491,7 @@ export default function AdminUsersClient() {
 
           {/* Sort */}
           <div className="md:col-span-2">
-            <select className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent text-gray-900">
+            <select className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent text-black">
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
               <option value="name">Name A-Z</option>

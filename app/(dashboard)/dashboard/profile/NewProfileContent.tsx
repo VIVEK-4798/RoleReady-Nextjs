@@ -108,7 +108,7 @@ export default function NewProfileContent() {
   const router = useRouter();
   const { update: updateSession } = useSession();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Profile data state
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [resume, setResume] = useState<ResumeInfo | null>(null);
@@ -116,12 +116,12 @@ export default function NewProfileContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
-  
+
   // Modal state
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const [editData, setEditData] = useState<Record<string, unknown>>({});
   const [isSaving, setIsSaving] = useState(false);
-  
+
   // Resume upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploadingResume, setIsUploadingResume] = useState(false);
@@ -147,18 +147,18 @@ export default function NewProfileContent() {
         'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       ];
-      
+
       if (!allowedTypes.includes(file.type)) {
         addToast('error', 'Please upload a PDF or Word document');
         return;
       }
-      
+
       // Validate file size (5MB)
       if (file.size > 5 * 1024 * 1024) {
         addToast('error', 'File size must be less than 5MB');
         return;
       }
-      
+
       setSelectedFile(file);
     }
   };
@@ -166,20 +166,20 @@ export default function NewProfileContent() {
   // Handle resume upload
   const handleResumeUpload = async () => {
     if (!selectedFile || !user?.id) return;
-    
+
     try {
       setIsUploadingResume(true);
-      
+
       const formData = new FormData();
       formData.append('file', selectedFile);
-      
+
       const response = await fetch(`/api/users/${user.id}/resume`, {
         method: 'POST',
         body: formData,
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         addToast('success', 'Resume uploaded successfully');
         setActiveModal(null);
@@ -199,10 +199,10 @@ export default function NewProfileContent() {
   // Fetch all profile data
   const fetchProfile = useCallback(async () => {
     if (!user?.id) return;
-    
+
     try {
       setIsLoading(true);
-      
+
       const [profileRes, skillsRes, resumeRes] = await Promise.all([
         fetch(`/api/users/${user.id}/profile`),
         fetch(`/api/users/${user.id}/skills`),
@@ -260,10 +260,10 @@ export default function NewProfileContent() {
   // Calculate profile completion progress
   useEffect(() => {
     if (!profile) return;
-    
+
     let filled = 0;
     const total = 9;
-    
+
     if (profile.name) filled++;
     if (profile.email) filled++;
     if (profile.profile?.bio?.trim()) filled++;
@@ -273,7 +273,7 @@ export default function NewProfileContent() {
     if (resume?.hasResume) filled++;
     if (profile.profile?.certificates?.length || 0 > 0) filled++;
     if (profile.profile?.projects?.length > 0) filled++;
-    
+
     const progressValue = Math.round((filled / total) * 100);
     setProgress(progressValue);
   }, [profile, skills, resume]);
@@ -281,12 +281,12 @@ export default function NewProfileContent() {
   // Handle save for different sections
   const handleSave = async (type: ModalType, data: Record<string, unknown>) => {
     if (!user?.id) return;
-    
+
     setIsSaving(true);
     try {
       let endpoint = '';
       let body = {};
-      
+
       switch (type) {
         case 'about':
         case 'header':
@@ -338,15 +338,15 @@ export default function NewProfileContent() {
           };
           break;
       }
-      
+
       const response = await fetch(endpoint, {
         method: data._id ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      
+
       const result = await response.json();
-      
+
       if (result.success) {
         addToast('success', 'Saved successfully');
         setActiveModal(null);
@@ -365,18 +365,18 @@ export default function NewProfileContent() {
   // Delete achievement
   const handleDeleteAchievement = async (achievementId: string | number) => {
     if (!user?.id) return;
-    
+
     if (!confirm('Are you sure you want to delete this achievement?')) {
       return;
     }
-    
+
     try {
       const response = await fetch(`/api/users/${user.id}/achievements/${achievementId}`, {
         method: 'DELETE',
       });
-      
+
       const result = await response.json();
-      
+
       if (result.success) {
         addToast('success', 'Achievement deleted successfully');
         await fetchProfile();
@@ -392,11 +392,11 @@ export default function NewProfileContent() {
   // Handle image upload
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    
+
     if (!file) {
       return;
     }
-    
+
     if (!user?.id) {
       addToast('error', 'User session not found');
       return;
@@ -417,18 +417,18 @@ export default function NewProfileContent() {
     }
 
     setIsUploadingImage(true);
-    
+
     try {
       const formData = new FormData();
       formData.append('image', file);
-      
+
       const response = await fetch(`/api/users/${user.id}/upload-image`, {
         method: 'POST',
         body: formData,
       });
-      
+
       const result = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(result?.error || 'Upload failed');
       }
@@ -437,14 +437,14 @@ export default function NewProfileContent() {
         // Update local profile state
         const newImageUrl = result.data.imageUrl;
         setProfile(prev => prev ? { ...prev, image: newImageUrl } : null);
-        
+
         // Update session
         try {
           await updateSession({ image: newImageUrl });
         } catch (sessionError) {
           console.error('Session update error:', sessionError);
         }
-        
+
         addToast('success', 'Profile image updated successfully');
         router.refresh();
       } else {
@@ -474,7 +474,7 @@ export default function NewProfileContent() {
   console.log('[PROFILE-RENDER] Skills data:', skills);
 
   const primaryEducation = profile?.profile?.education?.[0];
-  
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
@@ -493,9 +493,9 @@ export default function NewProfileContent() {
               <div className="relative mb-4">
                 <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg">
                   {profile?.image ? (
-                    <Image 
-                      src={profile.image} 
-                      alt={profile.name || 'User'} 
+                    <Image
+                      src={profile.image}
+                      alt={profile.name || 'User'}
                       width={128}
                       height={128}
                       className="w-full h-full object-cover"
@@ -508,7 +508,7 @@ export default function NewProfileContent() {
                       </span>
                     </div>
                   )}
-                  
+
                   {/* Upload Overlay */}
                   <button
                     onClick={handleAvatarClick}
@@ -528,7 +528,7 @@ export default function NewProfileContent() {
                     )}
                   </button>
                 </div>
-                
+
                 {/* Hidden File Input */}
                 <input
                   ref={fileInputRef}
@@ -537,7 +537,7 @@ export default function NewProfileContent() {
                   onChange={handleImageUpload}
                   className="hidden"
                 />
-                
+
                 <button
                   onClick={handleAvatarClick}
                   disabled={isUploadingImage}
@@ -547,7 +547,7 @@ export default function NewProfileContent() {
                 </button>
               </div>
             </div>
-            
+
             {/* Right - Info Section */}
             <div className="flex-1">
               <div className="mb-6">
@@ -563,25 +563,25 @@ export default function NewProfileContent() {
                   </p>
                 )}
               </div>
-              
+
               {/* Profile Strength */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-700">Profile Completion</span>
                   <span className="text-sm font-bold text-[#5693C1]">{progress}%</span>
                 </div>
-                
+
                 {/* Progress Bar */}
                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-2">
                   <div
                     className="h-full rounded-full transition-all duration-300"
-                    style={{ 
+                    style={{
                       width: `${progress}%`,
                       backgroundColor: '#5693C1'
                     }}
                   />
                 </div>
-                
+
                 <p className="text-xs text-gray-500">
                   Complete your profile to increase your readiness score
                 </p>
@@ -609,7 +609,7 @@ export default function NewProfileContent() {
                 </svg>
               </button>
             </div>
-            
+
             {profile?.profile?.bio ? (
               <div className="text-gray-700 whitespace-pre-line">
                 {profile.profile.bio}
@@ -635,7 +635,7 @@ export default function NewProfileContent() {
                 </svg>
               </button>
             </div>
-            
+
             {resume?.hasResume ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
@@ -651,7 +651,7 @@ export default function NewProfileContent() {
                     )}
                   </div>
                 </div>
-                
+
                 {/* Extract Skills Button - Always visible when resume exists */}
                 <SkillSuggestionsReview onSkillsAdded={() => fetchProfile()} />
               </div>
@@ -676,7 +676,7 @@ export default function NewProfileContent() {
                 </svg>
               </button>
             </div>
-            
+
             {skills.length > 0 ? (
               <div className="space-y-3">
                 {skills.map((skill) => (
@@ -762,7 +762,7 @@ export default function NewProfileContent() {
                 </svg>
               </button>
             </div>
-            
+
             {profile?.profile?.experience?.length ? (
               <div className="space-y-4">
                 {profile.profile.experience.slice(0, 3).map((exp) => (
@@ -832,7 +832,7 @@ export default function NewProfileContent() {
                 </svg>
               </button>
             </div>
-            
+
             {profile?.profile?.education?.length ? (
               <div className="space-y-4">
                 {profile.profile.education.slice(0, 3).map((edu) => (
@@ -879,7 +879,7 @@ export default function NewProfileContent() {
                 </svg>
               </button>
             </div>
-            
+
             {profile?.profile?.certificates?.length ? (
               <div className="space-y-3">
                 {profile.profile.certificates.slice(0, 3).map((cert, index) => (
@@ -928,20 +928,32 @@ export default function NewProfileContent() {
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Projects</h3>
-              <button
-                onClick={() => {
-                  setEditData({});
-                  setActiveModal('project');
-                }}
-                className="p-1.5 text-[#5693C1] hover:text-[#4a82b0] hover:bg-blue-50 rounded-lg transition-colors"
-                title="Add Project"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => router.push('/dashboard/profile/import-github')}
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-gray-900 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  title="Import from GitHub"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+                  </svg>
+                  <span>Import GitHub</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setEditData({});
+                    setActiveModal('project');
+                  }}
+                  className="p-1.5 text-[#5693C1] hover:text-[#4a82b0] hover:bg-blue-50 rounded-lg transition-colors"
+                  title="Add Project"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                </button>
+              </div>
             </div>
-            
+
             {profile?.profile?.projects?.length ? (
               <div className="space-y-4">
                 {profile.profile.projects.slice(0, 3).map((project) => (
@@ -1019,7 +1031,7 @@ export default function NewProfileContent() {
                 </svg>
               </button>
             </div>
-            
+
             {profile?.profile?.achievements && profile.profile.achievements.length > 0 ? (
               <div className="space-y-3">
                 {profile.profile.achievements.map((achievement, index) => (
@@ -1037,7 +1049,7 @@ export default function NewProfileContent() {
                                   const dateObj = new Date(achievement.date);
                                   formattedDate = dateObj.toISOString().split('T')[0];
                                 }
-                                
+
                                 setEditData({
                                   _id: achievement._id || index,
                                   title: achievement.title,
@@ -1202,7 +1214,7 @@ export default function NewProfileContent() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">About</label>
                     <textarea
                       value={editData.bio as string || ''}
-                      onChange={(e) => setEditData({...editData, bio: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, bio: e.target.value })}
                       rows={5}
                       maxLength={1000}
                       placeholder="Write about yourself..."
@@ -1252,7 +1264,7 @@ export default function NewProfileContent() {
                     <input
                       type="text"
                       value={editData.title as string || ''}
-                      onChange={(e) => setEditData({...editData, title: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, title: e.target.value })}
                       placeholder="Software Engineer"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
                     />
@@ -1262,7 +1274,7 @@ export default function NewProfileContent() {
                     <input
                       type="text"
                       value={editData.company as string || ''}
-                      onChange={(e) => setEditData({...editData, company: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, company: e.target.value })}
                       placeholder="Company Name"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
                     />
@@ -1271,7 +1283,7 @@ export default function NewProfileContent() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                     <textarea
                       value={editData.description as string || ''}
-                      onChange={(e) => setEditData({...editData, description: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, description: e.target.value })}
                       rows={3}
                       placeholder="Describe your responsibilities..."
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 resize-none focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
@@ -1319,7 +1331,7 @@ export default function NewProfileContent() {
                     <input
                       type="text"
                       value={editData.institution as string || ''}
-                      onChange={(e) => setEditData({...editData, institution: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, institution: e.target.value })}
                       placeholder="University/College Name"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
                     />
@@ -1329,7 +1341,7 @@ export default function NewProfileContent() {
                     <input
                       type="text"
                       value={editData.degree as string || ''}
-                      onChange={(e) => setEditData({...editData, degree: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, degree: e.target.value })}
                       placeholder="Bachelor's, Master's, etc."
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
                     />
@@ -1412,7 +1424,7 @@ export default function NewProfileContent() {
                     <input
                       type="text"
                       value={editData.title as string || ''}
-                      onChange={(e) => setEditData({...editData, title: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, title: e.target.value })}
                       placeholder="AWS Certified Solutions Architect"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
                     />
@@ -1422,7 +1434,7 @@ export default function NewProfileContent() {
                     <input
                       type="text"
                       value={editData.organization as string || ''}
-                      onChange={(e) => setEditData({...editData, organization: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, organization: e.target.value })}
                       placeholder="Amazon Web Services"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
                     />
@@ -1432,7 +1444,7 @@ export default function NewProfileContent() {
                     <input
                       type="date"
                       value={editData.issuedDate as string || ''}
-                      onChange={(e) => setEditData({...editData, issuedDate: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, issuedDate: e.target.value })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
                     />
                   </div>
@@ -1441,7 +1453,7 @@ export default function NewProfileContent() {
                     <input
                       type="date"
                       value={editData.expiryDate as string || ''}
-                      onChange={(e) => setEditData({...editData, expiryDate: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, expiryDate: e.target.value })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
                     />
                   </div>
@@ -1450,7 +1462,7 @@ export default function NewProfileContent() {
                     <input
                       type="url"
                       value={editData.url as string || ''}
-                      onChange={(e) => setEditData({...editData, url: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, url: e.target.value })}
                       placeholder="https://..."
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
                     />
@@ -1499,7 +1511,7 @@ export default function NewProfileContent() {
                     <input
                       type="text"
                       value={editData.name as string || ''}
-                      onChange={(e) => setEditData({...editData, name: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, name: e.target.value })}
                       placeholder="E-commerce Platform"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
                     />
@@ -1508,7 +1520,7 @@ export default function NewProfileContent() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                     <textarea
                       value={editData.description as string || ''}
-                      onChange={(e) => setEditData({...editData, description: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, description: e.target.value })}
                       rows={3}
                       placeholder="Describe your project..."
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 resize-none focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
@@ -1519,7 +1531,7 @@ export default function NewProfileContent() {
                     <input
                       type="url"
                       value={editData.url as string || ''}
-                      onChange={(e) => setEditData({...editData, url: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, url: e.target.value })}
                       placeholder="https://..."
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
                     />
@@ -1529,7 +1541,7 @@ export default function NewProfileContent() {
                     <input
                       type="url"
                       value={editData.githubUrl as string || ''}
-                      onChange={(e) => setEditData({...editData, githubUrl: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, githubUrl: e.target.value })}
                       placeholder="https://github.com/..."
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
                     />
@@ -1540,7 +1552,7 @@ export default function NewProfileContent() {
                       type="text"
                       value={Array.isArray(editData.technologies) ? (editData.technologies as string[]).join(', ') : ''}
                       onChange={(e) => setEditData({
-                        ...editData, 
+                        ...editData,
                         technologies: e.target.value.split(',').map(t => t.trim()).filter(t => t)
                       })}
                       placeholder="React, Node.js, MongoDB"
@@ -1553,7 +1565,7 @@ export default function NewProfileContent() {
                       <input
                         type="date"
                         value={editData.startDate as string || ''}
-                        onChange={(e) => setEditData({...editData, startDate: e.target.value})}
+                        onChange={(e) => setEditData({ ...editData, startDate: e.target.value })}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
                       />
                     </div>
@@ -1562,7 +1574,7 @@ export default function NewProfileContent() {
                       <input
                         type="date"
                         value={editData.endDate as string || ''}
-                        onChange={(e) => setEditData({...editData, endDate: e.target.value})}
+                        onChange={(e) => setEditData({ ...editData, endDate: e.target.value })}
                         disabled={editData.isOngoing as boolean}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent disabled:bg-gray-50"
                       />
@@ -1573,7 +1585,7 @@ export default function NewProfileContent() {
                       type="checkbox"
                       id="isOngoing"
                       checked={editData.isOngoing as boolean || false}
-                      onChange={(e) => setEditData({...editData, isOngoing: e.target.checked, endDate: e.target.checked ? '' : editData.endDate})}
+                      onChange={(e) => setEditData({ ...editData, isOngoing: e.target.checked, endDate: e.target.checked ? '' : editData.endDate })}
                       className="w-4 h-4 text-[#5693C1] border-gray-300 rounded focus:ring-[#5693C1]"
                     />
                     <label htmlFor="isOngoing" className="ml-2 text-sm text-gray-700">
@@ -1624,7 +1636,7 @@ export default function NewProfileContent() {
                     <input
                       type="text"
                       value={editData.title as string || ''}
-                      onChange={(e) => setEditData({...editData, title: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, title: e.target.value })}
                       placeholder="Employee of the Year"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
                     />
@@ -1633,7 +1645,7 @@ export default function NewProfileContent() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                     <textarea
                       value={editData.description as string || ''}
-                      onChange={(e) => setEditData({...editData, description: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, description: e.target.value })}
                       rows={3}
                       placeholder="Describe your achievement..."
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 resize-none focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
@@ -1644,7 +1656,7 @@ export default function NewProfileContent() {
                     <input
                       type="text"
                       value={editData.issuer as string || ''}
-                      onChange={(e) => setEditData({...editData, issuer: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, issuer: e.target.value })}
                       placeholder="Organization name"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
                     />
@@ -1654,7 +1666,7 @@ export default function NewProfileContent() {
                     <input
                       type="date"
                       value={editData.date as string || ''}
-                      onChange={(e) => setEditData({...editData, date: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, date: e.target.value })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"
                     />
                   </div>

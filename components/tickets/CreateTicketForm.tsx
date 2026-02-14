@@ -74,7 +74,7 @@ export default function CreateTicketForm({ basePath }: CreateTicketFormProps) {
                         type="text"
                         id="subject"
                         required
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#5693C1] focus:ring-[#5693C1] sm:text-sm p-3 border"
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#5693C1] focus:ring-[#5693C1] sm:text-sm p-3 border text-gray-900 placeholder-gray-400"
                         placeholder="Brief summary of the issue"
                         value={formData.subject}
                         onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
@@ -91,7 +91,7 @@ export default function CreateTicketForm({ basePath }: CreateTicketFormProps) {
                         <select
                             id="category"
                             required
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#5693C1] focus:ring-[#5693C1] sm:text-sm p-3 border"
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#5693C1] focus:ring-[#5693C1] sm:text-sm p-3 border text-gray-900"
                             value={formData.category}
                             onChange={(e) => setFormData({ ...formData, category: e.target.value as TicketCategory })}
                         >
@@ -111,7 +111,7 @@ export default function CreateTicketForm({ basePath }: CreateTicketFormProps) {
                         <select
                             id="priority"
                             required
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#5693C1] focus:ring-[#5693C1] sm:text-sm p-3 border"
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#5693C1] focus:ring-[#5693C1] sm:text-sm p-3 border text-gray-900"
                             value={formData.priority}
                             onChange={(e) => setFormData({ ...formData, priority: e.target.value as TicketPriority })}
                         >
@@ -131,7 +131,7 @@ export default function CreateTicketForm({ basePath }: CreateTicketFormProps) {
                         id="message"
                         required
                         rows={6}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#5693C1] focus:ring-[#5693C1] sm:text-sm p-3 border"
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#5693C1] focus:ring-[#5693C1] sm:text-sm p-3 border text-gray-900 placeholder-gray-400"
                         placeholder="Please provide detailed information about your request..."
                         value={formData.message}
                         onChange={(e) => setFormData({ ...formData, message: e.target.value })}

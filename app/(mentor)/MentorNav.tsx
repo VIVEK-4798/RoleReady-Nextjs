@@ -11,7 +11,7 @@ import { ReactNode, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 
 // Icons
 const iconMap: Record<string, ReactNode | ((isOpen: boolean) => ReactNode)> = {
@@ -85,7 +85,7 @@ const navItems = [
     exact: true,
   },
   {
-    href: '/mentor/validation-queue',
+    href: '/mentor/validations',
     label: 'Skill Validation',
     icon: 'validation',
   },
@@ -200,6 +200,12 @@ export default function MentorNav() {
     );
   };
 
+  const { data: session } = useSession();
+  const user = session?.user;
+  const userName = user?.name || 'Mentor';
+  const userEmail = user?.email || 'mentor@roleready.com';
+  const userInitial = userName.charAt(0).toUpperCase();
+
   const NavContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo Section */}
@@ -299,15 +305,18 @@ export default function MentorNav() {
 
       {/* User Section & Logout */}
       <div className="p-4 border-t border-gray-200">
-        {/* User Info - This will be replaced by actual user data */}
         <div className="flex items-center gap-3 mb-4 px-2 py-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
           <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#5693C1] to-[#4a80b0] flex items-center justify-center text-white font-semibold overflow-hidden ring-2 ring-white">
-            M
+            {user?.image ? (
+              <img src={user.image} alt={userName} className="w-full h-full object-cover" />
+            ) : (
+              userInitial
+            )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">Mentor Name</p>
-            <p className="text-xs text-gray-500 truncate">mentor@roleready.com</p>
-            <p className="text-xs text-[#5693C1] font-medium mt-1">Mentor</p>
+            <p className="text-sm font-medium text-gray-900 truncate">{userName}</p>
+            <p className="text-xs text-gray-500 truncate">{userEmail}</p>
+            <p className="text-xs text-[#5693C1] font-medium mt-1">{(user as any)?.role?.charAt(0).toUpperCase() + (user as any)?.role?.slice(1) || 'Mentor'}</p>
           </div>
         </div>
 

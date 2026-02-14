@@ -15,19 +15,19 @@ interface Internship {
   title: string;
   company: string;
   city: string;
-  country: string;
   stipend: string;
   duration: string;
   type: string;
   workDetail: string;
   isActive: boolean;
   isFeatured: boolean;
-  category: string;
-  skills: string[];
-  applications: number;
+  category?: {
+    _id: string;
+    name: string;
+    colorClass: string;
+  };
+  applications?: number;
   createdAt: string;
-  deadline?: string;
-  status: 'open' | 'closed' | 'draft';
 }
 
 interface Stats {
@@ -55,159 +55,33 @@ export default function MentorInternshipsClient() {
 
   const limit = 10;
 
-  // Mock data
-  const mockInternships: Internship[] = [
-    {
-      _id: '1',
-      title: 'Frontend Developer Intern',
-      company: 'TechCorp Inc.',
-      city: 'San Francisco',
-      country: 'USA',
-      stipend: '$2,500/month',
-      duration: '6 months',
-      type: 'full-time',
-      workDetail: 'Work on React applications and collaborate with design team',
-      isActive: true,
-      isFeatured: true,
-      category: 'Software Development',
-      skills: ['React', 'TypeScript', 'CSS', 'Git'],
-      applications: 45,
-      createdAt: '2024-01-15',
-      deadline: '2024-03-15',
-      status: 'open',
-    },
-    {
-      _id: '2',
-      title: 'Data Science Intern',
-      company: 'DataAnalytics Pro',
-      city: 'New York',
-      country: 'USA',
-      stipend: '$3,000/month',
-      duration: '3 months',
-      type: 'full-time',
-      workDetail: 'Analyze large datasets and build predictive models',
-      isActive: true,
-      isFeatured: false,
-      category: 'Data Science',
-      skills: ['Python', 'Pandas', 'Machine Learning', 'SQL'],
-      applications: 32,
-      createdAt: '2024-01-10',
-      deadline: '2024-02-28',
-      status: 'open',
-    },
-    {
-      _id: '3',
-      title: 'UX Design Intern',
-      company: 'DesignStudio',
-      city: 'Austin',
-      country: 'USA',
-      stipend: '$2,000/month',
-      duration: '4 months',
-      type: 'part-time',
-      workDetail: 'Design user interfaces and conduct user research',
-      isActive: true,
-      isFeatured: true,
-      category: 'Design',
-      skills: ['Figma', 'UI/UX', 'Prototyping', 'User Research'],
-      applications: 28,
-      createdAt: '2024-01-05',
-      deadline: '2024-03-01',
-      status: 'open',
-    },
-    {
-      _id: '4',
-      title: 'DevOps Intern',
-      company: 'CloudSystems',
-      city: 'Seattle',
-      country: 'USA',
-      stipend: '$2,800/month',
-      duration: '5 months',
-      type: 'full-time',
-      workDetail: 'Manage cloud infrastructure and CI/CD pipelines',
-      isActive: false,
-      isFeatured: false,
-      category: 'DevOps',
-      skills: ['AWS', 'Docker', 'Kubernetes', 'Terraform'],
-      applications: 15,
-      createdAt: '2023-12-20',
-      deadline: '2024-01-30',
-      status: 'closed',
-    },
-    {
-      _id: '5',
-      title: 'Backend Developer Intern',
-      company: 'ServerStack',
-      city: 'Boston',
-      country: 'USA',
-      stipend: '$2,700/month',
-      duration: '6 months',
-      type: 'full-time',
-      workDetail: 'Build scalable APIs and microservices',
-      isActive: true,
-      isFeatured: false,
-      category: 'Software Development',
-      skills: ['Node.js', 'Express', 'MongoDB', 'Redis'],
-      applications: 38,
-      createdAt: '2024-01-08',
-      deadline: '2024-03-10',
-      status: 'open',
-    },
-  ];
 
   // Fetch internships
   const fetchInternships = useCallback(async () => {
     try {
       setLoading(true);
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 600));
-      
-      // Calculate stats
-      const total = mockInternships.length;
-      const active = mockInternships.filter(i => i.isActive).length;
-      const featured = mockInternships.filter(i => i.isFeatured).length;
-      const applications = mockInternships.reduce((sum, i) => sum + i.applications, 0);
-      
-      setStats({
-        total,
-        active,
-        featured,
-        applications,
+
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+        search: searchTerm,
+        status: statusFilter,
       });
-      
-      // Apply filters
-      let filtered = [...mockInternships];
-      
-      if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        filtered = filtered.filter(i => 
-          i.title.toLowerCase().includes(term) ||
-          i.company.toLowerCase().includes(term) ||
-          i.city.toLowerCase().includes(term) ||
-          i.skills.some(skill => skill.toLowerCase().includes(term))
-        );
+
+      const response = await fetch(`/api/mentor/internships?${params.toString()}`);
+      const result = await response.json();
+
+      if (result.success) {
+        setInternships(result.data.internships);
+        setStats(result.data.stats);
+        setTotalPages(result.data.pagination.pages);
       }
-      
-      if (statusFilter !== 'all') {
-        filtered = filtered.filter(i => i.status === statusFilter);
-      }
-      
-      if (typeFilter !== 'all') {
-        filtered = filtered.filter(i => i.type === typeFilter);
-      }
-      
-      // Apply pagination
-      const start = (page - 1) * limit;
-      const end = start + limit;
-      const paginated = filtered.slice(start, end);
-      
-      setInternships(paginated);
-      setTotalPages(Math.ceil(filtered.length / limit));
     } catch (error) {
       console.error('Error fetching internships:', error);
     } finally {
       setLoading(false);
     }
-  }, [page, searchTerm, statusFilter, typeFilter]);
+  }, [page, searchTerm, statusFilter]);
 
   useEffect(() => {
     fetchInternships();
@@ -218,13 +92,19 @@ export default function MentorInternshipsClient() {
     if (!window.confirm('Are you sure you want to delete this internship? This action cannot be undone.')) {
       return;
     }
-    
+
     try {
-      // In real app, call API
-      // await fetch(`/api/mentor/internships/${id}`, { method: 'DELETE' });
-      
-      setInternships(prev => prev.filter(internship => internship._id !== id));
-      alert('Internship deleted successfully!');
+      const response = await fetch(`/api/mentor/internships/${id}`, {
+        method: 'DELETE'
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        fetchInternships(); // Refresh list and stats
+        alert('Internship deleted successfully!');
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error) {
       console.error('Error deleting internship:', error);
       alert('Failed to delete internship. Please try again.');
@@ -234,15 +114,18 @@ export default function MentorInternshipsClient() {
   // Toggle active status
   const toggleStatus = async (internship: Internship) => {
     try {
-      // In real app, call API
-      // await fetch(`/api/mentor/internships/${internship._id}`, {
-      //   method: 'PATCH',
-      //   body: JSON.stringify({ isActive: !internship.isActive })
-      // });
-      
-      setInternships(prev => prev.map(i => 
-        i._id === internship._id ? { ...i, isActive: !i.isActive } : i
-      ));
+      const response = await fetch(`/api/mentor/internships/${internship._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !internship.isActive })
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        fetchInternships();
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error) {
       console.error('Error toggling status:', error);
       alert('Failed to update status. Please try again.');
@@ -252,15 +135,18 @@ export default function MentorInternshipsClient() {
   // Toggle featured status
   const toggleFeatured = async (internship: Internship) => {
     try {
-      // In real app, call API
-      // await fetch(`/api/mentor/internships/${internship._id}/featured`, {
-      //   method: 'PATCH',
-      //   body: JSON.stringify({ isFeatured: !internship.isFeatured })
-      // });
-      
-      setInternships(prev => prev.map(i => 
-        i._id === internship._id ? { ...i, isFeatured: !i.isFeatured } : i
-      ));
+      const response = await fetch(`/api/mentor/internships/${internship._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isFeatured: !internship.isFeatured })
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        fetchInternships();
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error) {
       console.error('Error toggling featured:', error);
       alert('Failed to update featured status. Please try again.');
@@ -270,44 +156,26 @@ export default function MentorInternshipsClient() {
   // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
       day: 'numeric',
       year: 'numeric'
     });
   };
 
   // Get status badge
-  const getStatusBadge = (status: string, isActive: boolean) => {
+  const getStatusBadge = (isActive: boolean) => {
     if (!isActive) {
       return {
         text: 'Inactive',
         className: 'bg-gray-100 text-gray-800 border border-gray-200',
       };
     }
-    
-    switch (status) {
-      case 'open':
-        return {
-          text: 'Open',
-          className: 'bg-green-100 text-green-800 border border-green-200',
-        };
-      case 'closed':
-        return {
-          text: 'Closed',
-          className: 'bg-red-100 text-red-800 border border-red-200',
-        };
-      case 'draft':
-        return {
-          text: 'Draft',
-          className: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
-        };
-      default:
-        return {
-          text: 'Unknown',
-          className: 'bg-gray-100 text-gray-800 border border-gray-200',
-        };
-    }
+
+    return {
+      text: 'Active',
+      className: 'bg-green-100 text-green-800 border border-green-200',
+    };
   };
 
   // Get type badge
@@ -346,7 +214,7 @@ export default function MentorInternshipsClient() {
             Manage your internship listings and track applications
           </p>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <Link
             href="/mentor/internships/add"
@@ -452,7 +320,7 @@ export default function MentorInternshipsClient() {
               </svg>
             </div>
           </div>
-          
+
           <div className="flex flex-wrap gap-3">
             <select
               value={statusFilter}
@@ -467,7 +335,7 @@ export default function MentorInternshipsClient() {
               <option value="closed">Closed</option>
               <option value="draft">Draft</option>
             </select>
-            
+
             <select
               value={typeFilter}
               onChange={(e) => {
@@ -481,7 +349,7 @@ export default function MentorInternshipsClient() {
               <option value="part-time">Part Time</option>
               <option value="remote">Remote</option>
             </select>
-            
+
             <button
               onClick={() => {
                 setSearchTerm('');
@@ -498,7 +366,7 @@ export default function MentorInternshipsClient() {
             </button>
           </div>
         </div>
-        
+
         <div className="mt-4 flex items-center justify-between">
           <span className="text-sm text-gray-500">
             Showing {internships.length} of {stats.total} internships
@@ -560,9 +428,9 @@ export default function MentorInternshipsClient() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {internships.map((internship) => {
-                  const statusBadge = getStatusBadge(internship.status, internship.isActive);
+                  const statusBadge = getStatusBadge(internship.isActive);
                   const typeBadge = getTypeBadge(internship.type);
-                  
+
                   return (
                     <tr key={internship._id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
@@ -580,23 +448,20 @@ export default function MentorInternshipsClient() {
                               {statusBadge.text}
                             </span>
                           </div>
-                          
+
                           <h4 className="font-semibold text-gray-900 text-sm mb-1">{internship.title}</h4>
                           <p className="text-gray-600 text-sm mb-2">{internship.company}</p>
-                          
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {internship.skills.slice(0, 3).map((skill, index) => (
-                              <span key={index} className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded">
-                                {skill}
+
+                          {internship.category && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              <span className={`px-2 py-0.5 ${internship.category.colorClass || 'bg-gray-100 text-gray-700'} text-xs rounded`}>
+                                {internship.category.name}
                               </span>
-                            ))}
-                            {internship.skills.length > 3 && (
-                              <span className="px-2 py-0.5 text-gray-500 text-xs">+{internship.skills.length - 3}</span>
-                            )}
-                          </div>
+                            </div>
+                          )}
                         </div>
                       </td>
-                      
+
                       <td className="px-6 py-4">
                         <div className="space-y-2">
                           <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -604,75 +469,67 @@ export default function MentorInternshipsClient() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
-                            {internship.city}, {internship.country}
+                            {internship.city}
                           </div>
-                          
+
                           <div>
                             <span className={`px-2 py-1 rounded text-xs font-medium ${typeBadge.className}`}>
                               {typeBadge.text}
                             </span>
                           </div>
-                          
+
                           <div className="text-sm text-gray-600">
                             <span className="font-medium text-gray-900">{internship.stipend}</span> • {internship.duration}
                           </div>
                         </div>
                       </td>
-                      
+
                       <td className="px-6 py-4">
                         <div className="space-y-3">
                           <div>
                             <div className="flex items-center gap-2 mb-1">
                               <span className="text-sm text-gray-600">Applications:</span>
-                              <span className="font-medium text-gray-900">{internship.applications}</span>
+                              <span className="font-medium text-gray-900">{internship.applications || 0}</span>
                             </div>
                             <div className="w-full bg-gray-200 rounded-full h-1.5">
-                              <div 
-                                className="bg-[#5693C1] h-1.5 rounded-full" 
-                                style={{ width: `${Math.min(internship.applications * 2, 100)}%` }}
+                              <div
+                                className="bg-[#5693C1] h-1.5 rounded-full"
+                                style={{ width: `${Math.min((internship.applications || 0) * 2, 100)}%` }}
                               ></div>
                             </div>
                           </div>
-                          
-                          {internship.deadline && (
-                            <div className="text-xs text-gray-500">
-                              Deadline: {formatDate(internship.deadline)}
-                            </div>
-                          )}
                         </div>
                       </td>
-                      
+
                       <td className="px-6 py-4">
                         <div className="flex flex-col gap-2">
                           <Link
-                            href={`/mentor/internships/${internship._id}/edit`}
+                            href={`/mentor/internships/edit/${internship._id}`}
                             className="px-3 py-1.5 text-xs border border-[#5693C1] text-[#5693C1] hover:bg-[#5693C1] hover:text-white rounded-lg font-medium transition-colors text-center"
                           >
                             Edit
                           </Link>
-                          
+
                           <button
                             onClick={() => toggleStatus(internship)}
-                            className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors ${
-                              internship.isActive
+                            className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors ${internship.isActive
                                 ? 'border border-gray-300 text-gray-700 hover:bg-gray-50'
                                 : 'border border-green-300 text-green-700 hover:bg-green-50'
-                            }`}
+                              }`}
                           >
                             {internship.isActive ? 'Deactivate' : 'Activate'}
                           </button>
-                          
+
                           <button
                             onClick={() => toggleFeatured(internship)}
-                            className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors ${
-                              internship.isFeatured
+                            className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors ${internship.isFeatured
                                 ? 'border border-gray-300 text-gray-700 hover:bg-gray-50'
                                 : 'border border-yellow-300 text-yellow-700 hover:bg-yellow-50'
-                            }`}
+                              }`}
                           >
                             {internship.isFeatured ? 'Remove Feature' : 'Feature'}
                           </button>
-                          
+
                           <button
                             onClick={() => handleDelete(internship._id)}
                             className="px-3 py-1.5 text-xs border border-red-300 text-red-600 hover:bg-red-50 rounded-lg font-medium transition-colors"
@@ -696,7 +553,7 @@ export default function MentorInternshipsClient() {
           <div className="text-sm text-gray-500">
             Showing page {page} of {totalPages}
           </div>
-          
+
           <div className="flex items-center gap-2">
             <button
               onClick={() => setPage(prev => Math.max(1, prev - 1))}
@@ -708,7 +565,7 @@ export default function MentorInternshipsClient() {
               </svg>
               Previous
             </button>
-            
+
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               let pageNum;
               if (totalPages <= 5) {
@@ -720,22 +577,21 @@ export default function MentorInternshipsClient() {
               } else {
                 pageNum = page - 2 + i;
               }
-              
+
               return (
                 <button
                   key={pageNum}
                   onClick={() => setPage(pageNum)}
-                  className={`w-10 h-10 rounded-lg text-sm font-medium ${
-                    page === pageNum
+                  className={`w-10 h-10 rounded-lg text-sm font-medium ${page === pageNum
                       ? 'bg-[#5693C1] text-white'
                       : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}
+                    }`}
                 >
                   {pageNum}
                 </button>
               );
             })}
-            
+
             <button
               onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
               disabled={page === totalPages}

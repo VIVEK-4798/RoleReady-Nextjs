@@ -17,6 +17,7 @@
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import Google from 'next-auth/providers/google';
+import GitHub from 'next-auth/providers/github';
 import LinkedIn from 'next-auth/providers/linkedin';
 import type { NextAuthConfig, Session, User as NextAuthUser } from 'next-auth';
 import type { JWT } from 'next-auth/jwt';
@@ -117,11 +118,16 @@ export const authConfig: NextAuthConfig = {
         },
       },
     }),
+    GitHub({
+      clientId: process.env.GITHUB_CLIENT_ID,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      allowDangerousEmailAccountLinking: true,
+    }),
   ],
   callbacks: {
     async signIn({ user, profile, account, email: emailObj }) {
-      // Only process OAuth providers (Google and LinkedIn)
-      if (account?.provider === 'google' || account?.provider === 'linkedin') {
+      // Only process OAuth providers
+      if (['google', 'linkedin', 'github'].includes(account?.provider || '')) {
         try {
           // Lazy load database modules
           const connectDB = (await import('@/lib/db/mongoose')).default;
@@ -141,21 +147,65 @@ export const authConfig: NextAuthConfig = {
             isActive: true,
           });
 
+          console.log('[Auth] Looking for existing user with email:', email, 'Found:', existingUser ? existingUser._id.toString() : 'NONE');
+
           if (existingUser) {
-            // Update provider-specific ID if not set
-            if (account.provider === 'linkedin' && !existingUser.linkedinId && account.providerAccountId) {
+            let hasChanges = false;
+
+            // Update provider-specific IDs if not set
+            if (account && account.provider === 'linkedin' && !existingUser.linkedinId && account.providerAccountId) {
               existingUser.linkedinId = account.providerAccountId;
-              await existingUser.save();
+              hasChanges = true;
+            }
+
+            if (account && account.provider === 'github' && account.providerAccountId) {
+              existingUser.githubId = account.providerAccountId;
+              existingUser.authProvider = 'github';
+              // @ts-ignore - login exists on GitHub profile
+              existingUser.githubUsername = profile?.login;
+              existingUser.githubAccessToken = account.access_token;
+              hasChanges = true;
+
+              console.log('[Auth] Preparing to save GitHub data to user:', {
+                email: existingUser.email,
+                id: existingUser._id.toString(),
+                hasToken: !!account.access_token,
+                tokenStart: account.access_token?.substring(0, 5)
+              });
             }
 
             // Update image if different
             if (user.image && existingUser.image !== user.image) {
               existingUser.image = user.image;
-              await existingUser.save();
+              hasChanges = true;
             }
 
-            // Update user ID for NextAuth
+            if (hasChanges) {
+              try {
+                // Collect all changes and save once
+                await existingUser.save();
+                console.log('[Auth] Successfully updated existing user record:', existingUser.email);
+              } catch (saveError) {
+                console.error('[Auth] Error during existingUser.save():', saveError);
+                // Fallback: Atomic update for critical GitHub fields
+                if (account?.provider === 'github' && account.access_token) {
+                  await User.findByIdAndUpdate(existingUser._id, {
+                    $set: {
+                      githubAccessToken: account.access_token,
+                      githubId: account.providerAccountId,
+                      githubUsername: (profile as any)?.login,
+                      authProvider: 'github'
+                    }
+                  });
+                  console.log('[Auth] Fallback atomic update successful for GitHub token');
+                }
+              }
+            }
+
+            // Update user ID and role for NextAuth
             user.id = existingUser._id.toString();
+            // @ts-ignore
+            user.role = existingUser.role;
             return true;
           }
 
@@ -166,14 +216,22 @@ export const authConfig: NextAuthConfig = {
             password: null,
             image: user.image,
             role: 'user', // Default role for new OAuth users
+            authProvider: account?.provider, // Set provider
             emailVerified: new Date(),
             isActive: true,
             profile: {},
           };
 
           // Add provider-specific ID
-          if (account.provider === 'linkedin' && account.providerAccountId) {
+          if (account && account.provider === 'linkedin' && account.providerAccountId) {
             newUserData.linkedinId = account.providerAccountId;
+          }
+
+          if (account && account.provider === 'github' && account.providerAccountId) {
+            newUserData.githubId = account.providerAccountId;
+            // @ts-ignore - login exists on GitHub profile
+            newUserData.githubUsername = profile?.login;
+            newUserData.githubAccessToken = account.access_token;
           }
 
           const newUser = new User(newUserData);
@@ -188,12 +246,14 @@ export const authConfig: NextAuthConfig = {
             }).catch(err => console.error('[Auth] Welcome email failed:', err));
           }).catch(err => console.error('[Auth] Email module import failed:', err));
 
-          // Update user ID for NextAuth
-          user.id = newUser._id.toString();;
+          // Update user ID and role for NextAuth
+          user.id = newUser._id.toString();
+          // @ts-ignore
+          user.role = newUser.role;
           return true;
         } catch (error) {
           console.error('=== SIGNIN CALLBACK ERROR ===');
-          console.error(`signIn - ${account.provider} OAuth error:`, error);
+          console.error(`signIn - ${account?.provider} OAuth error:`, error);
           console.error('Error name:', error instanceof Error ? error.name : 'Unknown');
           console.error('Error message:', error instanceof Error ? error.message : String(error));
           console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
@@ -206,10 +266,26 @@ export const authConfig: NextAuthConfig = {
       return true;
     },
     async jwt({ token, user, trigger, session }): Promise<ExtendedJWT> {
-      // Always fetch from database to ensure we have the latest role
-      const email = token.email || (user?.email);
+      // If user is present, it's the first time the JWT is created (initial sign in)
+      if (user) {
+        console.log('[Auth] JWT init with user:', { id: user.id, email: user.email, role: (user as any).role });
+        token.id = user.id;
+        // @ts-ignore
+        token.role = user.role;
+        token.image = user.image;
+        token.email = user.email;
+      }
 
-      if (email) {
+      // Check if we are in the Edge Runtime
+      const isEdge = process.env.NEXT_RUNTIME === 'edge';
+
+      // Only fetch from database if we have an email and NOT on Edge
+      // We also ALWAYS fetch if the ID looks like a UUID (contains hyphens) 
+      const email = token.email;
+      const isUuid = typeof token.id === 'string' && token.id.includes('-');
+
+      if (email && !isEdge && (!token.role || isUuid)) {
+        console.log('[Auth] JWT fetching from DB for email:', email, 'isUuid:', isUuid);
         try {
           const connectDB = (await import('@/lib/db/mongoose')).default;
           const { User } = await import('@/lib/models');
@@ -222,27 +298,41 @@ export const authConfig: NextAuthConfig = {
           });
 
           if (dbUser) {
+            console.log('[Auth] JWT found dbUser:', { id: dbUser._id.toString(), email: dbUser.email, role: dbUser.role });
             token.id = dbUser._id.toString();
             token.role = dbUser.role as 'user' | 'mentor' | 'admin';
             token.name = dbUser.name;
             token.email = dbUser.email;
             token.image = dbUser.image;
           } else {
-            console.warn('jwt - User not found in DB for email:', email);
+            console.error('[Auth] JWT dbUser NOT found for email:', email);
           }
         } catch (error) {
           console.error('jwt - Database fetch error:', error);
         }
       }
 
-      // Fallback: if still no role, default to user
-      if (!token.role) {
-        token.role = 'user';
-      }
+      // Handle session updates (e.g., after profile image upload or role change)
+      if (trigger === 'update') {
+        if (session?.image) token.image = session.image;
+        if (session?.role) token.role = session.role;
 
-      // Handle session updates (e.g., after profile image upload)
-      if (trigger === 'update' && session?.image) {
-        token.image = session.image;
+        // If it's a generic update (no specific fields), force a DB re-sync
+        if (!session && !isEdge && token.email) {
+          try {
+            const connectDB = (await import('@/lib/db/mongoose')).default;
+            const { User } = await import('@/lib/models');
+            await connectDB();
+            const dbUser = await User.findOne({ email: token.email.toLowerCase(), isActive: true });
+            if (dbUser) {
+              token.role = dbUser.role as 'user' | 'mentor' | 'admin';
+              token.name = dbUser.name;
+              token.image = dbUser.image;
+            }
+          } catch (e) {
+            console.error('JWT update sync failed:', e);
+          }
+        }
       }
 
       return token as ExtendedJWT;

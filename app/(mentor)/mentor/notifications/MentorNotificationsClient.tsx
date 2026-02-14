@@ -49,113 +49,34 @@ export default function MentorNotificationsClient() {
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'unread' | 'high' | 'today'>('all');
   const [showActions, setShowActions] = useState<string | null>(null);
 
-  const mockNotifications: Notification[] = [
-    {
-      _id: '1',
-      userId: {
-        _id: 'user1',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john@example.com',
-      },
-      type: 'skill_validation',
-      title: 'New Skill Validation Request',
-      message: 'John Doe has submitted React.js skills for validation. Review and validate their proficiency level.',
-      actionUrl: '/mentor/skill-validation',
-      isRead: false,
-      createdAt: new Date(Date.now() - 30 * 60000).toISOString(), // 30 minutes ago
-      priority: 'high',
-    },
-    {
-      _id: '2',
-      userId: {
-        _id: 'user2',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        email: 'jane@example.com',
-      },
-      type: 'student_message',
-      title: 'Student Query',
-      message: 'Jane Smith has a question about career guidance for frontend development roles.',
-      actionUrl: '/mentor/messages',
-      isRead: false,
-      createdAt: new Date(Date.now() - 2 * 3600000).toISOString(), // 2 hours ago
-      priority: 'medium',
-    },
-    {
-      _id: '3',
-      userId: {
-        _id: 'user3',
-        firstName: 'Bob',
-        lastName: 'Wilson',
-        email: 'bob@example.com',
-      },
-      type: 'opportunity_match',
-      title: 'Job Match Found',
-      message: 'Found 3 job opportunities matching Bob Wilson\'s skill set. Review and share with the student.',
-      actionUrl: '/mentor/opportunities',
-      isRead: true,
-      createdAt: new Date(Date.now() - 1 * 86400000).toISOString(), // 1 day ago
-      priority: 'medium',
-    },
-    {
-      _id: '4',
-      userId: {
-        _id: 'system',
-        firstName: 'System',
-        lastName: 'Alert',
-        email: 'system@roleready.com',
-      },
-      type: 'system_alert',
-      title: 'System Maintenance',
-      message: 'Scheduled system maintenance this Saturday from 2:00 AM to 4:00 AM. Plan your activities accordingly.',
-      actionUrl: '/mentor/settings',
-      isRead: true,
-      createdAt: new Date(Date.now() - 2 * 86400000).toISOString(), // 2 days ago
-      priority: 'low',
-    },
-    {
-      _id: '5',
-      userId: {
-        _id: 'user4',
-        firstName: 'Alice',
-        lastName: 'Brown',
-        email: 'alice@example.com',
-      },
-      type: 'skill_validation',
-      title: 'Skill Validation Completed',
-      message: 'Alice Brown has completed validating all their Node.js skills. Review their progress report.',
-      actionUrl: '/mentor/student/alice-brown',
-      isRead: true,
-      createdAt: new Date(Date.now() - 3 * 86400000).toISOString(), // 3 days ago
-      priority: 'low',
-    },
-  ];
-
   const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true);
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+
+      const res = await fetch('/api/notifications?limit=100'); // Fetch enough for stats
+      if (!res.ok) throw new Error('Failed to fetch notifications');
+
+      const result = await res.json();
+      const allNotifications = result.data || [];
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
-      const todayCount = mockNotifications.filter(n => 
+
+      const todayCount = allNotifications.filter((n: any) =>
         new Date(n.createdAt) >= today
       ).length;
-      
-      const unreadCount = mockNotifications.filter(n => !n.isRead).length;
-      const highPriorityCount = mockNotifications.filter(n => n.priority === 'high').length;
-      
+
+      const unreadCount = allNotifications.filter((n: any) => !n.isRead).length;
+      const highPriorityCount = allNotifications.filter((n: any) => n.priority === 'high' || n.metadata?.priority === 'high').length;
+
       setStats({
         unread: unreadCount,
-        total: mockNotifications.length,
+        total: result.pagination?.totalItems || allNotifications.length,
         today: todayCount,
         highPriority: highPriorityCount,
       });
-      
-      setNotifications(mockNotifications);
+
+      setNotifications(allNotifications);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {
@@ -169,7 +90,7 @@ export default function MentorNotificationsClient() {
 
   const filteredNotifications = notifications.filter((notification) => {
     if (selectedFilter === 'unread') return !notification.isRead;
-    if (selectedFilter === 'high') return notification.priority === 'high';
+    if (selectedFilter === 'high') return notification.priority === 'high' || notification.metadata?.priority === 'high';
     if (selectedFilter === 'today') {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -180,10 +101,18 @@ export default function MentorNotificationsClient() {
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {
-      setNotifications(prev => 
-        prev.map(n => n._id === notificationId ? { ...n, isRead: true } : n)
-      );
-      setStats(prev => ({ ...prev, unread: Math.max(0, prev.unread - 1) }));
+      const res = await fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notificationIds: [notificationId] })
+      });
+
+      if (res.ok) {
+        setNotifications(prev =>
+          prev.map(n => n._id === notificationId ? { ...n, isRead: true } : n)
+        );
+        setStats(prev => ({ ...prev, unread: Math.max(0, prev.unread - 1) }));
+      }
     } catch (error) {
       console.error('Error marking as read:', error);
     }
@@ -191,10 +120,18 @@ export default function MentorNotificationsClient() {
 
   const handleMarkAllAsRead = async () => {
     try {
-      setNotifications(prev => 
-        prev.map(n => ({ ...n, isRead: true }))
-      );
-      setStats(prev => ({ ...prev, unread: 0 }));
+      const res = await fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ markAll: true })
+      });
+
+      if (res.ok) {
+        setNotifications(prev =>
+          prev.map(n => ({ ...n, isRead: true }))
+        );
+        setStats(prev => ({ ...prev, unread: 0 }));
+      }
     } catch (error) {
       console.error('Error marking all as read:', error);
     }
@@ -202,34 +139,41 @@ export default function MentorNotificationsClient() {
 
   const handleDeleteNotification = async (notificationId: string) => {
     try {
-      setNotifications(prev => prev.filter(n => n._id !== notificationId));
-      const isUnread = notifications.find(n => n._id === notificationId)?.isRead === false;
-      if (isUnread) {
-        setStats(prev => ({ ...prev, unread: Math.max(0, prev.unread - 1) }));
+      const res = await fetch(`/api/notifications/${notificationId}`, {
+        method: 'DELETE'
+      });
+
+      if (res.ok) {
+        const deletedNotification = notifications.find(n => n._id === notificationId);
+        setNotifications(prev => prev.filter(n => n._id !== notificationId));
+
+        if (deletedNotification && !deletedNotification.isRead) {
+          setStats(prev => ({ ...prev, unread: Math.max(0, prev.unread - 1) }));
+        }
+        setStats(prev => ({ ...prev, total: prev.total - 1 }));
       }
-      setStats(prev => ({ ...prev, total: prev.total - 1 }));
     } catch (error) {
       console.error('Error deleting notification:', error);
     }
   };
 
-  const getNotificationIcon = (type: Notification['type']) => {
-    const icons = {
-      skill_validation: {
+  const getNotificationIcon = (type: string) => {
+    const icons: Record<string, { icon: React.ReactNode; color: string }> = {
+      validation_request: {
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 01118 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+          </svg>
+        ),
+        color: 'text-indigo-600 bg-indigo-100',
+      },
+      mentor_validation: {
+        icon: (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         ),
         color: 'text-green-600 bg-green-100',
-      },
-      student_message: {
-        icon: (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-          </svg>
-        ),
-        color: 'text-blue-600 bg-blue-100',
       },
       system_alert: {
         icon: (
@@ -239,36 +183,21 @@ export default function MentorNotificationsClient() {
         ),
         color: 'text-yellow-600 bg-yellow-100',
       },
-      opportunity_match: {
-        icon: (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>
-        ),
-        color: 'text-purple-600 bg-purple-100',
-      },
-      announcement: {
-        icon: (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-          </svg>
-        ),
-        color: 'text-red-600 bg-red-100',
-      },
     };
 
     return icons[type] || icons.system_alert;
   };
 
-  const getPriorityBadge = (priority: Notification['priority']) => {
-    const styles = {
+  const getPriorityBadge = (priority: string) => {
+    const styles: Record<string, string> = {
       high: 'bg-red-100 text-red-700 border border-red-200',
       medium: 'bg-yellow-100 text-yellow-700 border border-yellow-200',
       low: 'bg-gray-100 text-gray-600 border border-gray-200',
     };
+    const p = priority || 'low';
     return (
-      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${styles[priority]}`}>
-        {priority.charAt(0).toUpperCase() + priority.slice(1)}
+      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${styles[p] || styles.low}`}>
+        {p.charAt(0).toUpperCase() + p.slice(1)}
       </span>
     );
   };
@@ -299,7 +228,7 @@ export default function MentorNotificationsClient() {
             Stay updated with student activities, system alerts, and important announcements.
           </p>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <button
             onClick={handleMarkAllAsRead}
@@ -400,19 +329,17 @@ export default function MentorNotificationsClient() {
                 <button
                   key={filterOption.key}
                   onClick={() => setSelectedFilter(filterOption.key)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
-                    selectedFilter === filterOption.key
-                      ? 'bg-[#5693C1] text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${selectedFilter === filterOption.key
+                    ? 'bg-[#5693C1] text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
                 >
                   {filterOption.label}
                   {filterOption.count > 0 && (
-                    <span className={`px-2 py-0.5 text-xs rounded-full ${
-                      selectedFilter === filterOption.key
-                        ? 'bg-white/30'
-                        : 'bg-gray-200'
-                    }`}>
+                    <span className={`px-2 py-0.5 text-xs rounded-full ${selectedFilter === filterOption.key
+                      ? 'bg-white/30'
+                      : 'bg-gray-200'
+                      }`}>
                       {filterOption.count}
                     </span>
                   )}
@@ -420,7 +347,7 @@ export default function MentorNotificationsClient() {
               ))}
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <div className="relative">
               <input
@@ -453,7 +380,7 @@ export default function MentorNotificationsClient() {
             <div className="text-5xl mb-4">📭</div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No notifications found</h3>
             <p className="text-gray-600">
-              {selectedFilter === 'all' 
+              {selectedFilter === 'all'
                 ? 'You\'re all caught up! No notifications in your inbox.'
                 : `No ${selectedFilter} notifications found.`}
             </p>
@@ -462,13 +389,12 @@ export default function MentorNotificationsClient() {
           <div className="divide-y divide-gray-100">
             {filteredNotifications.map((notification) => {
               const iconConfig = getNotificationIcon(notification.type);
-              
+
               return (
                 <div
                   key={notification._id}
-                  className={`p-5 hover:bg-gray-50 transition-colors relative ${
-                    !notification.isRead ? 'bg-blue-50/30 border-l-4 border-[#5693C1]' : ''
-                  }`}
+                  className={`p-5 hover:bg-gray-50 transition-colors relative ${!notification.isRead ? 'bg-blue-50/30 border-l-4 border-[#5693C1]' : ''
+                    }`}
                   onMouseEnter={() => setShowActions(notification._id)}
                   onMouseLeave={() => setShowActions(null)}
                 >
@@ -477,7 +403,7 @@ export default function MentorNotificationsClient() {
                     <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${iconConfig.color}`}>
                       {iconConfig.icon}
                     </div>
-                    
+
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-2">
@@ -506,11 +432,10 @@ export default function MentorNotificationsClient() {
                             <span className="text-xs text-gray-400">{formatTimeAgo(notification.createdAt)}</span>
                           </div>
                         </div>
-                        
+
                         {/* Action Buttons (Hover) */}
-                        <div className={`flex items-center gap-2 transition-opacity ${
-                          showActions === notification._id ? 'opacity-100' : 'opacity-0'
-                        }`}>
+                        <div className={`flex items-center gap-2 transition-opacity ${showActions === notification._id ? 'opacity-100' : 'opacity-0'
+                          }`}>
                           {!notification.isRead && (
                             <button
                               onClick={() => handleMarkAsRead(notification._id)}
@@ -533,9 +458,9 @@ export default function MentorNotificationsClient() {
                           </button>
                         </div>
                       </div>
-                      
+
                       <p className="text-gray-600 mb-3">{notification.message}</p>
-                      
+
                       <div className="flex items-center gap-3">
                         {notification.actionUrl && (
                           <Link
@@ -548,14 +473,13 @@ export default function MentorNotificationsClient() {
                             </svg>
                           </Link>
                         )}
-                        
-                        <span className={`text-xs px-2 py-1 rounded ${
-                          notification.type === 'skill_validation' ? 'bg-green-50 text-green-700' :
+
+                        <span className={`text-xs px-2 py-1 rounded ${notification.type === 'skill_validation' ? 'bg-green-50 text-green-700' :
                           notification.type === 'student_message' ? 'bg-blue-50 text-blue-700' :
-                          notification.type === 'opportunity_match' ? 'bg-purple-50 text-purple-700' :
-                          notification.type === 'announcement' ? 'bg-red-50 text-red-700' :
-                          'bg-gray-50 text-gray-700'
-                        }`}>
+                            notification.type === 'opportunity_match' ? 'bg-purple-50 text-purple-700' :
+                              notification.type === 'announcement' ? 'bg-red-50 text-red-700' :
+                                'bg-gray-50 text-gray-700'
+                          }`}>
                           {notification.type.replace('_', ' ').toUpperCase()}
                         </span>
                       </div>

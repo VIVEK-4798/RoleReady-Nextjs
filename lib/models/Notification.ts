@@ -27,11 +27,13 @@ import mongoose, { Schema, Document, Model, Types } from 'mongoose';
 // Types
 // ============================================================================
 
-export type NotificationType = 
+export type NotificationType =
   | 'readiness_outdated'
   | 'mentor_validation'
   | 'roadmap_updated'
-  | 'role_changed';
+  | 'role_changed'
+  | 'validation_request'
+  | 'mentor_application';
 
 export interface INotification {
   _id: Types.ObjectId;
@@ -50,7 +52,7 @@ export interface INotification {
 // Document Interface
 // ============================================================================
 
-export interface INotificationDocument extends Omit<INotification, '_id'>, Document {}
+export interface INotificationDocument extends Omit<INotification, '_id'>, Document { }
 
 // ============================================================================
 // Model Interface with Static Methods
@@ -71,7 +73,7 @@ interface INotificationModel extends Model<INotificationDocument> {
       metadata?: Record<string, unknown>;
     }
   ): Promise<INotificationDocument>;
-  
+
   /**
    * Get unread notifications for a user
    */
@@ -79,12 +81,12 @@ interface INotificationModel extends Model<INotificationDocument> {
     userId: string | Types.ObjectId,
     options?: { limit?: number }
   ): Promise<INotificationDocument[]>;
-  
+
   /**
    * Get unread count for a user
    */
   getUnreadCount(userId: string | Types.ObjectId): Promise<number>;
-  
+
   /**
    * Mark notification(s) as read
    */
@@ -109,7 +111,7 @@ const NotificationSchema = new Schema<INotificationDocument>(
     type: {
       type: String,
       enum: {
-        values: ['readiness_outdated', 'mentor_validation', 'roadmap_updated', 'role_changed'] as NotificationType[],
+        values: ['readiness_outdated', 'mentor_validation', 'roadmap_updated', 'role_changed', 'validation_request', 'mentor_application'] as NotificationType[],
         message: '{VALUE} is not a valid notification type',
       },
       required: [true, 'Notification type is required'],
@@ -224,7 +226,7 @@ NotificationSchema.statics.markAsRead = async function (
   notificationIds?: (string | Types.ObjectId)[]
 ): Promise<number> {
   const query: Record<string, unknown> = { userId, isRead: false };
-  
+
   if (notificationIds && notificationIds.length > 0) {
     query._id = { $in: notificationIds };
   }

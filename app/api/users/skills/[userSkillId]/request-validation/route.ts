@@ -14,9 +14,17 @@ import { UserSkill } from '@/lib/models';
 import { successResponse, errors } from '@/lib/utils/api';
 import { requireAuthApi } from '@/lib/auth/utils';
 import { isValidObjectId } from '@/lib/utils/db';
+import { sendNotifications } from '@/lib/services/notificationService';
 
 interface RouteParams {
   params: Promise<{ userSkillId: string }>;
+}
+
+// Helper type for populated skill
+interface PopulatedSkill {
+  _id: string;
+  name: string;
+  domain: string;
 }
 
 /**
@@ -69,6 +77,46 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     await userSkill.save();
 
+    // Determine validation recipients for notification routing
+    const { getValidationRecipients } = await import('@/lib/services/validationRoutingService');
+    const recipients = await getValidationRecipients(user.id);
+
+    // Cast to any because populate type inference can be tricky
+    const skillName = (userSkill.skillId as any)?.name || 'a skill';
+
+    // Send notifications based on routing
+    if (recipients.recipientType === 'mentor') {
+      // Notify assigned mentor
+      await sendNotifications(
+        recipients.recipientIds,
+        'validation_request',
+        {
+          title: 'New Validation Request',
+          message: `${user.name} has requested validation for "${skillName}"`,
+          actionUrl: `/mentor/validation-queue`,
+          metadata: {
+            skillId: userSkill._id,
+            userId: user.id
+          }
+        }
+      );
+    } else {
+      // Notify admins
+      await sendNotifications(
+        recipients.recipientIds,
+        'validation_request',
+        {
+          title: 'Unassigned Validation Request',
+          message: `${user.name} (unassigned) requested validation for "${skillName}"`,
+          actionUrl: `/admin/users?filter=pending`,
+          metadata: {
+            skillId: userSkill._id,
+            userId: user.id
+          }
+        }
+      );
+    }
+
     return successResponse(
       {
         userSkill: {
@@ -78,7 +126,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           source: userSkill.source,
           validationStatus: userSkill.validationStatus,
         },
-        message: 'Your skill is now pending validation by a mentor',
+        message: recipients.recipientType === 'mentor'
+          ? 'Your request has been sent to your assigned mentor.'
+          : 'Your request has been sent to the admin team for assignment.',
+        routing: {
+          type: recipients.recipientType
+        }
       },
       'Validation requested successfully'
     );

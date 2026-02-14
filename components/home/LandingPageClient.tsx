@@ -10,9 +10,9 @@ import {
   WhoIsItForSection,
   GuestCTASection,
   AuthenticatedCTASection,
-  FooterSection,
   WhyChooseUsSectionRef,
 } from '@/components/home';
+import PublicFooter from '@/components/layout/PublicFooter';
 
 interface LandingPageClientProps {
   isAuthenticated: boolean;
@@ -36,8 +36,8 @@ export default function LandingPageClient({ isAuthenticated }: LandingPageClient
   return (
     <>
       <LandingHeader isAuthenticated={isAuthenticated} />
-      
-      <HeroSection 
+
+      <HeroSection
         onCheckReadiness={handleCheckReadiness}
         onLearnMore={handleLearnMore}
       />
@@ -77,7 +77,7 @@ export default function LandingPageClient({ isAuthenticated }: LandingPageClient
         <GuestCTASection />
       )}
 
-      <FooterSection />
+      <PublicFooter />
     </>
   );
 }

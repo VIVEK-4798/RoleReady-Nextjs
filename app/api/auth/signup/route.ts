@@ -35,17 +35,15 @@ export async function POST(request: NextRequest) {
       return errors.validationError('Password must be at least 6 characters');
     }
 
-    // Validate role (only 'user' and 'mentor' allowed for self-registration)
-    // Admins must be created separately via seed script
-    if (role !== 'user' && role !== 'mentor') {
-      return errors.forbidden('Only user and mentor accounts can be self-registered');
-    }
-
     // Check if user already exists
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       return errors.conflict('An account with this email already exists');
     }
+
+    // GOVERNANCE CHANGE: Always create account as "user" (student).
+    // Mentor role is granted ONLY by admin approval after registration.
+    const finalRole = 'user';
 
     // Create new user (password will be hashed by pre-save middleware)
     const user = new User({
@@ -53,7 +51,7 @@ export async function POST(request: NextRequest) {
       email: email.toLowerCase().trim(),
       password,
       mobile: mobile?.trim(),
-      role, // Use the provided role (user or mentor)
+      role: finalRole,
       isActive: true,
       profile: {},
     });

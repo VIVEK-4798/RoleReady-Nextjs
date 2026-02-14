@@ -15,11 +15,26 @@ export const metadata: Metadata = {
 
 export default async function MentorDashboardPage() {
   const session = await auth();
-  
+
   // Get user details from session
   const userName = session?.user?.name?.split(' ')[0] || 'Mentor';
   const userEmail = session?.user?.email || 'mentor@roleready.com';
-  
+  const userId = session?.user?.id;
+
+  // Import service dynamically to avoid build-time issues with auth
+  const { getMentorValidationStats } = await import('@/lib/services/mentorQueueService');
+  const { getMentorWorkload } = await import('@/lib/services/mentorAssignmentService');
+
+  let stats = { pending: 0, validated: 0, rejected: 0, total: 0 };
+  let workload = { assignedUsersCount: 0, pendingValidationsCount: 0 };
+
+  if (userId) {
+    [stats, workload] = await Promise.all([
+      getMentorValidationStats(userId),
+      getMentorWorkload(userId)
+    ]);
+  }
+
   return (
     <div>
       {/* Dashboard Header */}
@@ -41,7 +56,7 @@ export default async function MentorDashboardPage() {
               Last login: Today at {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </p>
           </div>
-          
+
           <div className="flex flex-wrap gap-3">
             <button className="px-4 py-2 bg-[#5693C1] hover:bg-[#4a80b0] text-white font-medium rounded-lg transition-colors flex items-center gap-2">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -57,20 +72,20 @@ export default async function MentorDashboardPage() {
             </button>
           </div>
         </div>
-        
+
         {/* Stats Summary Bar */}
         <div className="mt-6 p-4 bg-gradient-to-r from-[#5693C1]/10 to-[#4a80b0]/10 rounded-xl">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-[#5693C1]"></div>
-              <span className="text-sm text-gray-700">You have 12 pending validations this week</span>
+              <span className="text-sm text-gray-700">You have {stats.pending} pending validations this week</span>
             </div>
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-600">
-                <span className="font-semibold text-[#5693C1]">8</span> completed today
+                <span className="font-semibold text-[#5693C1]">{stats.validated}</span> validated total
               </span>
               <span className="text-sm text-gray-600">
-                <span className="font-semibold text-[#5693C1]">24</span> active students
+                <span className="font-semibold text-[#5693C1]">{workload.assignedUsersCount}</span> active students
               </span>
               <span className="text-sm text-gray-600">
                 <span className="font-semibold text-[#5693C1]">94%</span> satisfaction rate
@@ -79,28 +94,28 @@ export default async function MentorDashboardPage() {
           </div>
         </div>
       </div>
-      
+
       {/* Dashboard Content */}
       <MentorDashboardClient userName={userName} />
-      
+
       {/* Bottom Stats */}
       <div className="mt-8 pt-8 border-t border-gray-200">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="text-center p-4">
-            <div className="text-3xl font-bold text-[#5693C1]">156</div>
-            <div className="text-sm text-gray-600">Total Skills Validated</div>
+            <div className="text-3xl font-bold text-[#5693C1]">{stats.total}</div>
+            <div className="text-sm text-gray-600">Total Skills Processed</div>
           </div>
           <div className="text-center p-4">
-            <div className="text-3xl font-bold text-green-600">142</div>
+            <div className="text-3xl font-bold text-green-600">{stats.validated}</div>
             <div className="text-sm text-gray-600">Successful Validations</div>
           </div>
           <div className="text-center p-4">
-            <div className="text-3xl font-bold text-red-600">14</div>
+            <div className="text-3xl font-bold text-red-600">{stats.rejected}</div>
             <div className="text-sm text-gray-600">Rejected Skills</div>
           </div>
           <div className="text-center p-4">
-            <div className="text-3xl font-bold text-purple-600">24</div>
-            <div className="text-sm text-gray-600">Active Students</div>
+            <div className="text-3xl font-bold text-purple-600">{workload.assignedUsersCount}</div>
+            <div className="text-sm text-gray-600">Assigned Students</div>
           </div>
         </div>
       </div>

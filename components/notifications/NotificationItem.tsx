@@ -25,7 +25,12 @@ function formatTimeAgo(dateString: string): string {
 }
 
 // Notification type from the model
-type NotificationType = 'readiness_outdated' | 'mentor_validation' | 'roadmap_updated' | 'role_changed';
+type NotificationType =
+  | 'readiness_outdated'
+  | 'mentor_validation'
+  | 'roadmap_updated'
+  | 'role_changed'
+  | 'validation_request';
 
 export interface Notification {
   _id: string;
@@ -95,22 +100,33 @@ const typeConfig: Record<NotificationType, {
     label: 'Role',
     defaultUrl: '/dashboard/roles',
   },
+  validation_request: {
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+      </svg>
+    ),
+    bgColor: 'bg-indigo-50',
+    iconColor: 'text-indigo-600',
+    label: 'New Request',
+    defaultUrl: '/mentor/skill-validation',
+  },
 };
 
 export default function NotificationItem({ notification, onMarkAsRead }: NotificationItemProps) {
   const [isMarking, setIsMarking] = useState(false);
   const config = typeConfig[notification.type];
   const actionUrl = notification.actionUrl || config.defaultUrl;
-  
+
   // Format time
   const timeAgo = formatTimeAgo(notification.createdAt);
 
   const handleMarkAsReadClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (notification.isRead || !onMarkAsRead) return;
-    
+
     setIsMarking(true);
     try {
       await onMarkAsRead(notification._id);
@@ -122,7 +138,7 @@ export default function NotificationItem({ notification, onMarkAsRead }: Notific
   };
 
   return (
-    <div 
+    <div
       className={`
         px-6 py-4 transition-colors
         ${!notification.isRead ? 'bg-blue-50' : ''}
@@ -148,16 +164,16 @@ export default function NotificationItem({ notification, onMarkAsRead }: Notific
                   </span>
                 )}
               </div>
-              
+
               <h4 className={`font-medium ${!notification.isRead ? 'text-gray-900' : 'text-gray-700'}`}>
                 {notification.title}
               </h4>
-              
+
               <p className="mt-1 text-sm text-gray-600">
                 {notification.message}
               </p>
             </div>
-            
+
             {/* Mark as read button */}
             {!notification.isRead && onMarkAsRead && (
               <button
@@ -186,7 +202,7 @@ export default function NotificationItem({ notification, onMarkAsRead }: Notific
             <span className="text-xs text-gray-500">
               {timeAgo}
             </span>
-            
+
             {actionUrl && (
               <Link
                 href={actionUrl}

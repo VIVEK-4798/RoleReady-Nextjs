@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/hooks';
 import TicketStatusBadge from './TicketStatusBadge';
 import TicketPriorityBadge from './TicketPriorityBadge';
-import { ITicket, ITicketMessage } from '@/lib/models/Ticket';
+import { ITicket } from '@/lib/models/Ticket';
+import { ITicketMessage } from '@/lib/models/TicketMessage';
 
 interface TicketChatProps {
     ticketId: string;
@@ -150,10 +151,10 @@ export default function TicketChat({ ticketId, basePath }: TicketChatProps) {
                         >
                             <div
                                 className={`max-w-[80%] rounded-2xl px-4 py-3 shadow-sm ${isCurrentUser
-                                        ? 'bg-[#5693C1] text-white rounded-br-none'
-                                        : isAdmin
-                                            ? 'bg-purple-50 border border-purple-100 text-gray-800 rounded-bl-none'
-                                            : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none'
+                                    ? 'bg-[#5693C1] text-white rounded-br-none'
+                                    : isAdmin
+                                        ? 'bg-purple-50 border border-purple-100 text-gray-800 rounded-bl-none'
+                                        : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none'
                                     }`}
                             >
                                 {!isCurrentUser && (
@@ -200,7 +201,7 @@ export default function TicketChat({ ticketId, basePath }: TicketChatProps) {
                                 value={replyMessage}
                                 onChange={(e) => setReplyMessage(e.target.value)}
                                 placeholder="Type your reply..."
-                                className="w-full rounded-lg border-gray-300 focus:border-[#5693C1] focus:ring-[#5693C1] resize-none py-3 px-4 text-sm"
+                                className="w-full rounded-lg border-gray-300 focus:border-[#5693C1] focus:ring-[#5693C1] resize-none py-3 px-4 text-sm text-gray-900 placeholder-gray-400"
                                 rows={2}
                                 disabled={sending}
                                 onKeyDown={(e) => {

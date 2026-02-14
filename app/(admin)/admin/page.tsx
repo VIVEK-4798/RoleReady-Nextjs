@@ -62,6 +62,10 @@ const SettingsIcon = () => (
 async function getStats() {
   await connectDB();
 
+  // Import service dynamically or at top level if possible, but here inside function to keep it cleaner for this file
+  const { getPendingValidationsForAdmin } = await import('@/lib/services/mentorQueueService');
+  const adminPendingValidations = await getPendingValidationsForAdmin();
+
   const [
     totalSkills,
     activeSkills,
@@ -69,7 +73,6 @@ async function getStats() {
     activeRoles,
     totalUsers,
     totalMentors,
-    pendingValidations,
     targetRolesCount,
     recentUsers,
   ] = await Promise.all([
@@ -79,7 +82,6 @@ async function getStats() {
     Role.countDocuments({ isActive: true }),
     User.countDocuments({ role: 'user', isActive: true }),
     User.countDocuments({ role: 'mentor', isActive: true }),
-    UserSkill.countDocuments({ validationStatus: 'pending' }),
     TargetRole.countDocuments(),
     User.find({ isActive: true })
       .sort({ createdAt: -1 })
@@ -93,7 +95,7 @@ async function getStats() {
     roles: { total: totalRoles, active: activeRoles },
     users: { total: totalUsers },
     mentors: { total: totalMentors },
-    pendingValidations,
+    pendingValidations: adminPendingValidations.length,
     targetRolesCount,
     recentUsers: recentUsers.map((user) => ({
       id: user._id?.toString() || '',
@@ -254,7 +256,7 @@ export default async function AdminDashboard() {
                 {card.trend}
               </span>
             </div>
-            
+
             <div className="mt-4">
               <h3 className="text-sm font-medium text-gray-500">{card.title}</h3>
               <div className="mt-2 flex items-baseline gap-2">
@@ -262,8 +264,8 @@ export default async function AdminDashboard() {
                 <span className="text-sm text-gray-500">{card.subtitle}</span>
               </div>
             </div>
-            
-            <a 
+
+            <a
               href={card.href}
               className="mt-4 inline-flex items-center text-sm font-medium text-[#5693C1] hover:text-[#5693C1]/80"
             >
@@ -286,8 +288,8 @@ export default async function AdminDashboard() {
                 <h2 className="text-lg md:text-xl font-bold text-gray-900">Recent Users</h2>
                 <p className="text-sm text-gray-500 mt-1">Latest user registrations</p>
               </div>
-              <a 
-                href="/admin/users" 
+              <a
+                href="/admin/users"
                 className="text-sm font-medium text-[#5693C1] hover:text-[#5693C1]/80 flex items-center gap-1"
               >
                 View all

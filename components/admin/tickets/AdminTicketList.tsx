@@ -106,14 +106,14 @@ export default function AdminTicketList() {
                     <input
                         type="text"
                         placeholder="Search tickets by subject or number..."
-                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-[#5693C1] focus:ring-[#5693C1] sm:text-sm p-2 border"
+                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-[#5693C1] focus:ring-[#5693C1] sm:text-sm p-2 border text-gray-900 placeholder-gray-400"
                         value={filters.search}
                         onChange={(e) => handleFilterChange('search', e.target.value)}
                     />
                 </div>
                 <div className="flex gap-4">
                     <select
-                        className="rounded-md border-gray-300 shadow-sm focus:border-[#5693C1] focus:ring-[#5693C1] sm:text-sm p-2 border"
+                        className="rounded-md border-gray-300 shadow-sm focus:border-[#5693C1] focus:ring-[#5693C1] sm:text-sm p-2 border text-gray-900"
                         value={filters.status}
                         onChange={(e) => handleFilterChange('status', e.target.value)}
                     >
@@ -125,7 +125,7 @@ export default function AdminTicketList() {
                         <option value="closed">Closed</option>
                     </select>
                     <select
-                        className="rounded-md border-gray-300 shadow-sm focus:border-[#5693C1] focus:ring-[#5693C1] sm:text-sm p-2 border"
+                        className="rounded-md border-gray-300 shadow-sm focus:border-[#5693C1] focus:ring-[#5693C1] sm:text-sm p-2 border text-gray-900"
                         value={filters.priority}
                         onChange={(e) => handleFilterChange('priority', e.target.value)}
                     >

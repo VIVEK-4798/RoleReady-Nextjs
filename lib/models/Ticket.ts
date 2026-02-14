@@ -95,11 +95,10 @@ const TicketSchema = new Schema<ITicketDocument, ITicketModel>(
     }
 );
 
-// Indexes for performance
+// Compound indexes for performance (single-field indexes already defined inline)
 TicketSchema.index({ createdBy: 1, status: 1 });
 TicketSchema.index({ status: 1, lastMessageAt: -1 });
 TicketSchema.index({ assignedTo: 1, status: 1 });
-TicketSchema.index({ ticketNumber: 1 }, { unique: true });
 
 /**
  * Generate unique ticket number (e.g., RR-1024)
@@ -129,11 +128,10 @@ TicketSchema.statics.generateTicketNumber = async function (): Promise<string> {
  * Pre-validate hook to generate ticket number
  * Using pre('validate') ensures the field is populated before required check
  */
-TicketSchema.pre('validate', async function (next: any) {
+TicketSchema.pre('validate', async function () {
     if (this.isNew && !this.ticketNumber) {
         this.ticketNumber = await (this.constructor as ITicketModel).generateTicketNumber();
     }
-    next();
 });
 
 // Prevent deletion

@@ -1,99 +1,40 @@
 /**
- * Mentor Validation Queue API
+ * Mentor Validation Queue API - Grouped
  * 
  * GET /api/mentor/validation-queue
  * 
- * Returns pending skills that the mentor can validate.
- * - All mentors and admins can see all pending skills from any user
- * - Mentors cannot validate their own skills
+ * Returns a list of users with pending validations assigned to this mentor.
+ * Grouped by user for high-level management.
  */
 
-import { NextRequest } from 'next/server';
-import connectDB from '@/lib/db/mongoose';
-import { UserSkill } from '@/lib/models';
+import { NextRequest, NextResponse } from 'next/server';
 import { successResponse, errors } from '@/lib/utils/api';
-import { requireMentorApi } from '@/lib/auth/utils';
-import { Types } from 'mongoose';
+import { getUsersWithPendingValidations } from '@/lib/services/mentorQueueService';
+import { auth } from '@/lib/auth';
 
-/**
- * GET /api/mentor/validation-queue
- * 
- * Query params:
- * - status: Filter by validation status (default: 'pending', options: 'pending', 'none', 'all')
- * - userId: Filter by specific user ID (optional)
- */
 export async function GET(request: NextRequest) {
   try {
+    const session = await auth();
+
     // Check mentor role
-    const { user, error } = await requireMentorApi();
-    if (error) return error;
-    if (!user?.id) return errors.unauthorized('Authentication required');
-
-    await connectDB();
-
-    const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status') || 'pending';
-    const userIdFilter = searchParams.get('userId');
-
-    // Build query for skills pending validation
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const query: Record<string, any> = {};
-
-    // Filter by validation status
-    if (status === 'all') {
-      query.validationStatus = { $in: ['none', 'pending'] };
-    } else if (status === 'none') {
-      query.validationStatus = 'none';
-    } else {
-      // Default: pending
-      query.validationStatus = 'pending';
+    if (!session?.user || (session.user as any).role !== 'mentor') {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized. Mentor access required.' },
+        { status: 403 }
+      );
     }
 
-    // Only include skills from self or resume (not already validated)
-    query.source = { $in: ['self', 'resume'] };
+    const mentorId = session.user.id;
 
-    // Mentor cannot validate their own skills
-    query.userId = { $ne: new Types.ObjectId(user.id) };
-
-    // Filter by specific user if provided
-    if (userIdFilter) {
-      query.userId = new Types.ObjectId(userIdFilter);
-    }
-
-    // Fetch skills with user and skill details
-    const pendingSkills = await UserSkill.find(query)
-      .populate('userId', 'name email image')
-      .populate('skillId', 'name domain description')
-      .sort({ createdAt: -1 });
-
-    // Group by user for better UX
-    const groupedByUser = pendingSkills.reduce((acc, skill) => {
-      const userId = skill.userId?._id?.toString();
-      if (!userId) return acc;
-
-      if (!acc[userId]) {
-        acc[userId] = {
-          user: skill.userId,
-          skills: [],
-        };
-      }
-      acc[userId].skills.push({
-        _id: skill._id,
-        skill: skill.skillId,
-        level: skill.level,
-        source: skill.source,
-        validationStatus: skill.validationStatus,
-        createdAt: skill.createdAt,
-      });
-      return acc;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    }, {} as Record<string, { user: any; skills: any[] }>);
+    // Fetch grouped queue from service
+    const users = await getUsersWithPendingValidations(mentorId!);
 
     return successResponse({
-      queue: Object.values(groupedByUser),
-      totalCount: pendingSkills.length,
-      ungrouped: pendingSkills, // Also provide flat list
+      users,
+      totalUsers: users.length,
+      totalPendingCount: users.reduce((acc, u) => acc + u.pendingCount, 0)
     });
+
   } catch (error) {
     console.error('GET /api/mentor/validation-queue error:', error);
     return errors.serverError('Failed to fetch validation queue');

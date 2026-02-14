@@ -1,4 +1,4 @@
-/**
+  /**
  * Footer Component
  * 
  * Main footer for the landing page.

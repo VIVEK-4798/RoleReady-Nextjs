@@ -8,6 +8,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import NotificationItem, { Notification } from './NotificationItem';
 
 export default function NotificationBell() {
@@ -79,7 +80,7 @@ export default function NotificationBell() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notificationIds: [id] }),
       });
-      
+
       setNotifications((prev) =>
         prev.map((n) => (n._id === id ? { ...n, isRead: true } : n))
       );
@@ -92,20 +93,20 @@ export default function NotificationBell() {
   // Mark all notifications as read
   const handleMarkAllAsRead = async () => {
     if (unreadCount === 0 || notifications.length === 0) return;
-    
+
     try {
       setIsMarkingAll(true);
-      
+
       await fetch('/api/notifications', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ markAll: true }),
       });
-      
+
       // Optimistic update
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       setUnreadCount(0);
-      
+
     } catch (error) {
       console.error('Failed to mark all as read:', error);
     } finally {
@@ -120,6 +121,10 @@ export default function NotificationBell() {
       return () => clearInterval(interval);
     }
   }, [isOpen, fetchUnreadCount]);
+
+  const { data: session } = useSession();
+  const userRole = (session?.user as any)?.role;
+  const notificationsLink = userRole === 'mentor' ? '/mentor/notifications' : '/dashboard/notifications';
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -143,7 +148,7 @@ export default function NotificationBell() {
               d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
             />
           </svg>
-          
+
           {/* Badge */}
           {unreadCount > 0 && (
             <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-xs font-bold text-white bg-[#5693C1] rounded-full">
@@ -169,7 +174,7 @@ export default function NotificationBell() {
                   </span>
                 )}
               </div>
-              
+
               {unreadCount > 0 && (
                 <button
                   onClick={handleMarkAllAsRead}
@@ -233,7 +238,7 @@ export default function NotificationBell() {
           {(notifications.length > 0 || !isLoading) && (
             <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
               <Link
-                href="/dashboard/notifications"
+                href={notificationsLink}
                 onClick={() => setIsOpen(false)}
                 className="flex items-center justify-center gap-1 w-full text-sm font-medium text-[#5693C1] hover:text-[#4a82b0]"
               >

@@ -264,7 +264,7 @@ export default function ReportClient() {
         {/* Readiness Summary */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Readiness Overview</h2>
-          
+
           <div className="grid md:grid-cols-4 gap-6">
             {/* Main Score - Progress Ring */}
             <div className="md:col-span-1 flex justify-center">
@@ -329,7 +329,7 @@ export default function ReportClient() {
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">Skill-by-Skill Breakdown</h2>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">
@@ -359,19 +359,18 @@ export default function ReportClient() {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {report.skills.map((skill) => (
-                  <tr 
-                    key={skill.id} 
+                  <tr
+                    key={skill.id}
                     className={`transition-colors hover:bg-gray-50 ${skill.isMissing ? 'bg-red-50' : ''}`}
                   >
                     <td className="px-4 py-3">
                       <span className="font-medium text-gray-900">{skill.name}</span>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`px-2 py-1 text-xs font-medium rounded ${
-                        skill.importance === 'required'
+                      <span className={`px-2 py-1 text-xs font-medium rounded ${skill.importance === 'required'
                           ? 'bg-blue-100 text-blue-800'
                           : 'bg-gray-100 text-gray-600'
-                      }`}>
+                        }`}>
                         {skill.importance}
                       </span>
                     </td>
@@ -415,7 +414,7 @@ export default function ReportClient() {
         {report.roadmap && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 print-break">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Learning Roadmap Summary</h2>
-            
+
             {/* Roadmap Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <div className="p-4 bg-gray-50 rounded-lg">
@@ -476,11 +475,10 @@ export default function ReportClient() {
                     </p>
                   </div>
                   <div className="flex-shrink-0 text-right">
-                    <span className={`px-2 py-1 text-xs font-medium rounded ${
-                      step.status === 'completed' ? 'bg-green-100 text-green-800' :
-                      step.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                      'bg-gray-100 text-gray-600'
-                    }`}>
+                    <span className={`px-2 py-1 text-xs font-medium rounded ${step.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        step.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                          'bg-gray-100 text-gray-600'
+                      }`}>
                       {step.status.replace('_', ' ')}
                     </span>
                     <p className="text-xs text-gray-500 mt-1">
@@ -514,14 +512,14 @@ export default function ReportClient() {
           </svg>
           <div>
             <p className="text-sm font-medium text-gray-900 mb-1">PDF Export Instructions</p>
-            <p className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600">
               Click "Export PDF" and in the print dialog:
               <ul className="list-disc pl-5 mt-1 space-y-1">
                 <li>Select "Save as PDF" as your printer</li>
                 <li>Set margins to "None" or "Minimum" for best results</li>
                 <li>Enable "Background graphics" to include colors</li>
               </ul>
-            </p>
+            </div>
           </div>
         </div>
       </div>
