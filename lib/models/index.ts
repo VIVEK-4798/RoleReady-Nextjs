@@ -24,6 +24,7 @@ export { UserEmailEvent } from './UserEmailEvent';
 export { default as Ticket } from './Ticket';
 export { default as TicketMessage } from './TicketMessage';
 export { default as MentorRoleRequest } from './MentorRoleRequest';
+export { default as MentorApplication } from './MentorApplication';
 
 // Re-export document interfaces for convenience
 export type { IUserDocument } from './User';

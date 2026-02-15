@@ -30,13 +30,15 @@ import mongoose, { Schema, Document, Model, Types } from 'mongoose';
 // Types
 // ============================================================================
 
-export type UserActionType = 
+export type UserActionType =
   | 'skill_added'
   | 'skill_updated'
   | 'resume_uploaded'
   | 'readiness_calculated'
   | 'roadmap_step_completed'
-  | 'role_changed';
+  | 'role_changed'
+  | 'mentor_consent_given'
+  | 'mentor_application_submitted';
 
 export type MentorActionType =
   | 'skill_approved'
@@ -61,7 +63,7 @@ export interface IActivityLog {
 // Document Interface
 // ============================================================================
 
-export interface IActivityLogDocument extends Omit<IActivityLog, '_id'>, Document {}
+export interface IActivityLogDocument extends Omit<IActivityLog, '_id'>, Document { }
 
 // ============================================================================
 // Model Interface with Static Methods
@@ -119,6 +121,8 @@ const ActivityLogSchema = new Schema<IActivityLogDocument>(
           'readiness_calculated',
           'roadmap_step_completed',
           'role_changed',
+          'mentor_consent_given',
+          'mentor_application_submitted',
           // Mentor actions
           'skill_approved',
           'skill_rejected',

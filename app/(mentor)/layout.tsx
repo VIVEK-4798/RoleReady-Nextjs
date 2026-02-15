@@ -16,19 +16,16 @@ export default async function MentorLayout({
 }) {
   // Server-side auth check
   const session = await auth();
-  
+
   if (!session?.user) {
     redirect('/login');
   }
 
-  // Role check - only mentor and admin can access
+  // Role check
   const userRole = (session.user as { role?: string }).role;
-  
+
+  // For mentors and admins, render full mentor layout
   if (userRole !== 'mentor' && userRole !== 'admin') {
-    // Non-mentor users redirected to their dashboard
-    if (userRole === 'admin') {
-      redirect('/admin');
-    }
     redirect('/dashboard');
   }
 
@@ -36,7 +33,7 @@ export default async function MentorLayout({
     <div className="min-h-screen bg-white">
       <MentorNav />
       <main className="lg:pl-64">
-        <MentorHeader 
+        <MentorHeader
           userName={session.user.name || undefined}
           userEmail={session.user.email || undefined}
         />

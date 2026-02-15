@@ -112,7 +112,7 @@ const sidebarData: SidebarItem[] = [
     title: 'Mentorship',
     links: [
       { title: 'Overview', href: '/admin/mentorship' },
-      { title: 'Role Requests', href: '/admin/mentor-requests', badge: 'New' },
+      { title: 'Applications', href: '/admin/mentor-applications', badge: 'New' },
     ],
   },
   {
