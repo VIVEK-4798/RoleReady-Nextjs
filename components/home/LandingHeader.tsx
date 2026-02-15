@@ -58,8 +58,9 @@ export default function LandingHeader({ isAuthenticated }: LandingHeaderProps) {
     ],
     mentor: [
       { href: '/#how-it-works', label: 'How It Works', icon: <Zap className="w-4 h-4" /> },
-      { href: '/#for-mentors', label: 'For Mentors', icon: <UserIcon className="w-4 h-4" /> },
-      { href: '/mentor/validations', label: 'Validation Queue', icon: <Target className="w-4 h-4" /> },
+      // { href: '/#for-mentors', label: 'For Mentors', icon: <UserIcon className="w-4 h-4" /> },
+      { href: '/mentor/jobs/add', label: 'Post Jobs', icon: <Target className="w-4 h-4" /> },
+      { href: '/mentor/internships/add', label: 'Post Internships', icon: <Target className="w-4 h-4" /> },
       { href: '/mentor/validations', label: 'My Learners', icon: <Users className="w-4 h-4" /> },
     ],
     admin: [

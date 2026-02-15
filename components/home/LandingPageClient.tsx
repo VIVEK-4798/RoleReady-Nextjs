@@ -12,6 +12,8 @@ import {
   AuthenticatedCTASection,
   WhyChooseUsSectionRef,
 } from '@/components/home';
+import { useAuth } from '@/hooks';
+import { LANDING_CONTENT } from '@/lib/constants/landingContent';
 import PublicFooter from '@/components/layout/PublicFooter';
 
 interface LandingPageClientProps {
@@ -19,8 +21,11 @@ interface LandingPageClientProps {
 }
 
 export default function LandingPageClient({ isAuthenticated }: LandingPageClientProps) {
+  const { user } = useAuth();
   const whyChooseUsRef = useRef<WhyChooseUsSectionRef>(null);
   const howItWorksRef = useRef<HTMLElement>(null);
+  const userRole = (user?.role === 'mentor' ? 'mentor' : 'student') as 'student' | 'mentor';
+  const content = LANDING_CONTENT[userRole];
 
   const handleCheckReadiness = () => {
     whyChooseUsRef.current?.scrollToCTA();
@@ -40,6 +45,7 @@ export default function LandingPageClient({ isAuthenticated }: LandingPageClient
       <HeroSection
         onCheckReadiness={handleCheckReadiness}
         onLearnMore={handleLearnMore}
+        content={content.hero}
       />
 
       {/* Counter Section */}
@@ -57,22 +63,22 @@ export default function LandingPageClient({ isAuthenticated }: LandingPageClient
 
       {/* How It Works (JoinOurBusiness equivalent) */}
       <section ref={howItWorksRef} id="how-it-works">
-        <HowItWorksSection />
+        <HowItWorksSection content={content.howItWorks} />
       </section>
 
       {/* Why Choose Us */}
       <section id="features">
-        <WhyChooseUsSection ref={whyChooseUsRef} />
+        <WhyChooseUsSection ref={whyChooseUsRef} content={content.problem} />
       </section>
 
       {/* Who Is It For */}
       <section id="for-who">
-        <WhoIsItForSection />
+        <WhoIsItForSection content={content.whoIsItFor} role={userRole} />
       </section>
 
       {/* Conditional Call To Action */}
       {isAuthenticated ? (
-        <AuthenticatedCTASection />
+        <AuthenticatedCTASection content={content.footerCTA} />
       ) : (
         <GuestCTASection />
       )}
