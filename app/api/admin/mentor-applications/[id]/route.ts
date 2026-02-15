@@ -9,15 +9,16 @@ import { successResponse, errors } from '@/lib/utils/api';
  */
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const session = await auth();
         if (!session?.user?.id || (session.user as any).role !== 'admin') {
             return errors.forbidden('Admin access required');
         }
 
-        const application = await mentorApplicationService.getApplicationById(params.id);
+        const application = await mentorApplicationService.getApplicationById(id);
         if (!application) return errors.notFound('Application');
 
         return successResponse(application);

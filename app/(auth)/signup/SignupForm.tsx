@@ -298,7 +298,7 @@ export default function SignupForm() {
           className="block text-sm font-medium text-gray-700 mb-2"
         >
           Mobile Number{' '}
-          <span className="text-gray-500 font-normal">(optional)</span>
+          
         </label>
         <input
           type="tel"

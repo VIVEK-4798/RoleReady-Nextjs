@@ -13,6 +13,7 @@ interface ApplicationData {
         githubUrl: string;
         portfolioUrl: string;
         companyEmail: string;
+        phoneNumber: string;
     };
     experience: {
         currentTitle: string;
@@ -49,6 +50,7 @@ const INITIAL_DATA: ApplicationData = {
         githubUrl: '',
         portfolioUrl: '',
         companyEmail: '',
+        phoneNumber: '',
     },
     experience: {
         currentTitle: '',
@@ -266,14 +268,21 @@ export default function ApplyClient() {
                                 onChange={(v: string) => setFormData(p => ({ ...p, professionalIdentity: { ...p.professionalIdentity, linkedinUrl: v } }))}
                             />
                             <Input
-                                label="GitHub URL"
-                                placeholder="https://github.com/username"
+                                label="Phone Number"
+                                placeholder="+1 (555) 000-0000"
+                                value={formData.professionalIdentity.phoneNumber}
+                                disabled={isReadOnly}
+                                onChange={(v: string) => setFormData(p => ({ ...p, professionalIdentity: { ...p.professionalIdentity, phoneNumber: v } }))}
+                            />
+                            <Input
+                                label="GitHub / Professional Profile (Optional)"
+                                placeholder="https://github.com/username or Personal Site"
                                 value={formData.professionalIdentity.githubUrl}
                                 disabled={isReadOnly}
                                 onChange={(v: string) => setFormData(p => ({ ...p, professionalIdentity: { ...p.professionalIdentity, githubUrl: v } }))}
                             />
                             <Input
-                                label="Portfolio URL"
+                                label="Portfolio URL / Website"
                                 placeholder="https://yourportfolio.com"
                                 value={formData.professionalIdentity.portfolioUrl}
                                 disabled={isReadOnly}
@@ -307,15 +316,15 @@ export default function ApplyClient() {
                                 onChange={(v: string) => setFormData(p => ({ ...p, experience: { ...p.experience, yearsOfExperience: parseInt(v) || 0 } }))}
                             />
                             <TagsInput
-                                label="Notable Companies"
-                                placeholder="e.g. Google, Meta, StartupX"
+                                label="Notable Work History (Companies/Orgs)"
+                                placeholder="e.g. Google, UNICEF, StartupX"
                                 tags={formData.experience.companies}
                                 disabled={isReadOnly}
                                 onChange={(tags: string[]) => setFormData(p => ({ ...p, experience: { ...p.experience, companies: tags } }))}
                             />
                             <TagsInput
-                                label="Industry Domains"
-                                placeholder="e.g. FinTech, Healthcare, AI"
+                                label="Industries / Fields"
+                                placeholder="e.g. Education, Marketing, FinTech"
                                 tags={formData.experience.domains}
                                 disabled={isReadOnly}
                                 onChange={(tags: string[]) => setFormData(p => ({ ...p, experience: { ...p.experience, domains: tags } }))}
@@ -327,8 +336,8 @@ export default function ApplyClient() {
                     <Section title="3. Expertise" description="Skills you can mentor in.">
                         <div className="space-y-6">
                             <TagsInput
-                                label="Primary Skills"
-                                placeholder="e.g. React, Python, Cloud Arch"
+                                label="Core Expertise / Skills"
+                                placeholder="e.g. Project Management, Public Speaking, React"
                                 tags={formData.expertise.primarySkills}
                                 disabled={isReadOnly}
                                 onChange={(tags: string[]) => setFormData(p => ({ ...p, expertise: { ...p.expertise, primarySkills: tags } }))}
@@ -344,11 +353,11 @@ export default function ApplyClient() {
                     </Section>
 
                     {/* Section 4: Work Proof */}
-                    <Section title="4. Work Proof" description="Evidence of your impact and technical contribution.">
+                    <Section title="4. Portfolio & Achievements" description="Evidence of your impact and contribution.">
                         <div className="space-y-6">
                             <TagsInput
-                                label="Project Links"
-                                placeholder="Links to open source or public projects"
+                                label="Portfolio Items / Work Samples"
+                                placeholder="Links to projects, articles, or case studies"
                                 tags={formData.workProof.projectLinks}
                                 disabled={isReadOnly}
                                 onChange={(tags: string[]) => setFormData(p => ({ ...p, workProof: { ...p.workProof, projectLinks: tags } }))}

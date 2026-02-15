@@ -8,9 +8,10 @@ export interface IMentorApplication extends Document {
 
     professionalIdentity: {
         linkedinUrl?: string;
-        githubUrl?: string;
+        githubUrl?: string; // Optional for non-tech
         portfolioUrl?: string;
         companyEmail?: string;
+        phoneNumber?: string;
     };
 
     experience: {
@@ -58,7 +59,7 @@ const MentorApplicationSchema = new Schema<IMentorApplication>(
             type: Schema.Types.ObjectId,
             ref: 'User',
             required: true,
-            index: true,
+            unique: true,
         },
         status: {
             type: String,
@@ -69,9 +70,10 @@ const MentorApplicationSchema = new Schema<IMentorApplication>(
 
         professionalIdentity: {
             linkedinUrl: String,
-            githubUrl: String,
+            githubUrl: String, // Treat as optional
             portfolioUrl: String,
             companyEmail: String,
+            phoneNumber: String,
         },
 
         experience: {
@@ -126,7 +128,7 @@ const MentorApplicationSchema = new Schema<IMentorApplication>(
 );
 
 // A user can only have one application at a time (excluding drafts maybe, but for now strict one)
-MentorApplicationSchema.index({ userId: 1 }, { unique: true });
+// A user can only have one application at a time
 
 const MentorApplication: Model<IMentorApplication> =
     mongoose.models.MentorApplication ||

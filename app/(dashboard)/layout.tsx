@@ -40,20 +40,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               </p>
             </div>
             <div className="flex items-center gap-6">
-              <a 
-                href="/terms" 
+              <a
+                href="/terms"
                 className="text-sm text-gray-500 hover:text-[#5693C1] transition-colors"
               >
                 Terms
               </a>
-              <a 
-                href="/privacy" 
+              <a
+                href="/privacy"
                 className="text-sm text-gray-500 hover:text-[#5693C1] transition-colors"
               >
                 Privacy
               </a>
-              <a 
-                href="/help" 
+              <a
+                href="/help"
                 className="text-sm text-gray-500 hover:text-[#5693C1] transition-colors"
               >
                 Help

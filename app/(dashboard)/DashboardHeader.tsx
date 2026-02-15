@@ -67,7 +67,7 @@ export default function DashboardHeader() {
       {/* Left Side - Mobile menu toggle and logo */}
       <div className="flex items-center gap-4">
         {/* Mobile menu toggle button */}
-        <button 
+        <button
           className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
           onClick={toggleMobileMenu}
           aria-label="Toggle menu"
@@ -112,11 +112,11 @@ export default function DashboardHeader() {
             {/* User Avatar */}
             <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#5693C1] to-[#4a80b0] flex items-center justify-center text-white font-medium overflow-hidden ring-2 ring-white ring-offset-2 group-hover:ring-[#5693C1] transition-all relative shrink-0">
               {user?.image ? (
-                <Image 
+                <Image
                   key={user.image}
-                  src={user.image} 
-                  alt={user.name || 'User'} 
-                  width={40} 
+                  src={user.image}
+                  alt={user.name || 'User'}
+                  width={40}
                   height={40}
                   className="absolute inset-0 w-full h-full object-cover rounded-full"
                   unoptimized
@@ -127,7 +127,7 @@ export default function DashboardHeader() {
                 </span>
               )}
             </div>
-            
+
             {/* User Info - Always visible */}
             <div className="text-left">
               <p className="text-sm font-semibold text-gray-900 leading-tight">
@@ -139,10 +139,10 @@ export default function DashboardHeader() {
             </div>
 
             {/* Dropdown Arrow */}
-            <svg 
-              className={`w-4 h-4 text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              className={`w-4 h-4 text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
