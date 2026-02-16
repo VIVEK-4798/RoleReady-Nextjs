@@ -1,13 +1,14 @@
 import { Metadata } from 'next';
 import JobDetailClient from '@/components/jobs/JobDetailClient';
-import { getJobById } from '@/services/jobs/joinriseService';
+import { jobAggregatorService } from '@/services/jobs/jobAggregatorService';
 
 interface PageProps {
-    params: { id: string };
+    params: Promise<{ id: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-    const job = await getJobById(params.id);
+    const { id } = await params;
+    const job = await jobAggregatorService.getJobById(id);
 
     if (!job) {
         return {

@@ -382,12 +382,17 @@ export const authConfig: NextAuthConfig = {
         '/pricing',
         '/terms',
         '/role-redirect', // Post-OAuth redirect route
+        '/jobs',
+        '/api/jobs',
+        '/internships',
+        '/api/internships',
       ];
 
       // Check if current path is public
-      const isPublicRoute = publicRoutes.some(
-        (route) => pathname === route || pathname.startsWith('/api/auth')
-      );
+      const isPublicRoute = publicRoutes.some((route) => {
+        if (route === '/') return pathname === '/';
+        return pathname === route || pathname.startsWith(route + '/');
+      }) || pathname.startsWith('/api/auth');
 
       if (isPublicRoute) {
         return true;

@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getJobById } from '@/services/jobs/joinriseService';
+import { jobAggregatorService } from '@/services/jobs/jobAggregatorService';
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: any
 ) {
-    const id = params.id;
+    const { id } = await context.params;
+    // ... rest of the code is fine.
 
     try {
-        const job = await getJobById(id);
+        const job = await jobAggregatorService.getJobById(id);
         if (!job) {
             return NextResponse.json({ error: 'Job not found' }, { status: 404 });
         }

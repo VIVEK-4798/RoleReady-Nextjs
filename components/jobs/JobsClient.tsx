@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useJobs } from '@/hooks/useJobs';
 import JobCard from '@/components/jobs/JobCard';
 import JobSkeleton from '@/components/jobs/JobSkeleton';
-import { Search, Briefcase, Filter, X } from 'lucide-react';
+import { Search, Briefcase, Filter, X, Loader2 } from 'lucide-react';
 import { LandingHeader } from '@/components/home';
 import PublicFooter from '@/components/layout/PublicFooter';
 import { useAuth } from '@/hooks';
@@ -14,8 +14,23 @@ export default function JobsClient() {
     const [query, setQuery] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [page, setPage] = useState(1);
+    const observer = useRef<IntersectionObserver | null>(null);
 
-    const { jobs, loading, error } = useJobs(searchQuery, page);
+    const { jobs, recommendedJobs, loading, error, hasMore } = useJobs(searchQuery, page);
+
+    // Intersection Observer for infinite scroll
+    const lastJobElementRef = useCallback((node: HTMLDivElement | null) => {
+        if (loading) return;
+        if (observer.current) observer.current.disconnect();
+
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasMore) {
+                setPage(prevPage => prevPage + 1);
+            }
+        });
+
+        if (node) observer.current.observe(node);
+    }, [loading, hasMore]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -106,14 +121,46 @@ export default function JobsClient() {
 
             {/* Main Content Area */}
             <section className="py-20 px-4 md:px-8 max-w-7xl mx-auto">
+                {/* Recommended Section (Only if personalized data exists) */}
+                {recommendedJobs.length > 0 && !searchQuery && (
+                    <div className="mb-20">
+                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+                            <div>
+                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-50 text-orange-600 text-[10px] font-bold uppercase tracking-widest rounded-full mb-3 border border-orange-100/50">
+                                    <span className="relative flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                                    </span>
+                                    Personalized Matches
+                                </div>
+                                <h2 className="text-3xl font-bold text-gray-900 leading-tight">🔥 Recommended for You</h2>
+                                <p className="text-gray-500 mt-2 flex items-center gap-2 italic">
+                                    "Recommendations based on your target role."
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {recommendedJobs.map((job) => (
+                                <JobCard key={job.id} job={job} />
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 <div className="flex justify-between items-center mb-10">
                     <div>
                         <h2 className="text-2xl font-bold text-gray-900">
-                            {searchQuery ? `Search results for "${searchQuery}"` : 'Latest Opportunities'}
+                            {searchQuery ? `Search results for "${searchQuery}"` : (recommendedJobs.length > 0 ? 'All Opportunities' : 'Latest Opportunities')}
                         </h2>
-                        <p className="text-gray-600 mt-1">
-                            {loading ? 'Discovering roles...' : `${jobs.length} roles found for you`}
-                        </p>
+                        <div className="flex flex-col gap-1 mt-1">
+                            <p className="text-gray-600">
+                                {loading && jobs.length === 0 ? 'Discovering roles...' : `${jobs.length} roles found for you`}
+                            </p>
+                            <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+                                Opportunities aggregated from external sources.
+                            </p>
+                        </div>
                     </div>
 
                     <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:border-[#5693C1] hover:text-[#5693C1] transition-all">
@@ -124,39 +171,54 @@ export default function JobsClient() {
 
                 {/* Job Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {loading ? (
-                        Array(6).fill(0).map((_, i) => <JobSkeleton key={i} />)
-                    ) : jobs.length > 0 ? (
-                        jobs.map((job) => <JobCard key={job.id} job={job} />)
-                    ) : (
-                        <div className="col-span-full py-20 text-center">
-                            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <Search className="w-10 h-10 text-gray-300" />
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">No jobs found</h3>
-                            <p className="text-gray-500 max-w-sm mx-auto">
-                                No jobs match your search criteria. Try using different keywords or clearing filters.
-                            </p>
-                            <button
-                                onClick={clearSearch}
-                                className="mt-6 font-semibold text-[#5693C1] hover:underline"
-                            >
-                                Clear all filters
-                            </button>
-                        </div>
+                    {jobs.map((job, index) => {
+                        if (jobs.length === index + 1) {
+                            return (
+                                <div key={job.id} ref={lastJobElementRef}>
+                                    <JobCard job={job} />
+                                </div>
+                            );
+                        } else {
+                            return <JobCard key={job.id} job={job} />;
+                        }
+                    })}
+
+                    {loading && (
+                        Array(3).fill(0).map((_, i) => <JobSkeleton key={`skeleton-${i}`} />)
                     )}
                 </div>
 
-                {/* Pagination placeholder */}
-                {jobs.length > 0 && (
-                    <div className="mt-16 flex justify-center">
+                {/* Empty State */}
+                {!loading && jobs.length === 0 && (
+                    <div className="col-span-full py-20 text-center">
+                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <Search className="w-10 h-10 text-gray-300" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">No jobs found</h3>
+                        <p className="text-gray-500 max-w-sm mx-auto">
+                            No jobs match your search criteria. Try using different keywords or clearing filters.
+                        </p>
                         <button
-                            onClick={() => setPage(p => p + 1)}
-                            disabled={loading}
-                            className="px-8 py-3 bg-white border-2 border-[#5693C1] text-[#5693C1] font-bold rounded-xl hover:bg-[#5693C1] hover:text-white transition-all duration-300 disabled:opacity-50"
+                            onClick={clearSearch}
+                            className="mt-6 font-semibold text-[#5693C1] hover:underline"
                         >
-                            Load More Opportunities
+                            Clear all filters
                         </button>
+                    </div>
+                )}
+
+                {/* Loading Indicator at Bottom */}
+                {loading && jobs.length > 0 && (
+                    <div className="mt-16 flex justify-center items-center gap-3 text-[#5693C1] font-bold">
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                        <span>Loading more opportunities...</span>
+                    </div>
+                )}
+
+                {/* End of results message */}
+                {!hasMore && jobs.length > 0 && (
+                    <div className="mt-16 text-center text-gray-400 font-medium">
+                        You've reached the end of the available opportunities.
                     </div>
                 )}
             </section>

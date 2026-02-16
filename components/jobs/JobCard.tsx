@@ -15,9 +15,14 @@ export default function JobCard({ job }: JobCardProps) {
                     <div className="p-3 bg-[#5693C1]/5 rounded-lg text-[#5693C1] group-hover:bg-[#5693C1] group-hover:text-white transition-colors">
                         <Building2 className="w-6 h-6" />
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#5693C1] bg-[#5693C1]/10 px-2 py-1 rounded">
-                        {job.employmentType || 'Full-time'}
-                    </span>
+                    <div className="flex flex-col items-end gap-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#5693C1] bg-[#5693C1]/10 px-2 py-1 rounded">
+                            {job.employmentType || 'Full-time'}
+                        </span>
+                        <span className="text-[8px] text-gray-400 font-medium uppercase tracking-widest bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
+                            {job.source}
+                        </span>
+                    </div>
                 </div>
 
                 {/* Content */}

@@ -18,7 +18,8 @@ import {
   LogIn,
   UserPlus,
   User as UserIcon,
-  Mail
+  Mail,
+  GraduationCap
 } from 'lucide-react';
 
 interface LandingHeaderProps {
@@ -48,16 +49,20 @@ export default function LandingHeader({ isAuthenticated }: LandingHeaderProps) {
   const NAV_BY_ROLE: Record<string, NavLink[]> = {
     guest: [
       { href: '/#how-it-works', label: 'How It Works', icon: <Zap className="w-4 h-4" /> },
+      { href: '/jobs', label: 'Jobs', icon: <Target className="w-4 h-4" /> },
+      { href: '/internships', label: 'Internships', icon: <GraduationCap className="w-4 h-4" /> },
       { href: '/#for-mentors', label: 'For Mentors', icon: <UserIcon className="w-4 h-4" /> },
     ],
     user: [
-      { href: '/#how-it-works', label: 'How It Works', icon: <Zap className="w-4 h-4" /> },
+      { href: '/jobs', label: 'Jobs', icon: <Target className="w-4 h-4" /> },
+      { href: '/internships', label: 'Internships', icon: <GraduationCap className="w-4 h-4" /> },
       { href: '/readiness', label: 'Readiness', icon: <Target className="w-4 h-4" /> },
       { href: '/roadmap', label: 'Roadmap', icon: <Compass className="w-4 h-4" /> },
       { href: '/report', label: 'Report', icon: <BarChart3 className="w-4 h-4" /> },
     ],
     mentor: [
-      { href: '/#how-it-works', label: 'How It Works', icon: <Zap className="w-4 h-4" /> },
+      { href: '/jobs', label: 'Jobs', icon: <Target className="w-4 h-4" /> },
+      { href: '/internships', label: 'Internships', icon: <GraduationCap className="w-4 h-4" /> },
       // { href: '/#for-mentors', label: 'For Mentors', icon: <UserIcon className="w-4 h-4" /> },
       { href: '/mentor/jobs/add', label: 'Post Jobs', icon: <Target className="w-4 h-4" /> },
       { href: '/mentor/internships/add', label: 'Post Internships', icon: <Target className="w-4 h-4" /> },

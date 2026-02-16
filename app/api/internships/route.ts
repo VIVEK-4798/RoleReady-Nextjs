@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { jobAggregatorService } from '@/services/jobs/jobAggregatorService';
-import { jobPersonalizationService } from '@/services/jobs/jobPersonalizationService';
-import { JobResponse } from '@/types/jobs';
+import { internshipAggregatorService } from '@/services/internships/internshipAggregatorService';
+import { internshipPersonalizationService } from '@/services/internships/internshipPersonalizationService';
 
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
@@ -11,21 +10,19 @@ export async function GET(request: NextRequest) {
 
     try {
         const session = await auth();
-        const rawJobs = await jobAggregatorService.fetchAggregatedJobs(query, page);
+        const rawItems = await internshipAggregatorService.fetchAggregatedInternships(query, page);
 
-        // Define meta for the response
         const meta = {
-            total: rawJobs.length,
+            total: rawItems.length,
             page: page,
             limit: 20,
-            totalPages: Math.ceil(rawJobs.length / 20) || 1
+            totalPages: Math.ceil(rawItems.length / 20) || 1
         };
 
-        // If authenticated and on page 1, apply personalization
         if (session?.user?.id && page === 1 && !query) {
-            const { recommended, others } = await jobPersonalizationService.rankJobsForUser(
+            const { recommended, others } = await internshipPersonalizationService.rankInternshipsForUser(
                 session.user.id,
-                rawJobs
+                rawItems
             );
 
             return NextResponse.json({
@@ -35,13 +32,12 @@ export async function GET(request: NextRequest) {
             });
         }
 
-        // Guest user or search query - return flat list
         return NextResponse.json({
-            data: rawJobs,
+            data: rawItems,
             meta
         });
     } catch (error) {
-        console.error('API /api/jobs error:', error);
+        console.error('API /api/internships error:', error);
         return NextResponse.json({
             data: [],
             meta: { total: 0, page: 1, limit: 20, totalPages: 0 }

@@ -200,7 +200,7 @@ export default function JobDetailClient() {
                                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Source</p>
                                     <p className="text-gray-900 font-semibold flex items-center gap-2">
                                         <span className="w-2 h-2 rounded-full bg-blue-500" />
-                                        Verified JoinRise Partner
+                                        {job.source ? job.source.charAt(0).toUpperCase() + job.source.slice(1) : 'External Source'}
                                     </p>
                                 </div>
                             </div>

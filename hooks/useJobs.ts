@@ -3,8 +3,17 @@ import { JobDTO } from '@/types/jobs';
 
 export function useJobs(query: string = '', page: number = 1) {
     const [jobs, setJobs] = useState<JobDTO[]>([]);
+    const [recommendedJobs, setRecommendedJobs] = useState<JobDTO[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [hasMore, setHasMore] = useState(true);
+
+    // Clear jobs when query changes
+    useEffect(() => {
+        setJobs([]);
+        setRecommendedJobs([]);
+        setHasMore(true);
+    }, [query]);
 
     const fetchJobs = useCallback(async () => {
         setLoading(true);
@@ -12,11 +21,37 @@ export function useJobs(query: string = '', page: number = 1) {
         try {
             const response = await fetch(`/api/jobs?query=${encodeURIComponent(query)}&page=${page}`);
             if (!response.ok) throw new Error('Failed to fetch jobs');
-            const data = await response.json();
-            setJobs(data);
+            const result = await response.json();
+
+            // Handle categorized response (recommended vs others)
+            const newOthers = result.others || result.data || [];
+            const newRecommended = result.recommended || [];
+
+            if (page === 1) {
+                setRecommendedJobs(newRecommended);
+                setJobs(newOthers);
+
+                if (newOthers.length + newRecommended.length < 10) {
+                    setHasMore(false);
+                }
+            } else {
+                setJobs(prev => {
+                    const newData: JobDTO[] = [...prev, ...newOthers];
+                    // Ensure uniqueness by ID
+                    const uniqueJobs = Array.from(new Map(newData.map(item => [item.id, item] as [string, JobDTO])).values());
+                    return uniqueJobs;
+                });
+
+                if (newOthers.length < 10) {
+                    setHasMore(false);
+                }
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Something went wrong');
-            setJobs([]);
+            if (page === 1) {
+                setJobs([]);
+                setRecommendedJobs([]);
+            }
         } finally {
             setLoading(false);
         }
@@ -26,7 +61,7 @@ export function useJobs(query: string = '', page: number = 1) {
         fetchJobs();
     }, [fetchJobs]);
 
-    return { jobs, loading, error, refetch: fetchJobs };
+    return { jobs, recommendedJobs, loading, error, hasMore, refetch: fetchJobs };
 }
 
 export function useJobDetails(id: string) {
