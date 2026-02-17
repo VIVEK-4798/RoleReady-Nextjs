@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { ContributionGraph } from '@/components/activity';
+import ATSScoreSection from '@/components/dashboard/ATSScoreSection';
 
 interface ReadinessData {
   success: boolean;
@@ -80,7 +81,7 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
   const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
-      
+
       const [readinessRes, targetRoleRes, contributionRes] = await Promise.all([
         fetch(`/api/users/${userId}/readiness`),
         fetch(`/api/users/${userId}/target-role`),
@@ -395,6 +396,9 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
         </div>
       </div>
 
+      {/* ATS Compatibility Score */}
+      <ATSScoreSection />
+
       {snapshot?.breakdown && snapshot.breakdown.length > 0 && (
         <div className="bg-white rounded-xl shadow-md p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Skill Breakdown</h3>
@@ -402,7 +406,7 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
             {snapshot.breakdown.slice(0, 10).map((skill) => {
               const badge = getValidationBadge(skill);
               const scorePercent = skill.maxPossibleScore > 0 ? (skill.weightedScore / skill.maxPossibleScore) * 100 : 0;
-              
+
               return (
                 <div key={skill.skillId} className="flex flex-col sm:flex-row sm:items-center gap-4 p-3 bg-gray-50 rounded-lg">
                   <div className="flex-1 min-w-0">
