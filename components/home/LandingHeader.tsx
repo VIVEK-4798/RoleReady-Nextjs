@@ -21,6 +21,7 @@ import {
   Mail,
   GraduationCap
 } from 'lucide-react';
+import VerifiedMentorBadge from '@/components/mentor/VerifiedMentorBadge';
 
 interface LandingHeaderProps {
   isAuthenticated: boolean;
@@ -61,9 +62,9 @@ export default function LandingHeader({ isAuthenticated }: LandingHeaderProps) {
       { href: '/report', label: 'Report', icon: <BarChart3 className="w-4 h-4" /> },
     ],
     mentor: [
-      { href: '/jobs', label: 'Jobs', icon: <Target className="w-4 h-4" /> },
-      { href: '/internships', label: 'Internships', icon: <GraduationCap className="w-4 h-4" /> },
-      // { href: '/#for-mentors', label: 'For Mentors', icon: <UserIcon className="w-4 h-4" /> },
+      // { href: '/jobs', label: 'Jobs', icon: <Target className="w-4 h-4" /> },
+      // { href: '/internships', label: 'Internships', icon: <GraduationCap className="w-4 h-4" /> },
+      { href: '/#for-mentors', label: 'For Mentors', icon: <UserIcon className="w-4 h-4" /> },
       { href: '/mentor/jobs/add', label: 'Post Jobs', icon: <Target className="w-4 h-4" /> },
       { href: '/mentor/internships/add', label: 'Post Internships', icon: <Target className="w-4 h-4" /> },
       { href: '/mentor/validations', label: 'My Learners', icon: <Users className="w-4 h-4" /> },
@@ -145,9 +146,7 @@ export default function LandingHeader({ isAuthenticated }: LandingHeaderProps) {
                         {user.name || 'User'}
                       </p>
                       {user.role === 'mentor' && (
-                        <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded uppercase tracking-wider shrink-0">
-                          Mentor
-                        </span>
+                        <VerifiedMentorBadge variant="inline" />
                       )}
                     </div>
                     <p className="text-xs text-gray-500 leading-tight mt-0.5 truncate max-w-[140px] flex items-center gap-1">

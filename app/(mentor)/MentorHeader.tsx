@@ -10,6 +10,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import NotificationBell from '@/components/notifications/NotificationBell';
+import VerifiedMentorBadge from '@/components/mentor/VerifiedMentorBadge';
 
 const NotificationIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,6 +130,9 @@ export default function MentorHeader({
                   <div className="px-4 py-3 border-b border-gray-200">
                     <p className="font-medium text-gray-900">{userName}</p>
                     <p className="text-sm text-gray-500 truncate">{userEmail}</p>
+                    <div className="mt-2">
+                      <VerifiedMentorBadge variant="inline" />
+                    </div>
                   </div>
 
                   <div className="py-2">

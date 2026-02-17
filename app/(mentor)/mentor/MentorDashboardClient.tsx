@@ -8,6 +8,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import VerifiedMentorBadge from '@/components/mentor/VerifiedMentorBadge';
+import MentorImpactMetrics from '@/components/mentor/MentorImpactMetrics';
+import ValidationWorkflowCard from '@/components/mentor/ValidationWorkflowCard';
+import PostOpportunityCard from '@/components/mentor/PostOpportunityCard';
 
 interface Stats {
   pendingValidations: number;
@@ -152,43 +156,31 @@ export default function MentorDashboardClient({ userName }: { userName: string }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-          Welcome back, <span className="text-[#5693C1]">{userName}</span>!
-        </h1>
-        <p className="mt-2 text-gray-600">
-          Here&apos;s what&apos;s happening with your mentor dashboard today.
-        </p>
+      {/* Header with Verified Badge */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+            Welcome back, <span className="text-[#5693C1]">{userName}</span>!
+          </h1>
+          <p className="mt-2 text-gray-600">
+            Here&apos;s what&apos;s happening with your mentor dashboard today.
+          </p>
+        </div>
+        <VerifiedMentorBadge variant="default" />
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        {statCards.map((stat, index) => (
-          <Link
-            key={index}
-            href={stat.href}
-            className="bg-white rounded-xl border border-gray-200 p-4 md:p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
-                  {loading ? '...' : stat.value}
-                </div>
-                <div className="text-sm text-gray-600">{stat.title}</div>
-              </div>
-              <div className={`p-2 rounded-lg ${stat.color}`}>
-                {stat.icon}
-              </div>
-            </div>
-            <div className="mt-4 flex items-center text-xs text-gray-500">
-              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-              View details
-            </div>
-          </Link>
-        ))}
+      {/* Impact Metrics - Feature 2 */}
+      {!loading && (
+        <MentorImpactMetrics stats={stats} />
+      )}
+
+      {/* Validation Workflow & Post Opportunity - Features 3 & 4 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ValidationWorkflowCard pendingCount={stats.pendingValidations} />
+        <PostOpportunityCard
+          jobsCount={stats.jobsCount}
+          internshipsCount={stats.internshipsCount}
+        />
       </div>
 
       {/* Quick Actions & Pending Tasks Row */}

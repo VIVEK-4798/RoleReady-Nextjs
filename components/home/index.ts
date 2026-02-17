@@ -13,6 +13,7 @@ export { default as WhoIsItForSection } from './WhoIsItForSection';
 export { default as GuestCTASection } from './GuestCTASection';
 export { default as AuthenticatedCTASection } from './AuthenticatedCTASection';
 export { default as FooterSection } from './FooterSection';
+export { default as MentorBenefitsSection } from './MentorBenefitsSection';
 export { default as LandingPageClient } from './LandingPageClient';
 
 export type { WhyChooseUsSectionRef } from './WhyChooseUsSection';

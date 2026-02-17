@@ -11,6 +11,7 @@ import {
   GuestCTASection,
   AuthenticatedCTASection,
   WhyChooseUsSectionRef,
+  MentorBenefitsSection,
 } from '@/components/home';
 import { useAuth } from '@/hooks';
 import { LANDING_CONTENT } from '@/lib/constants/landingContent';
@@ -66,10 +67,12 @@ export default function LandingPageClient({ isAuthenticated }: LandingPageClient
         <HowItWorksSection content={content.howItWorks} />
       </section>
 
-      {/* Why Choose Us */}
       <section id="features">
         <WhyChooseUsSection ref={whyChooseUsRef} content={content.problem} />
       </section>
+
+      {/* Mentor Benefits - Only for mentor view */}
+      {userRole === 'mentor' && <MentorBenefitsSection />}
 
       {/* Who Is It For */}
       <section id="for-who">
