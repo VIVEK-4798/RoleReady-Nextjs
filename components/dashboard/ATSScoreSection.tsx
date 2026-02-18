@@ -25,6 +25,7 @@ interface ATSScoreData {
     missingKeywords: string[];
     suggestions: string[];
     calculatedAt: string;
+    isOutdated?: boolean;
 }
 
 export default function ATSScoreSection() {
@@ -45,12 +46,39 @@ export default function ATSScoreSection() {
             const result = await response.json();
 
             if (!response.ok) {
-                throw new Error(result.error?.message || 'Failed to fetch ATS score');
+                if (response.status === 404) {
+                    setAtsData(null);
+                    return;
+                }
+                throw new Error(result.error || 'Failed to fetch ATS score');
             }
 
-            setAtsData(result.data.atsScore);
+            setAtsData({
+                ...result.data.atsScore,
+                isOutdated: result.data.isOutdated
+            });
         } catch (err: any) {
             console.error('Failed to fetch ATS score:', err);
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRecalculate = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch('/api/ats-score', { method: 'POST' });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Recalculation failed');
+
+            setAtsData({
+                ...result.data.atsScore,
+                isOutdated: false
+            });
+        } catch (err: any) {
+            console.error('Recalculate failed:', err);
             setError(err.message);
         } finally {
             setLoading(false);
@@ -158,6 +186,24 @@ export default function ATSScoreSection() {
 
     return (
         <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+            {atsData.isOutdated && (
+                <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between gap-4 animate-pulse">
+                    <div className="flex items-center gap-3">
+                        <AlertCircle className="w-5 h-5 text-amber-600" />
+                        <div>
+                            <h3 className="font-semibold text-amber-900">Score Outdated</h3>
+                            <p className="text-sm text-amber-700">Resume or role updated. Recalculate for latest score.</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={handleRecalculate}
+                        className="px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-lg text-sm font-medium transition-colors"
+                    >
+                        Recalculate
+                    </button>
+                </div>
+            )}
+
             {/* Header */}
             <div className="flex items-start justify-between mb-6">
                 <div className="flex items-center gap-3">
@@ -222,9 +268,9 @@ export default function ATSScoreSection() {
                                 <div className="w-full bg-gray-200 rounded-full h-2">
                                     <div
                                         className={`h-2 rounded-full transition-all duration-500 ${score >= 80 ? 'bg-emerald-500' :
-                                                score >= 60 ? 'bg-blue-500' :
-                                                    score >= 40 ? 'bg-amber-500' :
-                                                        'bg-red-500'
+                                            score >= 60 ? 'bg-blue-500' :
+                                                score >= 40 ? 'bg-amber-500' :
+                                                    'bg-red-500'
                                             }`}
                                         style={{ width: `${percentage}%` }}
                                     />

@@ -21,9 +21,6 @@ export default function DashboardHeader() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  // Debug: Log current user image
-  console.log('[HEADER] Current user image:', user?.image);
-  // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY >= 10);

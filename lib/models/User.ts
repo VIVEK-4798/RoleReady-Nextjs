@@ -231,6 +231,23 @@ const UserSchema = new Schema<IUserDocument>(
         achievements: [],
       }),
     },
+    evaluationState: {
+      type: {
+        readinessOutdated: { type: Boolean, default: true },
+        roadmapOutdated: { type: Boolean, default: true },
+        atsOutdated: { type: Boolean, default: true },
+        reportOutdated: { type: Boolean, default: true },
+        lastReadinessCalculatedAt: { type: Date },
+        lastATSCalculatedAt: { type: Date },
+        lastRoadmapGeneratedAt: { type: Date },
+      },
+      default: () => ({
+        readinessOutdated: true,
+        roadmapOutdated: true,
+        atsOutdated: true,
+        reportOutdated: true,
+      }),
+    },
   },
   {
     timestamps: true, // Adds createdAt and updatedAt

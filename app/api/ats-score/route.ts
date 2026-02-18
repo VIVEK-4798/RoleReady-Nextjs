@@ -1,49 +1,99 @@
 /**
- * ATS Score API Route
+ * ATS Score API
  * 
  * GET /api/ats-score
+ * - Returns cached score if available
+ * - Returns isOutdated flag
  * 
- * Returns ATS compatibility score for the logged-in user's active target role.
+ * POST /api/ats-score
+ * - Forces recalculation
+ * - Updates cached score
+ * - Marks evaluation as complete
  */
 
 import { NextRequest } from 'next/server';
-import { successResponse, errors } from '@/lib/utils/api';
-import { requireAuth } from '@/lib/auth/utils';
-import { calculateATSScoreForActiveRole } from '@/lib/services/ats/atsScoringService';
+import { auth } from '@/lib/auth';
+import { successResponse, errorResponse } from '@/lib/utils/api';
+import {
+    calculateATSScoreForActiveRole,
+    getLatestATSScoreForActiveRole
+} from '@/lib/services/ats/atsScoringService';
 
-export async function GET(request: NextRequest) {
+export async function GET(req: NextRequest) {
     try {
-        // Require authentication
-        const authResult = await requireAuth();
-        if ('error' in authResult) return authResult.error;
+        const session = await auth();
+        const authResult = session?.user as { id: string } | undefined;
 
-        if (!authResult.id) return errors.unauthorized('Authentication required');
-
-        // Calculate ATS score for active target role
-        const result = await calculateATSScoreForActiveRole(authResult.id);
-
-        if (!result) {
-            return errors.notFound('No active target role found. Please set a target role first.');
+        if (!authResult || !authResult.id) {
+            return errorResponse('Unauthorized', 401);
         }
 
+        // Try to get cached score first
+        let result = await getLatestATSScoreForActiveRole(authResult.id);
+
+        // If no score exists (first time user), calculate it
+        if (!result) {
+            try {
+                result = await calculateATSScoreForActiveRole(authResult.id);
+                // Mark complete since we just calculated
+                const { markEvaluationComplete } = await import('@/lib/services/evaluationService');
+                await markEvaluationComplete(authResult.id, 'ats');
+            } catch (calcError: any) {
+                // If calculation fails (e.g. no resume), return error or null
+                if (calcError.message?.includes('No active resume')) {
+                    return errorResponse(calcError.message, 404);
+                }
+                throw calcError;
+            }
+        }
+
+        if (!result) {
+            return errorResponse('No active target role found. Please set a target role first.', 404);
+        }
+
+        // Get evaluation state
+        const { getEvaluationState } = await import('@/lib/services/evaluationService');
+        const evaluationState = await getEvaluationState(authResult.id);
+        const isOutdated = evaluationState?.atsOutdated || false;
+
         return successResponse({
-            atsScore: result
+            atsScore: result,
+            isOutdated
         });
 
     } catch (error: any) {
-        console.error('GET /api/ats-score error:', error);
+        console.error('Error fetching ATS score:', error);
+        return errorResponse(error.message || 'Internal Server Error', 500);
+    }
+}
 
-        // Handle specific errors
-        if (error.message?.includes('No active resume')) {
-            return errors.notFound(error.message);
-        }
-        if (error.message?.includes('not been parsed')) {
-            return errors.badRequest(error.message);
-        }
-        if (error.message?.includes('Role not found')) {
-            return errors.notFound(error.message);
+export async function POST(req: NextRequest) {
+    try {
+        const session = await auth();
+        const authResult = session?.user as { id: string } | undefined;
+
+        if (!authResult || !authResult.id) {
+            return errorResponse('Unauthorized', 401);
         }
 
-        return errors.serverError('Failed to calculate ATS score');
+        // Force recalculation
+        const result = await calculateATSScoreForActiveRole(authResult.id);
+
+        if (!result) {
+            return errorResponse('No active target role found. Please set a target role first.', 404);
+        }
+
+        // Mark ATS evaluation as complete
+        const { markEvaluationComplete } = await import('@/lib/services/evaluationService');
+        await markEvaluationComplete(authResult.id, 'ats');
+
+        return successResponse({
+            atsScore: result,
+            isOutdated: false
+        });
+
+    } catch (error: any) {
+        console.error('Error calculating ATS score:', error);
+        return errorResponse(error.message || 'Internal Server Error', 500);
     }
 }

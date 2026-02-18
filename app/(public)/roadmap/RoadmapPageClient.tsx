@@ -55,6 +55,7 @@ interface Roadmap {
   edge_case?: EdgeCase;
   rules_applied?: RulesApplied[];
   generated_at: string;
+  isOutdated?: boolean;
 }
 
 interface RoadmapPageClientProps {
@@ -67,36 +68,36 @@ interface RoadmapPageClientProps {
 
 const EdgeCaseBanner = ({ edgeCase }: { edgeCase?: EdgeCase }) => {
   if (!edgeCase?.message) return null;
-  
+
   const getStyles = () => {
     switch (edgeCase.message_type) {
       case 'success':
-        return { 
-          bg: 'bg-green-100', 
-          border: 'border-green-300', 
+        return {
+          bg: 'bg-green-100',
+          border: 'border-green-300',
           color: 'text-green-800',
           icon: '🎉'
         };
       case 'warning':
-        return { 
-          bg: 'bg-amber-100', 
-          border: 'border-amber-300', 
+        return {
+          bg: 'bg-amber-100',
+          border: 'border-amber-300',
           color: 'text-amber-800',
           icon: '⚠️'
         };
       case 'info':
       default:
-        return { 
-          bg: 'bg-blue-100', 
-          border: 'border-blue-300', 
+        return {
+          bg: 'bg-blue-100',
+          border: 'border-blue-300',
           color: 'text-blue-800',
           icon: '💡'
         };
     }
   };
-  
+
   const styles = getStyles();
-  
+
   return (
     <div className={`${styles.bg} ${styles.border} border rounded-xl p-4 mb-6 flex items-start gap-3`}>
       <span className="text-xl flex-shrink-0">{styles.icon}</span>
@@ -104,7 +105,7 @@ const EdgeCaseBanner = ({ edgeCase }: { edgeCase?: EdgeCase }) => {
         <p className={`${styles.color} font-medium text-sm leading-relaxed`}>
           {edgeCase.message}
         </p>
-        
+
         {edgeCase.has_pending_validation && edgeCase.pending_validation_count && (
           <p className={`${styles.color} text-sm opacity-90 mt-1`}>
             {edgeCase.pending_validation_count} skill(s) are awaiting mentor review.
@@ -130,7 +131,7 @@ const RoadmapItemCard = ({ item }: { item: RoadmapItem }) => {
         return { bg: 'bg-gray-50', border: 'border-gray-200', icon: '📋' };
     }
   };
-  
+
   const getConfidenceBadge = () => {
     switch (item.confidence) {
       case 'validated':
@@ -141,16 +142,16 @@ const RoadmapItemCard = ({ item }: { item: RoadmapItem }) => {
         return { label: 'Self-reported', bg: 'bg-gray-100', color: 'text-gray-600' };
     }
   };
-  
+
   const style = getCategoryStyle();
   const badge = getConfidenceBadge();
-  
+
   return (
     <div className={`${style.bg} ${style.border} border rounded-xl p-4 mb-3 transition-all hover:shadow-sm`}>
       <div className="flex items-start gap-3">
         {/* Category Icon */}
         <span className="text-xl flex-shrink-0">{style.icon}</span>
-        
+
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Skill Name + Badge */}
@@ -160,10 +161,10 @@ const RoadmapItemCard = ({ item }: { item: RoadmapItem }) => {
               {badge.label}
             </span>
           </div>
-          
+
           {/* Reason */}
           <p className="text-sm text-gray-600 leading-relaxed">{item.reason}</p>
-          
+
           {/* Action Hint */}
           {item.action_hint && (
             <p className="text-sm text-gray-500 mt-2 italic">
@@ -176,14 +177,14 @@ const RoadmapItemCard = ({ item }: { item: RoadmapItem }) => {
   );
 };
 
-const PrioritySection = ({ 
-  title, 
-  emoji, 
-  description, 
-  items, 
-  emptyMessage, 
-  badgeColor 
-}: { 
+const PrioritySection = ({
+  title,
+  emoji,
+  description,
+  items,
+  emptyMessage,
+  badgeColor
+}: {
   title: string;
   emoji: string;
   description: string;
@@ -205,7 +206,7 @@ const PrioritySection = ({
       </div>
     );
   }
-  
+
   return (
     <div className="mb-8">
       <div className="flex items-center gap-2 mb-3">
@@ -231,13 +232,13 @@ const PrioritySection = ({
 
 export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
   const router = useRouter();
-  
+
   // State
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<{ type: string; message: string } | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  
+
   // Fetch roadmap
   const fetchRoadmap = useCallback(async (refresh: boolean = false) => {
     if (refresh) {
@@ -246,11 +247,11 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
       setIsLoading(true);
     }
     setError(null);
-    
+
     try {
       const response = await fetch(`/api/users/${userId}/roadmap${refresh ? '?refresh=true' : ''}`);
       const data = await response.json();
-      
+
       if (!response.ok) {
         if (data.error === 'NO_READINESS_FOUND' || data.message?.includes('readiness')) {
           setError({
@@ -261,10 +262,11 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
         }
         throw new Error(data.message || 'Failed to load roadmap');
       }
-      
-      // The API now returns { success, message, roadmap } in old project format
+
+      // The API now returns { success, message, roadmap, isOutdated } in old project format
       const roadmapData = data.roadmap || data.data?.roadmap;
-      
+      const isOutdated = data.isOutdated;
+
       if (roadmapData && roadmapData.items && roadmapData.items.length > 0) {
         // Map items directly - already in the correct format from API
         const items: RoadmapItem[] = roadmapData.items.map((item: any) => ({
@@ -277,7 +279,7 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
           action_hint: item.details?.action_hint,
           confidence: item.confidence as 'validated' | 'rejected' | 'self' | undefined,
         }));
-        
+
         setRoadmap({
           roadmap_id: roadmapData.readiness_id?.toString(),
           readiness_score: roadmapData.current_score || 0,
@@ -285,15 +287,16 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
           items,
           summary: roadmapData.summary?.by_priority
             ? {
-                high_priority: roadmapData.summary.by_priority.high || 0,
-                medium_priority: roadmapData.summary.by_priority.medium || 0,
-                low_priority: roadmapData.summary.by_priority.low || 0,
-                by_priority: roadmapData.summary.by_priority,
-              }
+              high_priority: roadmapData.summary.by_priority.high || 0,
+              medium_priority: roadmapData.summary.by_priority.medium || 0,
+              low_priority: roadmapData.summary.by_priority.low || 0,
+              by_priority: roadmapData.summary.by_priority,
+            }
             : undefined,
           edge_case: roadmapData.edge_case,
           rules_applied: roadmapData.rules_applied,
           generated_at: roadmapData.generated_at || new Date().toISOString(),
+          isOutdated,
         });
       } else {
         // No roadmap items generated
@@ -313,27 +316,82 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
       setIsRefreshing(false);
     }
   }, [userId]);
-  
-  // Refresh roadmap
+
+  // Refresh roadmap (Regenerate)
   const handleRefresh = async () => {
-    await fetchRoadmap(true);
+    setIsRefreshing(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/users/${userId}/roadmap`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to regenerate roadmap');
+      }
+
+      // The POST response has data.roadmap
+      const roadmapData = data.data?.roadmap || data.roadmap;
+
+      if (roadmapData && roadmapData.items && roadmapData.items.length > 0) {
+        const items: RoadmapItem[] = roadmapData.items.map((item: any) => ({
+          item_id: item.skill_id,
+          skill_id: item.skill_id,
+          skill_name: item.skill_name,
+          priority: item.priority as 'HIGH' | 'MEDIUM' | 'LOW',
+          category: item.category as 'rejected' | 'required_gap' | 'strengthen' | 'optional_gap',
+          reason: item.reason,
+          action_hint: item.details?.action_hint,
+          confidence: item.confidence as 'validated' | 'rejected' | 'self' | undefined,
+        }));
+
+        setRoadmap({
+          roadmap_id: roadmapData.readiness_id?.toString(),
+          readiness_score: roadmapData.current_score || 0,
+          role_name: roadmapData.role_name || 'Your Target Role',
+          items,
+          summary: roadmapData.summary?.by_priority
+            ? {
+              high_priority: roadmapData.summary.by_priority.high || 0,
+              medium_priority: roadmapData.summary.by_priority.medium || 0,
+              low_priority: roadmapData.summary.by_priority.low || 0,
+              by_priority: roadmapData.summary.by_priority,
+            }
+            : undefined,
+          edge_case: roadmapData.edge_case,
+          rules_applied: roadmapData.rules_applied,
+          generated_at: roadmapData.generated_at || new Date().toISOString(),
+          isOutdated: false, // Explicitly set to false after regeneration
+        });
+      }
+    } catch (err) {
+      console.error('[RoadmapPage] Error regenerating roadmap:', err);
+      setError({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Failed to regenerate roadmap'
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
   };
-  
+
   // Initial fetch
   useEffect(() => {
     fetchRoadmap();
   }, [fetchRoadmap]);
-  
+
   // Group items by priority
   const getItemsByPriority = (priority: 'HIGH' | 'MEDIUM' | 'LOW') => {
     if (!roadmap?.items) return [];
     return roadmap.items.filter(item => item.priority === priority);
   };
-  
+
   const highPriorityItems = getItemsByPriority('HIGH');
   const mediumPriorityItems = getItemsByPriority('MEDIUM');
   const lowPriorityItems = getItemsByPriority('LOW');
-  
+
   // ============================================================================
   // Render: Loading State
   // ============================================================================
@@ -349,7 +407,7 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
       </div>
     );
   }
-  
+
   // ============================================================================
   // Render: Error State
   // ============================================================================
@@ -364,21 +422,19 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
               Your Skill Roadmap
             </h1>
           </div>
-          
+
           {/* Error Card */}
-          <div className={`p-8 rounded-2xl text-center ${
-            error.type === 'no_readiness' || error.type === 'no_roadmap' 
-              ? 'bg-amber-50' 
-              : 'bg-red-50'
-          }`}>
+          <div className={`p-8 rounded-2xl text-center ${error.type === 'no_readiness' || error.type === 'no_roadmap'
+            ? 'bg-amber-50'
+            : 'bg-red-50'
+            }`}>
             <div className="text-5xl mb-4">
               {error.type === 'no_readiness' || error.type === 'no_roadmap' ? '📊' : '❌'}
             </div>
-            <p className={`mb-6 ${
-              error.type === 'no_readiness' || error.type === 'no_roadmap'
-                ? 'text-amber-800'
-                : 'text-red-800'
-            }`}>
+            <p className={`mb-6 ${error.type === 'no_readiness' || error.type === 'no_roadmap'
+              ? 'text-amber-800'
+              : 'text-red-800'
+              }`}>
               {error.message}
             </p>
             {(error.type === 'no_readiness' || error.type === 'no_roadmap') && (
@@ -397,7 +453,7 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
       </div>
     );
   }
-  
+
   // ============================================================================
   // Render: Main Page
   // ============================================================================
@@ -414,9 +470,28 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
             A prioritized list of skills to focus on, based on your readiness analysis.
           </p>
         </div>
-        
+
         {roadmap && (
           <div>
+            {roadmap.isOutdated && (
+              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between gap-4 animate-pulse">
+                <div className="flex items-center gap-3">
+                  <span className="text-amber-600 text-xl">⚠️</span>
+                  <div>
+                    <h3 className="font-semibold text-amber-900">Your roadmap is outdated</h3>
+                    <p className="text-sm text-amber-700">Skills or role requirements have changed since this roadmap was generated.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  className="px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+                >
+                  {isRefreshing ? 'Regenerating...' : 'Regenerate Now'}
+                </button>
+              </div>
+            )}
+
             {/* Summary Card */}
             <div className="bg-white rounded-xl p-6 mb-6 shadow-sm border border-gray-200">
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -431,7 +506,7 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
                     </span>
                   </div>
                 </div>
-                
+
                 {/* Priority Stats */}
                 <div className="flex gap-6">
                   <div className="text-center">
@@ -454,7 +529,7 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
                   </div>
                 </div>
               </div>
-              
+
               {/* Actions */}
               <div className="mt-6 pt-6 border-t border-gray-100">
                 <div className="flex flex-wrap gap-3">
@@ -472,7 +547,7 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
                       <>🔄 Refresh Roadmap</>
                     )}
                   </button>
-                  
+
                   <Link
                     href="/report"
                     className="px-5 py-2.5 rounded-lg font-medium transition-colors inline-flex items-center gap-2 text-sm text-white"
@@ -482,7 +557,7 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
                   >
                     📄 Export Report
                   </Link>
-                  
+
                   <Link
                     href="/readiness"
                     className="px-5 py-2.5 rounded-lg font-medium transition-colors inline-flex items-center gap-2 text-sm text-white"
@@ -493,16 +568,16 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
                     🎯 View Readiness
                   </Link>
                 </div>
-                
+
                 <p className="text-xs text-gray-400 mt-3">
                   Last generated: {new Date(roadmap.generated_at).toLocaleString()}
                 </p>
               </div>
             </div>
-            
+
             {/* Edge Case Banner */}
             <EdgeCaseBanner edgeCase={roadmap.edge_case} />
-            
+
             {/* Fully Ready State */}
             {roadmap.edge_case?.is_fully_ready && (
               <div className="text-center p-8 bg-green-50 rounded-xl mb-8 border border-green-200">
@@ -517,7 +592,7 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
                 </div>
               </div>
             )}
-            
+
             {/* Priority Sections */}
             {!roadmap.edge_case?.is_fully_ready && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -531,13 +606,13 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
                     badgeColor="bg-red-100"
                   />
                 </div>
-                
+
                 <div className="lg:col-span-2">
                   <PrioritySection
                     title="Medium Priority"
                     emoji="📈"
                     description={
-                      roadmap.edge_case?.has_unvalidated_required 
+                      roadmap.edge_case?.has_unvalidated_required
                         ? "These skills meet requirements but aren't mentor-validated yet. Validation could boost your score."
                         : "Work on these next to strengthen your profile."
                     }
@@ -546,7 +621,7 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
                     badgeColor="bg-amber-100"
                   />
                 </div>
-                
+
                 <div>
                   <PrioritySection
                     title="Low Priority"
@@ -563,7 +638,7 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
                 </div>
               </div>
             )}
-            
+
             {/* Rules Applied (Transparency) */}
             {roadmap.rules_applied && roadmap.rules_applied.length > 0 && (
               <div className="mt-8 p-5 bg-gray-50 rounded-xl text-sm text-gray-600 border border-gray-200">
@@ -577,14 +652,14 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
                 </ul>
               </div>
             )}
-            
+
             {/* No Items State */}
             {roadmap.items.length === 0 && !roadmap.edge_case?.is_fully_ready && (
               <div className="text-center p-10 bg-gray-50 rounded-xl border border-gray-200">
                 <div className="text-5xl mb-4">📝</div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">No Roadmap Items</h3>
                 <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                  Your roadmap is empty. This could mean you need to recalculate your readiness 
+                  Your roadmap is empty. This could mean you need to recalculate your readiness
                   or there are no skill gaps detected.
                 </p>
                 <Link
@@ -600,7 +675,7 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
             )}
           </div>
         )}
-        
+
         {/* Navigation */}
         <div className="flex flex-col sm:flex-row justify-between mt-8 gap-4">
           <Link

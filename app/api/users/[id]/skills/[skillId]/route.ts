@@ -167,18 +167,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       }).catch(err => console.error('[SkillValidation] Email module import failed:', err));
     }
 
-    // Trigger readiness_outdated notification if user has a target role
-    const targetRole = await TargetRole.getActiveForUser(id);
-    if (targetRole) {
-      const notificationType = body.validationStatus !== undefined ? 'validation' : 'skill_update';
-      await Notification.createOrUpdate(id, 'readiness_outdated', {
-        title: 'Readiness outdated',
-        message: body.validationStatus !== undefined
-          ? 'Your skill validation has changed. Recalculate your readiness score.'
-          : 'Your skill level has changed. Recalculate your readiness score.',
-        metadata: { reason: notificationType },
-      });
-    }
+    // Mark evaluations as outdated
+    const { markEvaluationsOutdated } = await import('@/lib/services/evaluationService');
+    await markEvaluationsOutdated(id, ['readiness', 'roadmap', 'ats', 'report']);
 
     // Populate for response
     await userSkill.populate('skillId', 'name normalizedName domain');
@@ -233,15 +224,9 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       return errors.notFound('Skill not found in your profile');
     }
 
-    // Trigger readiness_outdated notification if user has a target role
-    const targetRole = await TargetRole.getActiveForUser(id);
-    if (targetRole) {
-      await Notification.createOrUpdate(id, 'readiness_outdated', {
-        title: 'Readiness outdated',
-        message: 'A skill was removed from your profile. Recalculate your readiness score.',
-        metadata: { reason: 'skill_removed' },
-      });
-    }
+    // Mark evaluations as outdated
+    const { markEvaluationsOutdated } = await import('@/lib/services/evaluationService');
+    await markEvaluationsOutdated(id, ['readiness', 'roadmap', 'ats', 'report']);
 
     return success(null, 'Skill removed from profile');
   } catch (error) {

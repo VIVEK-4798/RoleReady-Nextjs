@@ -14,8 +14,6 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import SkillsPageClient from './ReadinessPageClient';
-import LandingHeader from '@/components/home/LandingHeader';
-import FooterSection from '@/components/home/FooterSection';
 
 export const metadata = {
   title: 'My Skills | RoleReady',
@@ -24,16 +22,12 @@ export const metadata = {
 
 export default async function SkillsPage() {
   const session = await auth();
-  
+
   if (!session?.user?.id) {
     redirect('/login?redirect=/dashboard/skills');
   }
-  
+
   return (
-    <>
-      <LandingHeader isAuthenticated={true} />
-      <SkillsPageClient userId={session.user.id} />
-      <FooterSection />
-    </>
+    <SkillsPageClient userId={session.user.id} />
   );
 }

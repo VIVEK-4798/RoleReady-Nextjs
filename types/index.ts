@@ -132,7 +132,15 @@ export interface IUser {
     showInSearch: boolean;
   };
   passwordChangedAt?: Date;
-  profile: IUserProfile;
+  evaluationState?: {
+    readinessOutdated: boolean;
+    roadmapOutdated: boolean;
+    atsOutdated: boolean;
+    reportOutdated: boolean;
+    lastReadinessCalculatedAt?: Date;
+    lastATSCalculatedAt?: Date;
+    lastRoadmapGeneratedAt?: Date;
+  };
   createdAt: Date;
   updatedAt: Date;
 }

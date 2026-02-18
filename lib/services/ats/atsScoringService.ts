@@ -20,6 +20,7 @@ import connectDB from '@/lib/db/mongoose';
 import { Resume } from '@/lib/models/Resume';
 import Role from '@/lib/models/Role';
 import TargetRole from '@/lib/models/TargetRole';
+import ATSScore from '@/lib/models/ATSScore';
 
 // ============================================================================
 // Types
@@ -476,12 +477,46 @@ export async function calculateATSScore(
     // 6. Generate suggestions
     const suggestions = generateSuggestions(breakdown, missingKeywords);
 
+    // 7. Save to database
+    const savedScore = await ATSScore.findOneAndUpdate(
+        { userId, roleId },
+        {
+            overallScore,
+            breakdown,
+            missingKeywords,
+            suggestions,
+            calculatedAt: new Date()
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
     return {
         overallScore,
         breakdown,
         missingKeywords,
         suggestions,
-        calculatedAt: new Date()
+        calculatedAt: savedScore.calculatedAt
+    };
+}
+
+/**
+ * Get the latest ATS score without recalculating.
+ */
+export async function getLatestATSScore(
+    userId: string,
+    roleId: string
+): Promise<ATSScoreResult | null> {
+    await connectDB();
+    const result = await ATSScore.findOne({ userId, roleId }).lean();
+
+    if (!result) return null;
+
+    return {
+        overallScore: result.overallScore,
+        breakdown: result.breakdown,
+        missingKeywords: result.missingKeywords,
+        suggestions: result.suggestions,
+        calculatedAt: result.calculatedAt
     };
 }
 
@@ -504,9 +539,30 @@ export async function calculateATSScoreForActiveRole(
     }
 
     // Extract roleId - handle both ObjectId and populated role
-    const roleId = typeof targetRole.roleId === 'object' && '_id' in targetRole.roleId
-        ? targetRole.roleId._id.toString()
-        : targetRole.roleId.toString();
+    const roleId = typeof (targetRole as any).roleId === 'object' && '_id' in (targetRole as any).roleId
+        ? (targetRole as any).roleId._id.toString()
+        : String((targetRole as any).roleId);
 
     return calculateATSScore(userId, roleId);
+}
+
+/**
+ * Get latest ATS score for user's active target role.
+ */
+export async function getLatestATSScoreForActiveRole(
+    userId: string
+): Promise<ATSScoreResult | null> {
+    await connectDB();
+
+    const targetRole = await TargetRole.getActiveForUser(userId);
+    if (!targetRole) {
+        return null;
+    }
+
+    // Extract roleId - handle both ObjectId and populated role
+    const roleId = typeof (targetRole as any).roleId === 'object' && '_id' in (targetRole as any).roleId
+        ? (targetRole as any).roleId._id.toString()
+        : String((targetRole as any).roleId);
+
+    return getLatestATSScore(userId, roleId);
 }

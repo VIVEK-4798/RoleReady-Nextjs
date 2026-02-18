@@ -286,11 +286,13 @@ export default function NewProfileContent() {
     try {
       let endpoint = '';
       let body = {};
+      let method = data._id ? 'PUT' : 'POST';
 
       switch (type) {
         case 'about':
         case 'header':
           endpoint = `/api/users/${user.id}/profile`;
+          method = 'PUT';
           body = {
             name: data.name,
             mobile: data.mobile,
@@ -340,7 +342,7 @@ export default function NewProfileContent() {
       }
 
       const response = await fetch(endpoint, {
-        method: data._id ? 'PUT' : 'POST',
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });

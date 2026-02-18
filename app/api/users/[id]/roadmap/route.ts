@@ -44,16 +44,16 @@ function extractRoleId(targetRole: any): string {
 
 function formatRoadmapForFrontend(roadmap: any, roleName: string, readinessPercentage: number) {
   if (!roadmap) return null;
-  
+
   const steps = roadmap.steps || [];
-  
+
   // Map steps to old project's "items" format
   const items = steps.map((step: any, index: number) => ({
     skill_id: step.skillId?.toString(),
     skill_name: step.skillName,
     reason: step.actionDescription || '',
     priority: getPriorityLabel(step.priority),
-    category: step.importance === 'required' 
+    category: step.importance === 'required'
       ? (step.currentLevel === 'none' ? 'required_gap' : 'strengthen')
       : 'optional_gap',
     confidence: getConfidenceFromStep(step),
@@ -76,28 +76,28 @@ function formatRoadmapForFrontend(roadmap: any, roleName: string, readinessPerce
     },
     rank: index + 1,
   }));
-  
+
   // Count by priority
   const highItems = items.filter((i: any) => i.priority === 'HIGH');
   const mediumItems = items.filter((i: any) => i.priority === 'MEDIUM');
   const lowItems = items.filter((i: any) => i.priority === 'LOW');
-  
+
   // Count by category
   const requiredGap = items.filter((i: any) => i.category === 'required_gap');
   const optionalGap = items.filter((i: any) => i.category === 'optional_gap');
   const strengthen = items.filter((i: any) => i.category === 'strengthen');
   const rejected = items.filter((i: any) => i.category === 'rejected');
-  
+
   // Count by rule
   const rule1 = items.filter((i: any) => i.rule_applied === 'RULE_1_REQUIRED_MISSING');
   const rule2 = items.filter((i: any) => i.rule_applied === 'RULE_2_REJECTED');
   const rule3 = items.filter((i: any) => i.rule_applied === 'RULE_3_UNVALIDATED_REQUIRED');
   const rule4 = items.filter((i: any) => i.rule_applied === 'RULE_4_OPTIONAL_MISSING');
-  
+
   // Count excluded (validated + met) from total benchmarks
   const totalSteps = steps.length;
   const excludedCount = roadmap.priorityBreakdown?.excluded || 0;
-  
+
   return {
     readiness_id: roadmap.readinessId?.toString(),
     user_id: roadmap.userId?.toString(),
@@ -205,9 +205,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { id: userId } = await context.params;
     const refresh = request.nextUrl.searchParams.get('refresh') === 'true';
-    
+
     console.log('[Roadmap GET] userId:', userId, 'refresh:', refresh);
-    
+
     // Auth check
     const session = await auth();
     if (!session?.user) {
@@ -215,14 +215,14 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     const sessionUser = session.user as { id?: string; role?: string };
-    
+
     // Authorization
     if (sessionUser.id !== userId && sessionUser.role !== 'admin') {
       return errors.forbidden('You can only view your own roadmap');
     }
-    
+
     await connectDB();
-    
+
     // Check if user has a target role
     const targetRole = await TargetRole.getActiveForUser(userId);
     if (!targetRole) {
@@ -232,64 +232,85 @@ export async function GET(request: NextRequest, context: RouteContext) {
         message: 'No target role selected. Select a target role to generate a roadmap.',
       });
     }
-    
+
     // Extract roleId and roleName
     const roleId = extractRoleId(targetRole);
     const roleName = (typeof targetRole.roleId === 'object' && targetRole.roleId !== null && 'name' in (targetRole.roleId as any))
       ? (targetRole.roleId as any).name
       : 'Your Target Role';
-    
+
     console.log('[Roadmap GET] roleId:', roleId, 'roleName:', roleName);
-    
-    // Get existing roadmap (unless refresh requested)
-    let roadmap = refresh ? null : await getActiveRoadmap(userId, roleId);
-    
-    // Auto-generate if no roadmap exists
+
+    // Get existing roadmap
+    let roadmap = await getActiveRoadmap(userId, roleId);
+
+    // If no roadmap exists, try to generate one if a readiness snapshot exists
     if (!roadmap) {
-      console.log('[Roadmap GET] No existing roadmap, auto-generating...');
-      try {
-        roadmap = await generateAndSaveRoadmap({
-          userId,
-          roleId,
-          archiveExisting: true,
-        });
-        console.log('[Roadmap GET] Auto-generated roadmap with', roadmap.steps?.length, 'steps');
-      } catch (genError) {
-        console.error('[Roadmap GET] Failed to auto-generate roadmap:', genError);
+      console.log('[Roadmap GET] No roadmap found. Checking for readiness snapshot...');
+
+      // Check if readiness calculated
+      const snapshot = await ReadinessSnapshot.getLatest(userId, roleId);
+
+      if (snapshot) {
+        // Auto-generate roadmap
+        console.log('[Roadmap GET] Readiness snapshot found. Auto-generating roadmap...');
+        try {
+          roadmap = await generateAndSaveRoadmap({
+            userId,
+            roleId,
+            archiveExisting: true,
+          });
+          console.log('[Roadmap GET] Roadmap auto-generated successfully.');
+        } catch (genError) {
+          console.error('[Roadmap GET] Failed to auto-generate roadmap:', genError);
+          // Fallthrough to return null roadmap if generation fails
+        }
+      }
+
+      // If still no roadmap (no snapshot or generation failed)
+      if (!roadmap) {
+        console.log('[Roadmap GET] No roadmap and no readiness found (or generation failed).');
         return success({
           hasTargetRole: true,
           roleId,
           roadmap: null,
-          message: 'Failed to generate roadmap. Please calculate your readiness first.',
+          message: 'No roadmap generated yet. Please calculate your readiness first.',
+          needsGeneration: true
         });
       }
     }
-    
+
+    // Get evaluation state
+    const { getEvaluationState } = await import('@/lib/services/evaluationService');
+    const evaluationState = await getEvaluationState(userId);
+    const isOutdated = evaluationState?.roadmapOutdated || false;
+
     // Get readiness percentage
     let readinessPercentage = roadmap.readinessAtGeneration || 0;
     const snapshot = await ReadinessSnapshot.getLatest(userId, roleId);
     if (snapshot) {
       readinessPercentage = snapshot.percentage;
     }
-    
+
     // Count excluded skills (total benchmarks - roadmap items)
     const excludedCount = snapshot?.breakdown
       ? snapshot.breakdown.filter((b: any) => !b.isMissing && b.validationStatus === 'validated').length
       : 0;
-    
+
     // Format response to match old project
     const formattedRoadmap = formatRoadmapForFrontend(roadmap, roleName, readinessPercentage);
     if (formattedRoadmap) {
       formattedRoadmap.summary.excluded_validated = excludedCount;
       formattedRoadmap.rules_applied[4].count = excludedCount;
     }
-    
+
     console.log('[Roadmap GET] Returning roadmap with', formattedRoadmap?.items?.length, 'items');
-    
+
     return Response.json({
       success: true,
       message: `Generated roadmap with ${formattedRoadmap?.items?.length || 0} items`,
       roadmap: formattedRoadmap,
+      isOutdated,
     });
   } catch (error) {
     console.error('[Roadmap GET] Error:', error);
@@ -310,7 +331,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const { id: userId } = await context.params;
     console.log('[Roadmap POST] Starting roadmap generation for userId:', userId);
-    
+
     // Auth check
     const session = await auth();
     if (!session?.user) {
@@ -319,18 +340,18 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     const sessionUser = session.user as { id?: string; role?: string };
-    
+
     // Authorization
     if (sessionUser.id !== userId && sessionUser.role !== 'admin') {
       return errors.forbidden('You can only generate your own roadmap');
     }
-    
+
     await connectDB();
-    
+
     // Parse body
     let roleId: string | undefined;
     let maxSteps: number | undefined;
-    
+
     try {
       const body: GenerateRoadmapBody = await request.json();
       roleId = body.roleId;
@@ -340,7 +361,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     } catch {
       // Empty body is fine, will use active target role
     }
-    
+
     // If no roleId provided, check for active target role
     if (!roleId) {
       console.log('[Roadmap POST] No roleId provided, fetching active target role');
@@ -349,7 +370,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         console.log('[Roadmap POST] No active target role found');
         return errors.badRequest('No target role selected. Select a target role first.');
       }
-      
+
       // Extract roleId safely
       if (typeof targetRole.roleId === 'object' && targetRole.roleId !== null) {
         const populatedRoleId = targetRole.roleId as any;
@@ -359,7 +380,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       }
       console.log('[Roadmap POST] Extracted roleId:', roleId);
     }
-    
+
     // Generate and save roadmap
     console.log('[Roadmap POST] Calling generateAndSaveRoadmap with:', { userId, roleId, maxSteps });
     const roadmap = await generateAndSaveRoadmap({
@@ -369,12 +390,20 @@ export async function POST(request: NextRequest, context: RouteContext) {
       archiveExisting: true,
     });
     console.log('[Roadmap POST] Roadmap generated successfully, id:', roadmap._id);
-    
+
+    // Mark roadmap evaluation as complete
+    const { markEvaluationComplete } = await import('@/lib/services/evaluationService');
+    await markEvaluationComplete(userId, 'roadmap');
+
     // Populate role for response
     await roadmap.populate('roleId', 'name description colorClass');
-    
+
+    const populatedRole = roadmap.roleId as any;
+    const roleName = populatedRole.name;
+    const readinessPercentage = roadmap.readinessAtGeneration || 0;
+
     return success(
-      { roadmap: formatRoadmapResponse(roadmap) },
+      { roadmap: formatRoadmapForFrontend(roadmap, roleName, readinessPercentage) },
       'Roadmap generated successfully',
       201
     );

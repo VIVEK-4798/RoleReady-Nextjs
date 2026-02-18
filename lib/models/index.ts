@@ -25,6 +25,7 @@ export { default as Ticket } from './Ticket';
 export { default as TicketMessage } from './TicketMessage';
 export { default as MentorRoleRequest } from './MentorRoleRequest';
 export { default as MentorApplication } from './MentorApplication';
+export { default as ATSScore } from './ATSScore';
 
 // Re-export document interfaces for convenience
 export type { IUserDocument } from './User';
@@ -45,3 +46,4 @@ export type { IDemoSession, IDemoSkill } from './DemoSession';
 export type { IUserEmailEvent, IUserEmailEventDocument } from './UserEmailEvent';
 export type { ITicket, ITicketDocument, TicketCategory, TicketPriority, TicketStatus, TicketRole } from './Ticket';
 export type { ITicketMessage, ITicketMessageDocument, MessageSenderRole } from './TicketMessage';
+export type { IATSScoreDocument } from './ATSScore';

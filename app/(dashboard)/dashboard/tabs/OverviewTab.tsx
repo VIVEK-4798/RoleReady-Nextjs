@@ -11,6 +11,7 @@ interface ReadinessData {
     hasTargetRole: boolean;
     roleId?: string;
     roleName?: string;
+    isOutdated?: boolean;
     snapshot: {
       id: string;
       roleId: string;
@@ -309,6 +310,25 @@ export default function OverviewTab({ userId }: OverviewTabProps) {
     <div className="space-y-6">
       <div className="bg-white rounded-2xl shadow-md overflow-hidden">
         <div className="p-6">
+          {readiness?.data?.isOutdated && (
+            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between gap-4 animate-pulse">
+              <div className="flex items-center gap-3">
+                <span className="text-amber-600 text-xl">⚠️</span>
+                <div>
+                  <h3 className="font-semibold text-amber-900">Your readiness score is outdated</h3>
+                  <p className="text-sm text-amber-700">Skills or role requirements have changed since your last calculation.</p>
+                </div>
+              </div>
+              <button
+                onClick={handleRecalculate}
+                disabled={isCalculating}
+                className="px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+              >
+                {isCalculating ? 'Calculating...' : 'Recalculate Now'}
+              </button>
+            </div>
+          )}
+
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
             <div>
               <h2 className="text-xl font-bold text-gray-900">Readiness Score</h2>

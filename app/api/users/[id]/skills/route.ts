@@ -31,7 +31,7 @@ interface RouteContext {
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
-    
+
     const session = await auth();
     if (!session?.user) {
       return errors.unauthorized();
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
-    
+
     const session = await auth();
     if (!session?.user) {
       return errors.unauthorized();
@@ -171,7 +171,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     // Create user skill
     const proficiency = body.proficiency || 50;
     const level = proficiency >= 90 ? 'expert' : proficiency >= 70 ? 'advanced' : proficiency >= 50 ? 'intermediate' : 'beginner';
-    
+
     const userSkill = await UserSkill.create({
       userId: id,
       skillId,
@@ -185,15 +185,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
       userSkillId: userSkill._id.toString(),
     });
 
-    // Trigger readiness_outdated notification if user has a target role
-    const targetRole = await TargetRole.getActiveForUser(id);
-    if (targetRole) {
-      await Notification.createOrUpdate(id, 'readiness_outdated', {
-        title: 'Readiness outdated',
-        message: 'Your skills have changed. Recalculate your readiness score.',
-        metadata: { reason: 'skill_added' },
-      });
-    }
+    // Mark evaluations as outdated
+    const { markEvaluationsOutdated } = await import('@/lib/services/evaluationService');
+    await markEvaluationsOutdated(id, ['readiness', 'roadmap', 'ats', 'report']);
 
     // Populate skill data for response
     await userSkill.populate('skillId', 'name normalizedName domain');

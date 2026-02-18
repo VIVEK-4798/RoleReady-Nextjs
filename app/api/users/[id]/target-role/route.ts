@@ -164,19 +164,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         : null,
     });
 
-    // Trigger readiness_outdated notification
-    await Notification.createOrUpdate(id, 'readiness_outdated', {
-      title: 'Readiness needs recalculation',
-      message: `You've selected "${populatedRole.name}" as your target role. Calculate your readiness to see how you match up!`,
-      actionUrl: '/dashboard/readiness',
-      metadata: {
-        roleId: populatedRole._id,
-        roleName: populatedRole.name,
-        previousRoleId: currentTargetRole
-          ? (currentTargetRole.roleId as unknown as PopulatedRole)._id
-          : null,
-      },
-    });
+    // Mark evaluations as outdated
+    const { markEvaluationsOutdated } = await import('@/lib/services/evaluationService');
+    await markEvaluationsOutdated(id, ['readiness', 'roadmap', 'ats', 'report']);
 
     // Also create a role_changed notification
     await Notification.createOrUpdate(id, 'role_changed', {

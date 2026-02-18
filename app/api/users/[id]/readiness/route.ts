@@ -26,6 +26,18 @@ interface RouteContext {
 }
 
 // ============================================================================
+// Helper: Extract roleId safely from TargetRole
+// ============================================================================
+
+function extractRoleId(targetRole: any): string {
+  if (typeof targetRole.roleId === 'object' && targetRole.roleId !== null) {
+    const populated = targetRole.roleId as any;
+    return populated._id ? populated._id.toString() : populated.toString();
+  }
+  return String(targetRole.roleId);
+}
+
+// ============================================================================
 // Helper: Format snapshot for API response
 // ============================================================================
 
@@ -101,7 +113,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     // 4. Get latest snapshot
-    const snapshot = await getLatestSnapshot(userId, (typeof targetRole.roleId === 'object' ? targetRole.roleId._id.toString() : targetRole.roleId.toString()));
+    const snapshot = await getLatestSnapshot(userId, extractRoleId(targetRole));
 
     // 5. Check if fresh calculation is needed via query param
     const searchParams = request.nextUrl.searchParams;
@@ -111,12 +123,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
       // Calculate without persisting (preview mode)
       const previewResult = await calculateReadinessOnly(
         userId,
-        (typeof targetRole.roleId === 'object' ? targetRole.roleId._id.toString() : targetRole.roleId.toString())
+        extractRoleId(targetRole)
       );
 
       return success({
         hasTargetRole: true,
-        roleId: (typeof targetRole.roleId === 'object' ? targetRole.roleId._id.toString() : targetRole.roleId.toString()),
+        roleId: extractRoleId(targetRole),
         snapshot: null,
         preview: {
           percentage: previewResult.percentage,
@@ -129,14 +141,20 @@ export async function GET(request: NextRequest, context: RouteContext) {
       });
     }
 
+    // Get evaluation state
+    const { getEvaluationState } = await import('@/lib/services/evaluationService');
+    const evaluationState = await getEvaluationState(userId);
+    const isOutdated = evaluationState?.readinessOutdated || false;
+
     return success({
       hasTargetRole: true,
-      roleId: (typeof targetRole.roleId === 'object' ? targetRole.roleId._id.toString() : targetRole.roleId.toString()),
+      roleId: extractRoleId(targetRole),
       roleName: targetRole.roleId && typeof targetRole.roleId === 'object' && 'name' in targetRole.roleId
         ? (targetRole.roleId as { name: string }).name
         : undefined,
       snapshot: formatSnapshotResponse(snapshot),
       readinessAtChange: targetRole.readinessAtChange,
+      isOutdated,
     });
   } catch (error) {
     return handleError(error);
@@ -194,22 +212,37 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     // 5. Calculate and save snapshot
+    // 5. Calculate and save snapshot
     const result = await calculateAndSnapshot({
       userId,
-      roleId: (typeof targetRole.roleId === 'object' ? targetRole.roleId._id.toString() : targetRole.roleId.toString()),
+      roleId: extractRoleId(targetRole),
       trigger,
       triggerDetails,
     });
 
+    // Mark readiness evaluation as complete
+    const { markEvaluationComplete } = await import('@/lib/services/evaluationService');
+    await markEvaluationComplete(userId, 'readiness');
+
     // Log activity for contribution graph
     await ActivityLog.logActivity(userId, 'user', 'readiness_calculated', {
-      roleId: (typeof targetRole.roleId === 'object' ? targetRole.roleId._id.toString() : targetRole.roleId.toString()),
+      roleId: extractRoleId(targetRole),
       percentage: result.snapshot.percentage,
       trigger,
     });
 
+    // Trigger roadmap generation (async, non-blocking)
+    import('@/lib/services/roadmapService').then(({ generateAndSaveRoadmap }) => {
+      console.log('[Readiness API] Triggering async roadmap generation...');
+      generateAndSaveRoadmap({
+        userId,
+        roleId: extractRoleId(targetRole),
+        archiveExisting: true,
+      }).catch(err => console.error('[Readiness API] Async roadmap generation failed:', err));
+    }).catch(err => console.error('[Readiness API] Roadmap service import failed:', err));
+
     // Trigger readiness emails (async, non-blocking)
-    const roleId = (typeof targetRole.roleId === 'object' ? targetRole.roleId._id.toString() : targetRole.roleId.toString());
+    const roleId = extractRoleId(targetRole);
     const roleName = targetRole.roleId && typeof targetRole.roleId === 'object' && 'name' in targetRole.roleId
       ? (targetRole.roleId as { name: string }).name
       : 'Unknown Role';

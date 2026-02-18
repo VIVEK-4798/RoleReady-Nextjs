@@ -33,7 +33,7 @@ const ALLOWED_TYPES = [
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
-    
+
     const session = await auth();
     if (!session?.user) {
       return errors.unauthorized();
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
-    
+
     const session = await auth();
     if (!session?.user) {
       return errors.unauthorized();
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     await writeFile(filePath, buffer);
-    
+
     console.log(`[resumeUpload] Saved file: ${filePath} (${buffer.length} bytes)`);
 
     // Create resume record
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       isActive: true,
       version: nextVersion,
     });
-    
+
     console.log(`[resumeUpload] Created resume record: ${resume._id}, status: ${resume.status}`);
 
     // Log activity for contribution graph
@@ -152,6 +152,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     // TODO: Queue resume parsing job here
     // For now, we'll leave status as 'pending'
+
+    // Mark evaluations as outdated
+    const { markEvaluationsOutdated } = await import('@/lib/services/evaluationService');
+    await markEvaluationsOutdated(id, ['readiness', 'roadmap', 'ats', 'report']);
 
     return success({
       id: resume._id,

@@ -35,7 +35,7 @@ function getStatusInfo(percentage: number) {
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { userId } = await context.params;
-    
+
     // Auth check
     const session = await auth();
     if (!session?.user) {
@@ -43,26 +43,26 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     const sessionUser = session.user as { id?: string; role?: string };
-    
+
     // Authorization: Users can only view their own report
     if (sessionUser.id !== userId && sessionUser.role !== 'admin') {
       return errors.forbidden('You can only view your own report');
     }
-    
+
     await connectDB();
-    
+
     // Get user
     const user = await User.findById(userId).lean();
     if (!user) {
       return errors.notFound('User not found');
     }
-    
+
     // Get active target role
     const targetRole = await TargetRole.findOne({
       userId,
       isActive: true,
     }).populate('roleId', 'name description colorClass benchmarks').lean();
-    
+
     if (!targetRole) {
       return Response.json({
         success: false,
@@ -70,18 +70,18 @@ export async function GET(request: NextRequest, context: RouteContext) {
         message: 'No target role selected. Please select a target role first.',
       }, { status: 400 });
     }
-    
+
     // Get the roleId safely
     const roleIdObj = targetRole.roleId as any;
     const roleId = (roleIdObj._id || roleIdObj).toString();
     const roleName = roleIdObj.name || 'Unknown';
-    
+
     // Get latest snapshot
     const latestSnapshot = await ReadinessSnapshot.findOne({
       userId,
       roleId,
     }).sort({ createdAt: -1 }).lean();
-    
+
     if (!latestSnapshot) {
       return Response.json({
         success: false,
@@ -89,23 +89,23 @@ export async function GET(request: NextRequest, context: RouteContext) {
         message: 'No readiness data found. Please calculate your readiness first.',
       }, { status: 400 });
     }
-    
+
     // Get last 3 snapshots for history
     const historySnapshots = await ReadinessSnapshot.find({
       userId,
       roleId,
     }).sort({ createdAt: -1 }).limit(3).lean();
-    
+
     // Get active roadmap
     const roadmap = await Roadmap.findOne({
       userId,
       roleId,
       status: 'active',
     }).lean();
-    
+
     // Process skill breakdown from snapshot
     const breakdown = latestSnapshot.breakdown || [];
-    
+
     const metSkills = breakdown
       .filter((b: any) => !b.isMissing)
       .map((b: any) => ({
@@ -117,7 +117,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         validation_status: b.validationStatus || 'none',
         importance: b.importance || 'optional',
       }));
-    
+
     const missingSkills = breakdown
       .filter((b: any) => b.isMissing)
       .map((b: any) => ({
@@ -129,7 +129,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         validation_status: 'none',
         importance: b.importance || 'optional',
       }));
-    
+
     // Count validation stats
     const pendingValidationCount = breakdown.filter(
       (b: any) => b.validationStatus === 'pending'
@@ -146,7 +146,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const rejectedCount = breakdown.filter(
       (b: any) => !b.isMissing && b.validationStatus === 'rejected'
     ).length;
-    
+
     // Build history
     const history = historySnapshots.map((snap: {
       percentage: number;
@@ -161,7 +161,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         role_name: roleName,
       };
     });
-    
+
     // Build roadmap summary
     let roadmapSummary = null;
     if (roadmap) {
@@ -171,12 +171,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
         actionDescription?: string;
         importance?: string;
       }>;
-      
+
       // priority: 1=HIGH, 2=MEDIUM, 3=LOW (from roadmap generator)
       const highPriority = steps.filter(s => s.priority === 1);
       const mediumPriority = steps.filter(s => s.priority === 2);
       const lowPriority = steps.filter(s => s.priority >= 3);
-      
+
       roadmapSummary = {
         total_items: steps.length,
         by_priority: {
@@ -195,7 +195,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       const missingRequired = breakdown.filter((b: any) => b.isMissing && b.importance === 'required');
       const missingOptional = breakdown.filter((b: any) => b.isMissing && b.importance !== 'required');
       const unvalidated = breakdown.filter((b: any) => !b.isMissing && b.validationStatus !== 'validated' && b.importance === 'required');
-      
+
       roadmapSummary = {
         roadmap_id: null,
         generated_at: new Date().toISOString(),
@@ -212,10 +212,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
         })),
       };
     }
-    
+
     // Build status info
     const statusInfo = getStatusInfo(latestSnapshot.percentage);
-    
+
     // Build the report response
     const reportResponse = {
       success: true,
@@ -252,7 +252,11 @@ export async function GET(request: NextRequest, context: RouteContext) {
         history,
       },
     };
-    
+
+    // Mark report evaluation as complete
+    const { markEvaluationComplete } = await import('@/lib/services/evaluationService');
+    await markEvaluationComplete(userId, 'report');
+
     return Response.json(reportResponse);
   } catch (error) {
     console.error('[Report API] Error:', error);
