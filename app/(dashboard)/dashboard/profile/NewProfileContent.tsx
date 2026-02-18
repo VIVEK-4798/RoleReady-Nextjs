@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { useAuth } from '@/hooks';
 import { SkeletonPage, useToast } from '@/components/ui';
 import SkillSuggestionsReview from './SkillSuggestionsReview';
+import { Wand2, Activity, BarChart3, CheckCircle, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 
 // Types
 interface ProfileData {
@@ -99,6 +100,21 @@ interface UserSkill {
   rejectionReason?: string;
 }
 
+interface ATSScoreBreakdown {
+  relevance: number;
+  contextDepth: number;
+  structure: number;
+  impact: number;
+}
+
+interface ATSScoreResult {
+  overallScore: number;
+  breakdown: ATSScoreBreakdown;
+  missingKeywords: string[];
+  suggestions: string[];
+  calculatedAt: string;
+}
+
 // Modal Types
 type ModalType = 'about' | 'resume' | 'skills' | 'experience' | 'education' | 'certificate' | 'project' | 'header' | 'responsibility' | 'achievement' | 'social' | null;
 
@@ -125,6 +141,11 @@ export default function NewProfileContent() {
   // Resume upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploadingResume, setIsUploadingResume] = useState(false);
+
+  // ATS Score state
+  const [atsData, setAtsData] = useState<ATSScoreResult | null>(null);
+  const [isCalculatingATS, setIsCalculatingATS] = useState(false);
+  const [showATSDetails, setShowATSDetails] = useState(false);
 
   // Helper function to format dates
   const formatDate = (dateString: string | Date | undefined): string => {
@@ -193,6 +214,34 @@ export default function NewProfileContent() {
       addToast('error', 'Failed to upload resume');
     } finally {
       setIsUploadingResume(false);
+    }
+  };
+
+  // Handle ATS Score Calculation
+  const handleCalculateATS = async () => {
+    if (!user?.id) return;
+
+    try {
+      setIsCalculatingATS(true);
+
+      const response = await fetch('/api/ats-score', {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.data && data.data.atsScore) {
+        setAtsData(data.data.atsScore);
+        addToast('success', 'ATS Score calculated successfully');
+        setShowATSDetails(true);
+      } else {
+        addToast('error', data.error || 'Failed to calculate ATS score');
+      }
+    } catch (error) {
+      console.error('ATS calculation error:', error);
+      addToast('error', 'Failed to calculate ATS score');
+    } finally {
+      setIsCalculatingATS(false);
     }
   };
 
@@ -652,6 +701,139 @@ export default function NewProfileContent() {
                       </p>
                     )}
                   </div>
+                </div>
+
+                {/* ATS Score Section */}
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  {!atsData ? (
+                    <div className="p-4 bg-gray-50 flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                          <Activity className="w-4 h-4 text-[#5693C1]" />
+                          ATS Compatibility Score
+                        </h4>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Check how well your resume matches your target role
+                        </p>
+                      </div>
+                      <button
+                        onClick={handleCalculateATS}
+                        disabled={isCalculatingATS}
+                        className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isCalculatingATS ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-[#5693C1] border-t-transparent rounded-full animate-spin" />
+                            Calculating...
+                          </>
+                        ) : (
+                          <>
+                            <Wand2 className="w-4 h-4 text-[#5693C1]" />
+                            Calculate Score
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="bg-white">
+                      <div className="p-4 flex items-center justify-between bg-gradient-to-r from-blue-50 to-white">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg border-4 ${atsData.overallScore >= 80 ? 'border-green-500 text-green-700' :
+                            atsData.overallScore >= 60 ? 'border-amber-500 text-amber-700' :
+                              'border-red-500 text-red-700'
+                            }`}>
+                            {atsData.overallScore}
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-gray-900">ATS Score</h4>
+                            <p className="text-xs text-gray-500">
+                              Calculated on {new Date(atsData.calculatedAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={handleCalculateATS}
+                            disabled={isCalculatingATS}
+                            className="p-1.5 text-gray-400 hover:text-[#5693C1] transition-colors"
+                            title="Recalculate"
+                          >
+                            <div className={isCalculatingATS ? "animate-spin" : ""}>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setShowATSDetails(!showATSDetails)}
+                            className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors"
+                          >
+                            {showATSDetails ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      {showATSDetails && (
+                        <div className="p-4 border-t border-gray-100 bg-white">
+                          <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div className="bg-gray-50 p-2 rounded">
+                              <div className="flex justify-between text-xs mb-1">
+                                <span className="text-gray-600">Keywords</span>
+                                <span className="font-semibold">{atsData.breakdown.relevance}/100</span>
+                              </div>
+                              <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                <div className="h-full bg-blue-500 rounded-full" style={{ width: `${atsData.breakdown.relevance}%` }} />
+                              </div>
+                            </div>
+                            <div className="bg-gray-50 p-2 rounded">
+                              <div className="flex justify-between text-xs mb-1">
+                                <span className="text-gray-600">Context</span>
+                                <span className="font-semibold">{atsData.breakdown.contextDepth}/100</span>
+                              </div>
+                              <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                <div className="h-full bg-purple-500 rounded-full" style={{ width: `${atsData.breakdown.contextDepth}%` }} />
+                              </div>
+                            </div>
+                            <div className="bg-gray-50 p-2 rounded">
+                              <div className="flex justify-between text-xs mb-1">
+                                <span className="text-gray-600">Structure</span>
+                                <span className="font-semibold">{atsData.breakdown.structure}/100</span>
+                              </div>
+                              <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                <div className="h-full bg-green-500 rounded-full" style={{ width: `${atsData.breakdown.structure}%` }} />
+                              </div>
+                            </div>
+                            <div className="bg-gray-50 p-2 rounded">
+                              <div className="flex justify-between text-xs mb-1">
+                                <span className="text-gray-600">Impact</span>
+                                <span className="font-semibold">{atsData.breakdown.impact}/100</span>
+                              </div>
+                              <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                <div className="h-full bg-amber-500 rounded-full" style={{ width: `${atsData.breakdown.impact}%` }} />
+                              </div>
+                            </div>
+                          </div>
+
+                          {atsData.suggestions.length > 0 && (
+                            <div className="mt-4">
+                              <h5 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                                <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+                                Top Suggestions
+                              </h5>
+                              <ul className="space-y-1">
+                                {atsData.suggestions.slice(0, 3).map((suggestion, idx) => (
+                                  <li key={idx} className="text-xs text-gray-600 flex items-start gap-2">
+                                    <span className="mt-1 w-1 h-1 bg-gray-400 rounded-full flex-shrink-0" />
+                                    {suggestion}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Extract Skills Button - Always visible when resume exists */}
@@ -1694,6 +1876,6 @@ export default function NewProfileContent() {
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 }

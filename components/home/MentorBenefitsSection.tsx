@@ -114,7 +114,7 @@ const AnimatedCounter = ({ value }: { value: string }) => {
         let start = 0;
         const duration = 2000;
         const increment = numericValue / (duration / 16);
-        
+
         const timer = setInterval(() => {
             start += increment;
             if (start < numericValue) {
@@ -136,7 +136,8 @@ export default function MentorBenefitsSection() {
     const sectionRef = useRef<HTMLElement>(null);
 
     return (
-        <section 
+        <section
+            id="for-mentors"
             ref={sectionRef}
             className="relative py-28 bg-gradient-to-b from-gray-50 to-white overflow-hidden"
         >
@@ -158,16 +159,16 @@ export default function MentorBenefitsSection() {
                         For Verified Mentors
                         <Shield className="w-3.5 h-3.5" />
                     </div>
-                    
+
                     <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 animate-in fade-in slide-in-from-bottom-5 duration-700 delay-100">
                         What Mentors{' '}
                         <span className="bg-gradient-to-r from-[#5693C1] to-[#3a6a8c] bg-clip-text text-transparent">
                             Gain
                         </span>
                     </h2>
-                    
+
                     <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-5 duration-700 delay-200">
-                        RoleReady doesn't just help students grow — it helps mentors build influence, 
+                        RoleReady doesn't just help students grow — it helps mentors build influence,
                         <span className="text-[#5693C1] font-medium"> credibility, and measurable impact.</span>
                     </p>
                 </div>
@@ -183,10 +184,10 @@ export default function MentorBenefitsSection() {
                         >
                             {/* Glow effect on hover */}
                             <div className={`absolute -inset-0.5 bg-gradient-to-r ${benefit.gradient} rounded-2xl opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500`} />
-                            
+
                             {/* Main card */}
                             <div className="relative bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both backdrop-blur-sm"
-                                 style={{ animationDelay: `${index * 100}ms` }}
+                                style={{ animationDelay: `${index * 100}ms` }}
                             >
                                 {/* Corner accent */}
                                 <div className={`absolute top-0 right-0 w-12 h-12 bg-gradient-to-br ${benefit.gradient} rounded-bl-2xl rounded-tr-2xl opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-x-1 -translate-y-1 group-hover:translate-x-0 group-hover:-translate-y-0`}>
@@ -206,7 +207,7 @@ export default function MentorBenefitsSection() {
                                 <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-[#5693C1] transition-colors">
                                     {benefit.title}
                                 </h3>
-                                
+
                                 <p className="text-gray-600 leading-relaxed mb-4">
                                     {benefit.description}
                                 </p>
@@ -227,7 +228,7 @@ export default function MentorBenefitsSection() {
                 </div>
 
                 {/* Bottom CTA */}
-                <div className="mt-16 text-center animate-in fade-in slide-in-from-bottom-8 duration-700 delay-1000 fill-mode-both">
+                {/* <div className="mt-16 text-center animate-in fade-in slide-in-from-bottom-8 duration-700 delay-1000 fill-mode-both">
                     <div className="inline-flex items-center gap-3 bg-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100">
                         <span className="text-gray-700">Ready to make an impact?</span>
                         <button className="bg-gradient-to-r from-[#5693C1] to-[#3a6a8c] text-white px-6 py-2 rounded-full text-sm font-semibold hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center gap-2 group">
@@ -235,7 +236,7 @@ export default function MentorBenefitsSection() {
                             <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                         </button>
                     </div>
-                </div>
+                </div> */}
             </div>
         </section>
     );

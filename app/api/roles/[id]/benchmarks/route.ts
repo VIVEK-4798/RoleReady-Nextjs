@@ -21,7 +21,8 @@ interface RouteParams {
 /**
  * GET /api/roles/[id]/benchmarks
  * 
- * Get all benchmarks for a role with skill details
+ * Get all benchmarks for a role with skill details.
+ * Formatted for the Readiness Demo modal.
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
@@ -35,23 +36,42 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const role = await Role.findById(id)
       .select('name benchmarks')
-      .populate('benchmarks.skillId', 'name domain description');
+      .populate({
+        path: 'benchmarks.skillId',
+        select: 'name',
+        model: 'Skill'
+      })
+      .lean();
 
     if (!role) {
       return errors.notFound('Role');
     }
 
-    // Filter to active benchmarks only
-    const activeBenchmarks = role.benchmarks?.filter(b => b.isActive) || [];
+    // Format benchmarks
+    const formattedBenchmarks = (role.benchmarks || [])
+      .filter((b: any) => b.isActive && b.skillId) // Filter active benchmarks and valid skill references
+      .map((b: any) => ({
+        skillId: b.skillId._id.toString(),
+        skillName: b.skillId.name,
+        requiredLevel: b.requiredLevel,
+        weight: b.weight,
+        required: b.importance === 'required',
+      }));
+
+    // Sort benchmarks: Required first, then by weight desc
+    formattedBenchmarks.sort((a: any, b: any) => {
+      if (a.required === b.required) {
+        return b.weight - a.weight;
+      }
+      return a.required ? -1 : 1;
+    });
 
     return successResponse({
-      roleId: role._id,
+      roleId: role._id.toString(),
       roleName: role.name,
-      benchmarks: activeBenchmarks,
-      totalCount: activeBenchmarks.length,
-      requiredCount: activeBenchmarks.filter(b => b.importance === 'required').length,
-      optionalCount: activeBenchmarks.filter(b => b.importance === 'optional').length,
+      benchmarks: formattedBenchmarks,
     });
+
   } catch (error) {
     console.error('GET /api/roles/[id]/benchmarks error:', error);
     return errors.serverError('Failed to fetch benchmarks');
@@ -80,11 +100,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     await connectDB();
 
     const body = await request.json();
-    const { 
-      skillId, 
-      importance = 'optional', 
-      weight = 1, 
-      requiredLevel = 'beginner' 
+    const {
+      skillId,
+      importance = 'optional',
+      weight = 1,
+      requiredLevel = 'beginner'
     } = body;
 
     // Validate skillId
@@ -124,11 +144,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     return successResponse(role, 'Benchmark added successfully', 201);
   } catch (error) {
     console.error('POST /api/roles/[id]/benchmarks error:', error);
-    
+
     if (error instanceof Error && error.name === 'ValidationError') {
       return errors.validationError(error.message);
     }
-    
+
     return errors.serverError('Failed to add benchmark');
   }
 }

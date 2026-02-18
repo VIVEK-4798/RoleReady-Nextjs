@@ -384,6 +384,7 @@ export const authConfig: NextAuthConfig = {
         '/role-redirect', // Post-OAuth redirect route
         '/jobs',
         '/api/jobs',
+        '/api/roles',
         '/internships',
         '/api/internships',
       ];

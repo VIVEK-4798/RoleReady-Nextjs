@@ -71,8 +71,8 @@ export default function LandingPageClient({ isAuthenticated }: LandingPageClient
         <WhyChooseUsSection ref={whyChooseUsRef} content={content.problem} />
       </section>
 
-      {/* Mentor Benefits - Only for mentor view */}
-      {userRole === 'mentor' && <MentorBenefitsSection />}
+      {/* Mentor Benefits - For Verified Mentors and Guests */}
+      {(userRole === 'mentor' || !isAuthenticated) && <MentorBenefitsSection />}
 
       {/* Who Is It For */}
       <section id="for-who">
