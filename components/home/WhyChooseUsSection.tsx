@@ -46,19 +46,27 @@ import {
   Check
 } from 'lucide-react';
 
+// ============================================================================
+// Constants & Types
+// ============================================================================
+
 const LEVEL_POINTS: Record<SkillLevel, number> = {
   none: 0,
   beginner: 0.25,
-  intermediate: 0.50,
+  intermediate: 0.5,
   advanced: 0.75,
   expert: 1.0,
 };
 
 const LEVEL_ORDER: SkillLevel[] = ['none', 'beginner', 'intermediate', 'advanced', 'expert'];
 
-// ============================================================================
-// Types
-// ============================================================================
+const LEVEL_COLORS: Record<SkillLevel, { bg: string; text: string; border: string }> = {
+  none: { bg: 'bg-gray-50', text: 'text-gray-400', border: 'border-gray-200' },
+  beginner: { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-200' },
+  intermediate: { bg: 'bg-green-50', text: 'text-green-600', border: 'border-green-200' },
+  advanced: { bg: 'bg-purple-50', text: 'text-purple-600', border: 'border-purple-200' },
+  expert: { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-200' },
+};
 
 export interface WhyChooseUsSectionRef {
   scrollToCTA: () => void;
@@ -82,10 +90,6 @@ interface RoleOption {
   name: string;
 }
 
-// ============================================================================
-// Demo Modal Component
-// ============================================================================
-
 interface Benchmark {
   skillId: string;
   skillName: string;
@@ -93,6 +97,10 @@ interface Benchmark {
   weight: number;
   required: boolean;
 }
+
+// ============================================================================
+// Demo Modal Component
+// ============================================================================
 
 interface DemoModalProps {
   onClose: () => void;
@@ -127,6 +135,11 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
   // Fetch roles
   useEffect(() => {
     const fetchRoles = async () => {
+      if (!debouncedQuery.trim()) {
+        setResults([]);
+        return;
+      }
+
       setIsLoading(true);
       try {
         const response = await fetch(`/api/roles/search?q=${encodeURIComponent(debouncedQuery)}`);
@@ -231,8 +244,13 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
-        inputRef.current && !inputRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(target) &&
+        inputRef.current &&
+        !inputRef.current.contains(target)
+      ) {
         setIsOpen(false);
       }
     };
@@ -247,7 +265,6 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
     let earnedWeight = 0;
     let requiredMet = 0;
     let requiredTotal = 0;
-    let matchedCount = 0;
 
     benchmarks.forEach((b) => {
       const userLevel = userLevels[b.skillId] || 'none';
@@ -258,10 +275,6 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
 
       totalWeight += b.weight;
       earnedWeight += weightedScore;
-
-      if (userLevel !== 'none') {
-        matchedCount++;
-      }
 
       if (b.required) {
         requiredTotal++;
@@ -277,10 +290,28 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
 
     return {
       score: totalWeight > 0 ? Math.round((earnedWeight / totalWeight) * 100) : 0,
-      matched: `${matchedCount}/${benchmarks.length}`,
-      required: `${requiredMet}/${requiredTotal}`
+      matched: benchmarks.filter(b => userLevels[b.skillId] && userLevels[b.skillId] !== 'none').length,
+      total: benchmarks.length,
+      required: requiredMet,
+      requiredTotal
     };
-  })() : { score: 0, matched: '0/0', required: '0/0' };
+  })() : { score: 0, matched: 0, total: 0, required: 0, requiredTotal: 0 };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return 'text-emerald-600';
+    if (score >= 60) return 'text-green-600';
+    if (score >= 40) return 'text-yellow-600';
+    if (score >= 20) return 'text-orange-600';
+    return 'text-red-600';
+  };
+
+  const getScoreBg = (score: number) => {
+    if (score >= 80) return 'bg-emerald-50';
+    if (score >= 60) return 'bg-green-50';
+    if (score >= 40) return 'bg-yellow-50';
+    if (score >= 20) return 'bg-orange-50';
+    return 'bg-red-50';
+  };
 
   const handleLevelChange = (skillId: string, level: SkillLevel) => {
     setUserLevels((prev) => ({
@@ -290,24 +321,25 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="relative bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/80 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="relative bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col border border-gray-200">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 shrink-0">
+        <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0 bg-gradient-to-r from-gray-50 to-white">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-[#5693C1] to-[#3a6a8c] rounded-xl flex items-center justify-center">
-              <Play className="w-5 h-5 text-white" />
+            <div className="w-12 h-12 bg-gradient-to-br from-[#5693C1] to-[#2c5a7a] rounded-xl flex items-center justify-center shadow-lg shadow-[#5693C1]/20">
+              <Play className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-gray-900">Readiness Demo</h3>
+              <h3 className="text-xl font-bold text-gray-900">Interactive Readiness Demo</h3>
               <p className="text-sm text-gray-500">
-                {selectedRole ? `Analyzing for: ${selectedRole.name}` : 'Select a target role to analyze'}
+                {selectedRole ? `Analyzing: ${selectedRole.name}` : 'Select a role to begin analysis'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors"
+            className="w-10 h-10 rounded-xl hover:bg-gray-100 flex items-center justify-center transition-colors"
+            aria-label="Close modal"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -316,19 +348,19 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
         {/* Demo Content */}
         <div className="p-6 overflow-y-auto">
           {/* Role Selector */}
-          <div className="relative mb-8 z-20">
+          <div className="relative mb-8">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Target Role
+              Search for your target role
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-gray-400" />
               </div>
               <input
                 ref={inputRef}
                 type="text"
-                className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent sm:text-sm transition-shadow"
-                placeholder="Search roles (e.g., Backend Developer)"
+                className="block w-full pl-11 pr-12 py-4 border-2 border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent transition-all"
+                placeholder="e.g., Frontend Developer, Product Manager..."
                 value={query}
                 onChange={(e) => {
                   setQuery(e.target.value);
@@ -338,11 +370,11 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
                 onFocus={() => setIsOpen(true)}
                 onKeyDown={handleKeyDown}
               />
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+              <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
                 {isLoading ? (
-                  <Loader2 className="h-5 w-5 text-gray-400 animate-spin" />
+                  <Loader2 className="h-5 w-5 text-[#5693C1] animate-spin" />
                 ) : (
-                  <ChevronDown className="h-5 w-5 text-gray-400" />
+                  <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                 )}
               </div>
             </div>
@@ -351,187 +383,253 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
             {isOpen && (
               <div
                 ref={dropdownRef}
-                className="absolute mt-1 w-full bg-white shadow-lg max-h-60 rounded-xl py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm animate-in fade-in slide-in-from-top-2 duration-200"
+                className="absolute mt-2 w-full bg-white shadow-xl rounded-xl py-2 border border-gray-200 overflow-auto focus:outline-none z-10 animate-in fade-in slide-in-from-top-2 duration-200"
+                style={{ maxHeight: '280px' }}
               >
                 {results.length > 0 ? (
                   results.map((role, index) => (
-                    <div
+                    <button
                       key={role.id}
-                      className={`cursor-pointer select-none relative py-3 pl-10 pr-4 transition-colors ${index === highlightedIndex ? 'bg-[#5693C1]/10 text-[#5693C1]' : 'text-gray-900 hover:bg-gray-50'
-                        }`}
+                      className={`w-full text-left cursor-pointer select-none relative py-3 px-4 transition-colors ${index === highlightedIndex
+                          ? 'bg-[#5693C1]/10 text-[#5693C1]'
+                          : 'text-gray-900 hover:bg-gray-50'
+                        } ${selectedRole?.id === role.id ? 'bg-[#5693C1]/5' : ''}`}
                       onClick={() => handleSelect(role)}
                       onMouseEnter={() => setHighlightedIndex(index)}
                     >
-                      <span className={`block truncate ${selectedRole?.id === role.id ? 'font-medium' : 'font-normal'}`}>
-                        {role.name}
-                      </span>
-                      {selectedRole?.id === role.id && (
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-[#5693C1]">
-                          <Check className="h-5 w-5" />
+                      <div className="flex items-center justify-between">
+                        <span className={`block truncate ${selectedRole?.id === role.id ? 'font-medium' : 'font-normal'}`}>
+                          {role.name}
                         </span>
-                      )}
-                    </div>
+                        {selectedRole?.id === role.id && (
+                          <Check className="h-5 w-5 text-[#5693C1]" />
+                        )}
+                      </div>
+                    </button>
                   ))
                 ) : (
-                  <div className="cursor-default select-none relative py-3 px-4 text-gray-500 text-center">
-                    {query ? 'No roles found' : 'Type to search...'}
+                  <div className="py-8 px-4 text-center">
+                    {query ? (
+                      <>
+                        <AlertCircle className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                        <p className="text-gray-500">No roles found for &quot;{query}&quot;</p>
+                        <p className="text-sm text-gray-400 mt-1">Try a different search term</p>
+                      </>
+                    ) : (
+                      <>
+                        <Search className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                        <p className="text-gray-500">Start typing to search roles</p>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
             )}
           </div>
 
-          <div className={`bg-gradient-to-br from-gray-50 to-white rounded-xl p-8 border border-gray-200 transition-all duration-500 ${selectedRole ? 'opacity-100 translate-y-0' : 'opacity-50 translate-y-4'}`}>
-            {/* Dynamic Content Area */}
+          {/* Dynamic Content Area */}
+          <div className={`bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 border border-gray-200 transition-all duration-500 ${selectedRole ? 'opacity-100 translate-y-0' : 'opacity-50 translate-y-4'}`}>
             {isLoadingBenchmarks ? (
-              <div className="flex-1 flex flex-col items-center justify-center py-12">
-                <Loader2 className="w-12 h-12 text-[#5693C1] animate-spin mb-4" />
-                <p className="text-gray-500 font-medium">Loading requirements for {selectedRole?.name}...</p>
+              <div className="flex flex-col items-center justify-center py-16">
+                <div className="relative">
+                  <Loader2 className="w-16 h-16 text-[#5693C1] animate-spin" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Target className="w-6 h-6 text-[#5693C1] opacity-50" />
+                  </div>
+                </div>
+                <p className="text-gray-600 font-medium mt-4">Loading requirements...</p>
+                <p className="text-sm text-gray-400 mt-1">Fetching benchmarks for {selectedRole?.name}</p>
               </div>
             ) : selectedRole ? (
               <>
                 {/* Simulated Stats Header */}
-                <div className="grid grid-cols-3 gap-3 mb-6">
-                  <div className="bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-sm border border-gray-100 text-center">
-                    <div className="text-[10px] md:text-xs text-gray-500 font-medium uppercase tracking-wide truncate">Readiness Score</div>
-                    <div className={`text-2xl md:text-3xl font-bold transition-all duration-300 ${simulation.score >= 70 ? 'text-green-600' : simulation.score >= 40 ? 'text-yellow-600' : 'text-gray-400'}`}>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                  <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Readiness Score</span>
+                      <Zap className="w-4 h-4 text-gray-400" />
+                    </div>
+                    <div className={`text-3xl font-bold ${getScoreColor(simulation.score)}`}>
                       {simulation.score}%
                     </div>
-                    <div className="text-[10px] text-gray-400 mt-1">Simulated Result</div>
-                  </div>
-                  <div className="bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-sm border border-gray-100 text-center">
-                    <div className="text-[10px] md:text-xs text-gray-500 font-medium uppercase tracking-wide truncate">Skills Matched</div>
-                    <div className="text-xl md:text-2xl font-bold text-blue-600 transition-all duration-300">
-                      {simulation.matched}
+                    <div className="mt-2 w-full bg-gray-100 rounded-full h-1.5">
+                      <div
+                        className={`h-1.5 rounded-full transition-all duration-500 ${simulation.score >= 80 ? 'bg-emerald-500' :
+                            simulation.score >= 60 ? 'bg-green-500' :
+                              simulation.score >= 40 ? 'bg-yellow-500' :
+                                simulation.score >= 20 ? 'bg-orange-500' : 'bg-red-500'
+                          }`}
+                        style={{ width: `${simulation.score}%` }}
+                      />
                     </div>
-                    <div className="text-[10px] text-gray-400 mt-1">Found in profile</div>
                   </div>
-                  <div className="bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-sm border border-gray-100 text-center">
-                    <div className="text-[10px] md:text-xs text-gray-500 font-medium uppercase tracking-wide truncate">Required Skills</div>
-                    <div className="text-xl md:text-2xl font-bold text-purple-600 transition-all duration-300">
-                      {simulation.required}
+
+                  <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Skills Matched</span>
+                      <CheckCircle2 className="w-4 h-4 text-gray-400" />
                     </div>
-                    <div className="text-[10px] text-gray-400 mt-1">Min. Level Met</div>
+                    <div className="text-3xl font-bold text-[#5693C1]">
+                      {simulation.matched}/{simulation.total}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {Math.round((simulation.matched / simulation.total) * 100)}% of skills identified
+                    </p>
+                  </div>
+
+                  <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Requirements Met</span>
+                      <Shield className="w-4 h-4 text-gray-400" />
+                    </div>
+                    <div className="text-3xl font-bold text-emerald-600">
+                      {simulation.required}/{simulation.requiredTotal}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {simulation.requiredTotal > 0 ? Math.round((simulation.required / simulation.requiredTotal) * 100) : 0}% of required skills
+                    </p>
                   </div>
                 </div>
 
                 {/* Benchmarks List */}
-                <div className="flex-1 overflow-hidden flex flex-col mb-4">
-                  <div className="flex items-center justify-between mb-3 px-1">
+                <div className="mt-6">
+                  <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                      <Target className="w-5 h-5 text-[#5693C1]" />
-                      <h4 className="text-lg font-bold text-gray-900">Role Requirements</h4>
+                      <div className="p-2 bg-[#5693C1]/10 rounded-lg">
+                        <Target className="w-4 h-4 text-[#5693C1]" />
+                      </div>
+                      <h4 className="text-lg font-semibold text-gray-900">Role Requirements</h4>
                     </div>
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full hidden sm:inline-block">
-                      Select your current skill levels below
+                    <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
+                      Adjust sliders to simulate your level
                     </span>
                   </div>
 
                   {benchmarks.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 overflow-y-auto pr-2 pb-2 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent" style={{ maxHeight: '350px' }}>
+                    <div className="space-y-3 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
                       {benchmarks.map((benchmark) => {
                         const userLevel = userLevels[benchmark.skillId] || 'none';
-                        const userLevelIndex = LEVEL_ORDER.indexOf(userLevel);
+                        const levelColor = LEVEL_COLORS[userLevel];
                         const requiredLevelIndex = LEVEL_ORDER.indexOf(benchmark.requiredLevel as SkillLevel);
-
-                        let statusColor = 'border-gray-200';
-                        let statusBg = 'bg-white';
-
-                        if (benchmark.required) {
-                          if (userLevelIndex >= requiredLevelIndex) {
-                            statusColor = 'border-green-200';
-                            statusBg = 'bg-green-50/30';
-                          } else if (userLevelIndex > 0) {
-                            statusColor = 'border-yellow-200';
-                            statusBg = 'bg-yellow-50/30';
-                          } else {
-                            // Missing required
-                            statusColor = 'border-red-200';
-                            statusBg = 'bg-red-50/30';
-                          }
-                        } else {
-                          // Optional
-                          if (userLevelIndex > 0) {
-                            statusColor = 'border-blue-200';
-                            statusBg = 'bg-blue-50/30';
-                          }
-                        }
+                        const userLevelIndex = LEVEL_ORDER.indexOf(userLevel);
+                        const isRequirementMet = userLevelIndex >= requiredLevelIndex;
 
                         return (
-                          <div key={benchmark.skillId} className={`flex flex-col p-3 rounded-xl border transition-all shadow-sm ${statusColor} ${statusBg}`}>
-                            <div className="flex justify-between items-start mb-2">
-                              <div>
-                                <div className="font-medium text-gray-900 text-sm leading-tight mb-1">{benchmark.skillName}</div>
-                                <div className="flex items-center flex-wrap gap-1">
-                                  <span className="text-[10px] text-gray-500 bg-white/50 px-1.5 py-0.5 rounded border border-gray-100">
-                                    Goal: <span className="font-semibold capitalize">{benchmark.requiredLevel}</span>
-                                  </span>
+                          <div
+                            key={benchmark.skillId}
+                            className={`bg-white rounded-xl p-4 border-2 transition-all ${benchmark.required
+                                ? isRequirementMet
+                                  ? 'border-emerald-200 hover:border-emerald-300'
+                                  : 'border-amber-200 hover:border-amber-300'
+                                : 'border-gray-100 hover:border-gray-200'
+                              }`}
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h5 className="font-semibold text-gray-900">{benchmark.skillName}</h5>
                                   {benchmark.required && (
-                                    <span className="text-[10px] font-bold text-red-600 bg-red-100/50 px-1.5 py-0.5 rounded">
+                                    <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">
                                       Required
                                     </span>
                                   )}
                                 </div>
+                                <div className="flex items-center gap-3 text-sm">
+                                  <span className="text-gray-500">Target: <span className="font-medium text-gray-700 capitalize">{benchmark.requiredLevel}</span></span>
+                                  <span className="text-gray-300">•</span>
+                                  <span className="text-gray-500">Weight: <span className="font-medium text-gray-700">{benchmark.weight} pts</span></span>
+                                </div>
                               </div>
-                              <div className="text-xs font-bold text-gray-400 bg-white px-1.5 py-0.5 rounded border border-gray-100">
-                                {benchmark.weight} pts
-                              </div>
-                            </div>
 
-                            <div className="mt-auto">
-                              <select
-                                value={userLevel}
-                                onChange={(e) => handleLevelChange(benchmark.skillId, e.target.value as SkillLevel)}
-                                className="w-full text-xs py-1.5 pl-2 pr-7 border-gray-200 rounded-lg focus:ring-1 focus:ring-[#5693C1] focus:border-[#5693C1] bg-white text-gray-900 cursor-pointer"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <option value="none">None</option>
-                                <option value="beginner">Beginner</option>
-                                <option value="intermediate">Intermediate</option>
-                                <option value="advanced">Advanced</option>
-                                <option value="expert">Expert</option>
-                              </select>
+                              <div className="flex items-center gap-3">
+                                <select
+                                  value={userLevel}
+                                  onChange={(e) => handleLevelChange(benchmark.skillId, e.target.value as SkillLevel)}
+                                  className={`px-3 py-2 rounded-lg border-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent cursor-pointer transition-all ${levelColor.bg} ${levelColor.text} ${levelColor.border}`}
+                                >
+                                  {LEVEL_ORDER.map((level) => (
+                                    <option key={level} value={level} className="capitalize">
+                                      {level}
+                                    </option>
+                                  ))}
+                                </select>
+
+                                {benchmark.required && (
+                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isRequirementMet ? 'bg-emerald-100' : 'bg-amber-100'
+                                    }`}>
+                                    {isRequirementMet ? (
+                                      <Check className="w-4 h-4 text-emerald-600" />
+                                    ) : (
+                                      <AlertCircle className="w-4 h-4 text-amber-600" />
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
                         );
                       })}
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center h-48 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                      <AlertCircle className="w-8 h-8 mb-2 text-gray-400" />
-                      <p>No benchmarks configured for this role.</p>
+                    <div className="flex flex-col items-center justify-center py-12 text-gray-500 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                      <AlertCircle className="w-12 h-12 mb-3 text-gray-300" />
+                      <p className="font-medium">No benchmarks configured</p>
+                      <p className="text-sm text-gray-400 mt-1">This role doesn&apos;t have any requirements yet</p>
                     </div>
                   )}
                 </div>
               </>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center opacity-60">
-                <Target className="w-16 h-16 text-gray-300 mb-4" />
-                <h4 className="text-xl font-medium text-gray-400">Select a role to analyze</h4>
-                <p className="text-gray-400">Search above to see real role requirements</p>
+              <div className="flex flex-col items-center justify-center text-center py-16">
+                <div className="w-20 h-20 bg-[#5693C1]/10 rounded-2xl flex items-center justify-center mb-4">
+                  <Target className="w-10 h-10 text-[#5693C1]" />
+                </div>
+                <h4 className="text-xl font-semibold text-gray-900 mb-2">Select a Role to Begin</h4>
+                <p className="text-gray-500 max-w-sm">
+                  Search for your target role above to see real requirements and simulate your readiness
+                </p>
               </div>
             )}
 
             {/* CTA */}
-            <div className="mt-8 flex gap-3">
-              <Link
-                href="/signup"
-                className={`flex-1 bg-gradient-to-r from-[#5693C1] to-[#3a6a8c] text-white py-3 rounded-xl font-medium hover:shadow-lg transition-all duration-300 text-center flex items-center justify-center gap-2 group ${!selectedRole ? 'pointer-events-none opacity-70' : ''}`}
-                onClick={onClose}
-              >
-                {selectedRole ? 'Analyze My Profile' : 'Select a Role to Start'}
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <button
-                onClick={onClose}
-                className="px-6 py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl font-medium transition-colors border border-gray-200"
-              >
-                Close
-              </button>
-            </div>
+            {selectedRole && (
+              <div className="mt-8 flex flex-col sm:flex-row gap-3">
+                <Link
+                  href="/signup"
+                  className="flex-1 bg-gradient-to-r from-[#5693C1] to-[#2c5a7a] text-white py-4 rounded-xl font-semibold hover:shadow-lg hover:shadow-[#5693C1]/30 transition-all duration-300 text-center flex items-center justify-center gap-2 group"
+                  onClick={onClose}
+                >
+                  Analyze My Full Profile
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <button
+                  onClick={onClose}
+                  className="px-8 py-4 bg-white hover:bg-gray-50 text-gray-700 rounded-xl font-semibold transition-colors border-2 border-gray-200 hover:border-gray-300"
+                >
+                  Close
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #cbd5e0;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+      `}</style>
     </div>
   );
 };
@@ -562,14 +660,16 @@ const DifferenceCard = ({ icon, title, text, color, gradient, index, isHovered, 
       <div className={`absolute -inset-0.5 bg-gradient-to-r ${gradient} rounded-2xl opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500`} />
 
       {/* Card */}
-      <div className={`relative bg-white rounded-2xl p-8 border border-gray-100 transition-all duration-500 ${isHovered ? 'shadow-2xl -translate-y-2' : 'shadow-lg hover:shadow-xl hover:-translate-y-1'
+      <div className={`relative bg-white rounded-2xl p-8 border border-gray-100 transition-all duration-500 ${isHovered
+          ? 'shadow-2xl -translate-y-2 border-transparent'
+          : 'shadow-lg hover:shadow-xl hover:-translate-y-1 hover:border-gray-200'
         }`}>
         {/* Icon */}
         <div
-          className={`w-14 h-14 rounded-xl flex items-center justify-center mb-6 transition-all duration-500 ${isHovered ? 'scale-110 rotate-3' : ''
+          className={`w-16 h-16 rounded-xl flex items-center justify-center mb-6 transition-all duration-500 ${isHovered ? 'scale-110 rotate-3' : ''
             }`}
           style={{
-            background: `linear-gradient(135deg, ${color}20, ${color}05)`,
+            background: `linear-gradient(135deg, ${color}15, ${color}05)`,
             color: color
           }}
         >
@@ -625,35 +725,35 @@ const WhyChooseUsSection = forwardRef<WhyChooseUsSectionRef, WhyChooseUsSectionP
   // Define differences with proper icons
   const differences = [
     {
-      icon: <Target className="w-6 h-6" />,
+      icon: <Target className="w-7 h-7" />,
       title: "Not a Job Portal",
       text: "We don't just list jobs. We prepare you to actually get them by focusing on readiness first.",
       color: '#5693C1',
       gradient: 'from-blue-500 to-[#5693C1]'
     },
     {
-      icon: <Shield className="w-6 h-6" />,
+      icon: <Shield className="w-7 h-7" />,
       title: "Focuses on Readiness, Not Applications",
       text: "We help you understand when you're ready to apply, not just where to apply.",
       color: '#0EA5E9',
       gradient: 'from-cyan-500 to-sky-500'
     },
     {
-      icon: <Sparkles className="w-6 h-6" />,
+      icon: <Sparkles className="w-7 h-7" />,
       title: "Clear Explanations, Not Just Scores",
       text: "Every score comes with detailed reasoning so you know exactly what to improve.",
       color: '#10B981',
       gradient: 'from-emerald-500 to-teal-500'
     },
     {
-      icon: <Map className="w-6 h-6" />,
+      icon: <Map className="w-7 h-7" />,
       title: "Structured Guidance, Not Guesswork",
       text: "Follow a personalized roadmap instead of random preparation strategies.",
       color: '#F59E0B',
       gradient: 'from-amber-500 to-orange-500'
     },
     {
-      icon: <Users className="w-6 h-6" />,
+      icon: <Users className="w-7 h-7" />,
       title: "Mentor-Backed Validation",
       text: "Get your skills verified by industry professionals for credibility.",
       color: '#8B5CF6',
@@ -690,23 +790,23 @@ const WhyChooseUsSection = forwardRef<WhyChooseUsSectionRef, WhyChooseUsSectionP
   ];
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-white via-gray-50/30 to-white py-20 md:py-32 px-4 sm:px-6 lg:px-8">
-      {/* Background decorative elements */}
+    <section className="relative overflow-hidden bg-white bg-gradient-to-b from-white via-blue-50/20 to-white py-20 md:py-32 px-4 sm:px-6 lg:px-8">
+      {/* Background decorative elements - light theme */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-[#5693C1]/5 to-transparent" />
-        <div className="absolute top-20 -right-20 w-96 h-96 rounded-full bg-gradient-to-bl from-blue-50/40 to-cyan-50/30 blur-3xl animate-pulse-slow" />
-        <div className="absolute bottom-20 -left-20 w-96 h-96 rounded-full bg-gradient-to-tr from-emerald-50/30 to-teal-50/20 blur-3xl animate-pulse-slower" />
+        <div className="absolute top-20 -right-20 w-96 h-96 rounded-full bg-gradient-to-bl from-blue-100/40 to-cyan-100/30 blur-3xl" />
+        <div className="absolute bottom-20 -left-20 w-96 h-96 rounded-full bg-gradient-to-tr from-emerald-100/30 to-teal-100/20 blur-3xl" />
       </div>
 
-      {/* Animated floating elements */}
-      <div className="absolute top-32 left-10 w-4 h-4 rounded-full bg-[#5693C1]/20 animate-float" />
-      <div className="absolute top-1/2 right-20 w-6 h-6 rounded-full bg-[#5693C1]/10 animate-float-delayed" />
-      <div className="absolute bottom-40 left-1/4 w-3 h-3 rounded-full bg-amber-400/20 animate-float-slow" />
+      {/* Animated floating elements - light theme */}
+      <div className="absolute top-32 left-10 w-4 h-4 rounded-full bg-[#5693C1]/30 animate-float" />
+      <div className="absolute top-1/2 right-20 w-6 h-6 rounded-full bg-[#5693C1]/20 animate-float-delayed" />
+      <div className="absolute bottom-40 left-1/4 w-3 h-3 rounded-full bg-amber-400/30 animate-float-slow" />
 
       <div className="max-w-7xl mx-auto relative z-10">
         {/* CTA Section - Moved to top */}
         <div ref={ctaRef} className="max-w-6xl mx-auto mb-20 md:mb-32">
-          <div className="relative bg-gradient-to-br from-white via-gray-50 to-white rounded-3xl p-8 md:p-12 border border-gray-200 shadow-xl hover:shadow-2xl transition-all duration-500">
+          <div className="relative bg-white rounded-3xl p-8 md:p-12 border border-gray-200 shadow-xl hover:shadow-2xl transition-all duration-500">
             {/* Decorative elements */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#5693C1]/5 to-transparent rounded-full blur-3xl" />
 
@@ -718,12 +818,12 @@ const WhyChooseUsSection = forwardRef<WhyChooseUsSectionRef, WhyChooseUsSectionP
                 </div>
                 <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
                   See How RoleReady Transforms{' '}
-                  <span className="bg-gradient-to-r from-[#5693C1] to-[#3a6a8c] bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-[#5693C1] to-[#2c5a7a] bg-clip-text text-transparent">
                     Your Journey
                   </span>
                 </h3>
                 <p className="text-gray-600 text-lg mb-8 max-w-xl leading-relaxed">
-                  Don't just guess your readiness. See exactly how our AI analyzes your profile against industry standards.
+                  Don&apos;t just guess your readiness. See exactly how our AI analyzes your profile against industry standards.
                 </p>
 
                 <div className="flex flex-wrap gap-4 mb-6">
@@ -745,7 +845,7 @@ const WhyChooseUsSection = forwardRef<WhyChooseUsSectionRef, WhyChooseUsSectionP
               <div className="space-y-4">
                 <Link
                   href="/signup"
-                  className="group w-full h-16 bg-gradient-to-r from-[#5693C1] to-[#3a6a8c] text-white rounded-xl font-semibold flex items-center justify-center gap-3 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 active:scale-[0.98]"
+                  className="group w-full h-16 bg-gradient-to-r from-[#5693C1] to-[#2c5a7a] text-white rounded-xl font-semibold flex items-center justify-center gap-3 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 active:scale-[0.98]"
                 >
                   Start Free Analysis
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -753,7 +853,7 @@ const WhyChooseUsSection = forwardRef<WhyChooseUsSectionRef, WhyChooseUsSectionP
 
                 <button
                   onClick={() => setShowDemo(true)}
-                  className="group w-full h-16 bg-white text-[#5693C1] border-2 border-[#5693C1] rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-gradient-to-r hover:from-[#5693C1] hover:to-[#3a6a8c] hover:text-white transition-all duration-300"
+                  className="group w-full h-16 bg-white text-[#5693C1] border-2 border-[#5693C1] rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-gradient-to-r hover:from-[#5693C1] hover:to-[#2c5a7a] hover:text-white transition-all duration-300"
                 >
                   <PlayCircle className="w-5 h-5" />
                   Explore Readiness Demo
@@ -765,7 +865,7 @@ const WhyChooseUsSection = forwardRef<WhyChooseUsSectionRef, WhyChooseUsSectionP
 
         {/* Header */}
         <div className="text-center mb-16 md:mb-20">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[#5693C1]/10 to-[#3a6a8c]/10 text-[#5693C1] text-xs font-semibold uppercase tracking-wider mb-6 border border-[#5693C1]/20 backdrop-blur-sm">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[#5693C1]/10 to-[#2c5a7a]/10 text-[#5693C1] text-xs font-semibold uppercase tracking-wider mb-6 border border-[#5693C1]/20 backdrop-blur-sm">
             <Sparkles className="w-3.5 h-3.5" />
             {content.badge}
             <Zap className="w-3.5 h-3.5" />
@@ -774,7 +874,7 @@ const WhyChooseUsSection = forwardRef<WhyChooseUsSectionRef, WhyChooseUsSectionP
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
             {content.title.split(' ').map((word, i, arr) =>
               i === arr.length - 1 ? (
-                <span key={i} className="bg-gradient-to-r from-[#5693C1] to-[#3a6a8c] bg-clip-text text-transparent">
+                <span key={i} className="bg-gradient-to-r from-[#5693C1] to-[#2c5a7a] bg-clip-text text-transparent">
                   {word}
                 </span>
               ) : (
@@ -789,7 +889,7 @@ const WhyChooseUsSection = forwardRef<WhyChooseUsSectionRef, WhyChooseUsSectionP
         </div>
 
         {/* Differences Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
           {differences.map((diff, index) => (
             <DifferenceCard
               key={index}
@@ -806,23 +906,23 @@ const WhyChooseUsSection = forwardRef<WhyChooseUsSectionRef, WhyChooseUsSectionP
         </div>
 
         {/* Comparison Section */}
-        <div className="bg-gradient-to-br from-gray-50 to-white rounded-3xl p-8 md:p-12 border border-gray-200 shadow-xl">
+        <div className="bg-white rounded-3xl p-8 md:p-12 border border-gray-200 shadow-xl">
           <div className="text-center mb-10">
             <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
               RoleReady vs. Traditional Approach
             </h3>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              See how we're different from traditional job preparation platforms
+              See how we&apos;re different from traditional job preparation platforms
             </p>
           </div>
 
           {/* Comparison Header */}
           <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="text-center p-4 bg-red-50 rounded-xl border border-red-200">
+            <div className="text-center p-4 bg-red-50/50 rounded-xl border border-red-200">
               <XCircle className="w-6 h-6 text-red-500 mx-auto mb-2" />
               <span className="font-semibold text-red-700">Traditional Approach</span>
             </div>
-            <div className="text-center p-4 bg-green-50 rounded-xl border border-green-200">
+            <div className="text-center p-4 bg-green-50/50 rounded-xl border border-green-200">
               <CheckCircle className="w-6 h-6 text-green-500 mx-auto mb-2" />
               <span className="font-semibold text-green-700">RoleReady</span>
             </div>
@@ -866,13 +966,13 @@ const WhyChooseUsSection = forwardRef<WhyChooseUsSectionRef, WhyChooseUsSectionP
           <div className="mt-10 text-center">
             <Link
               href="/signup"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#5693C1] to-[#3a6a8c] text-white rounded-xl font-semibold hover:shadow-xl hover:scale-105 transition-all duration-300 group"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#5693C1] to-[#2c5a7a] text-white rounded-xl font-semibold hover:shadow-xl hover:scale-105 transition-all duration-300 group"
             >
               Experience the Difference
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             <p className="text-sm text-gray-500 mt-4">
-              Join thousands of professionals who've found their path with RoleReady
+              Join thousands of professionals who&apos;ve found their path with RoleReady
             </p>
           </div>
         </div>
@@ -894,14 +994,6 @@ const WhyChooseUsSection = forwardRef<WhyChooseUsSectionRef, WhyChooseUsSectionP
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-15px); }
         }
-        @keyframes pulse-slow {
-          0%, 100% { opacity: 0.3; }
-          50% { opacity: 0.5; }
-        }
-        @keyframes pulse-slower {
-          0%, 100% { opacity: 0.2; }
-          50% { opacity: 0.4; }
-        }
         .animate-float {
           animation: float 3s ease-in-out infinite;
         }
@@ -911,12 +1003,6 @@ const WhyChooseUsSection = forwardRef<WhyChooseUsSectionRef, WhyChooseUsSectionP
         }
         .animate-float-slow {
           animation: float-slow 5s ease-in-out infinite;
-        }
-        .animate-pulse-slow {
-          animation: pulse-slow 4s ease-in-out infinite;
-        }
-        .animate-pulse-slower {
-          animation: pulse-slower 6s ease-in-out infinite;
         }
       `}</style>
     </section>
