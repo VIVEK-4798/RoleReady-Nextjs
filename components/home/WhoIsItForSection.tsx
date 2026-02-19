@@ -276,7 +276,7 @@ export default function WhoIsItForSection({ content, role }: WhoIsItForSectionPr
         </div>
 
         {/* Stats Section */}
-        <div className="relative mb-16">
+        <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-white via-gray-50/50 to-white rounded-3xl" />
 
           <div className="relative max-w-6xl mx-auto py-12 px-8 md:px-12 rounded-3xl border border-gray-100 bg-white/60 backdrop-blur-sm">
@@ -338,75 +338,6 @@ export default function WhoIsItForSection({ content, role }: WhoIsItForSectionPr
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom CTA */}
-        <div className="max-w-4xl mx-auto">
-          <div className="relative bg-white rounded-3xl p-8 md:p-12 border border-gray-200 shadow-lg">
-            <div className="relative text-center">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#5693C1]/10 rounded-full text-sm font-medium mb-6 text-[#5693C1]">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-                Ready to Start Your Journey?
-              </div>
-
-              <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-                Find Your Path to Success
-              </h3>
-
-              <p className="text-gray-600 text-lg mb-8 max-w-2xl mx-auto">
-                Whether you're a student, career switcher, or mentor, we have the perfect solution for your needs.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link
-                  href="/signup"
-                  className="group h-14 bg-gradient-to-r from-[#5693C1] to-cyan-500 text-white rounded-xl font-semibold px-8 flex items-center justify-center gap-3 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 active:scale-[0.98]"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  Start Free Assessment
-                  <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-                </Link>
-
-                <Link
-                  href="/demo"
-                  className="group h-14 bg-white text-[#5693C1] border-2 border-[#5693C1] rounded-xl font-semibold px-8 flex items-center justify-center gap-3 hover:bg-[#5693C1] hover:text-white transition-all duration-300"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Schedule a Demo
-                  <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                </Link>
-              </div>
-
-              <div className="mt-8 pt-8 border-t border-gray-200">
-                <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-gray-600">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500" />
-                    <span>No credit card required</span>
-                  </div>
-                  <div className="hidden sm:block w-1 h-1 rounded-full bg-gray-400" />
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-cyan-500" />
-                    <span>Free 14-day trial</span>
-                  </div>
-                  <div className="hidden sm:block w-1 h-1 rounded-full bg-gray-400" />
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-purple-500" />
-                    <span>Get results in 5 minutes</span>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>

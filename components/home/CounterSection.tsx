@@ -7,17 +7,38 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { 
-  Target, 
-  XCircle, 
-  AlertCircle, 
-  BarChart, 
-  Users, 
-  MessageSquare, 
+import { motion, useInView, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
+import {
+  Target,
+  XCircle,
+  AlertCircle,
+  BarChart,
+  Users,
+  MessageSquare,
   Zap,
   TrendingUp,
   CheckCircle,
-  ArrowRight
+  ArrowRight,
+  Sparkles,
+  Brain,
+  Frown,
+  Eye,
+  Search,
+  Compass,
+  Shield,
+  Rocket,
+  Flame,
+  Lightbulb,
+  Award,
+  ChevronRight,
+  Gauge,
+  AlertTriangle,
+  PieChart,
+  Activity,
+  Heart,
+  X,
+  CheckCircle2
 } from 'lucide-react';
 
 interface AnimatedCounterProps {
@@ -29,19 +50,21 @@ interface AnimatedCounterProps {
 
 function AnimatedCounter({ target, duration = 2000, suffix = '', inView }: AnimatedCounterProps) {
   const [count, setCount] = useState(0);
+  const [hasAnimated, setHasAnimated] = useState(false);
 
   useEffect(() => {
-    if (!inView) return;
-    
+    if (!inView || hasAnimated) return;
+
+    setHasAnimated(true);
     let startTime: number;
     const easeOutQuart = (x: number): number => 1 - Math.pow(1 - x, 4);
-    
+
     const animate = (timestamp: number) => {
       if (!startTime) startTime = timestamp;
       const elapsed = timestamp - startTime;
       const progress = Math.min(elapsed / duration, 1);
       const eased = easeOutQuart(progress);
-      
+
       if (progress < 1) {
         setCount(Math.floor(eased * target));
         requestAnimationFrame(animate);
@@ -51,77 +74,107 @@ function AnimatedCounter({ target, duration = 2000, suffix = '', inView }: Anima
     };
 
     requestAnimationFrame(animate);
-  }, [target, duration, inView]);
+  }, [target, duration, inView, hasAnimated]);
 
-  return <span className="counter-value">{count}{suffix}</span>;
+  return <motion.span
+    className="counter-value"
+    animate={{ scale: [1, 1.1, 1] }}
+    transition={{ duration: 0.3, delay: 0.5 }}
+  >
+    {count}{suffix}
+  </motion.span>;
 }
 
 const problems = [
-  { 
-    icon: <Target className="w-8 h-8" />, 
-    title: 'Blind Applications', 
-    description: "Students apply without knowing if they're truly ready, wasting time and opportunities.", 
+  {
+    icon: <Eye className="w-8 h-8" />,
+    title: 'Blind Applications',
+    description: "Students apply without knowing if they're truly ready, wasting time and opportunities.",
     color: '#4F46E5',
     gradient: 'from-indigo-500 to-purple-600',
-    bgColor: '#EEF2FF'
+    bgColor: '#EEF2FF',
+    pattern: 'dots',
+    stat: '78% apply blindly'
   },
-  { 
-    icon: <XCircle className="w-8 h-8" />, 
-    title: 'Silent Rejections', 
-    description: 'Rejections come without meaningful feedback, leaving students confused about what to improve.', 
+  {
+    icon: <MessageSquare className="w-8 h-8" />,
+    title: 'Silent Rejections',
+    description: 'Rejections come without meaningful feedback, leaving students confused about what to improve.',
     color: '#0EA5E9',
     gradient: 'from-sky-500 to-cyan-500',
-    bgColor: '#F0F9FF'
+    bgColor: '#F0F9FF',
+    pattern: 'lines',
+    stat: '9/10 get no feedback'
   },
-  { 
-    icon: <AlertCircle className="w-8 h-8" />, 
-    title: 'Hidden Skill Gaps', 
-    description: 'Critical skill gaps remain invisible until it\'s too late to address them.', 
+  {
+    icon: <AlertTriangle className="w-8 h-8" />,
+    title: 'Hidden Skill Gaps',
+    description: 'Critical skill gaps remain invisible until it\'s too late to address them.',
     color: '#10B981',
     gradient: 'from-emerald-500 to-teal-500',
-    bgColor: '#F0FDF4'
+    bgColor: '#F0FDF4',
+    pattern: 'grid',
+    stat: '70% unaware of gaps'
   },
-  { 
-    icon: <BarChart className="w-8 h-8" />, 
-    title: 'Unstructured Efforts', 
-    description: 'Preparation becomes random and inefficient without a clear roadmap to follow.', 
+  {
+    icon: <Compass className="w-8 h-8" />,
+    title: 'Unstructured Efforts',
+    description: 'Preparation becomes random and inefficient without a clear roadmap to follow.',
     color: '#F59E0B',
     gradient: 'from-amber-500 to-orange-500',
-    bgColor: '#FFFBEB'
+    bgColor: '#FFFBEB',
+    pattern: 'waves',
+    stat: '82% lack structure'
   },
 ];
 
 const stats = [
-  { 
-    value: 85, 
-    label: 'Students apply blindly', 
-    suffix: '%', 
+  {
+    value: 85,
+    label: 'Students apply blindly',
+    suffix: '%',
     color: '#4F46E5',
     icon: <Users className="w-6 h-6" />,
-    description: 'apply without proper assessment'
+    description: 'apply without proper assessment',
+    impact: '3x lower success rate',
+    gradient: 'from-indigo-500 to-purple-500'
   },
-  { 
-    value: 9, 
-    label: 'Get no feedback on rejections', 
-    suffix: '/10', 
+  {
+    value: 9,
+    label: 'Get no feedback on rejections',
+    suffix: '/10',
     color: '#0EA5E9',
     icon: <MessageSquare className="w-6 h-6" />,
-    description: 'receive zero actionable feedback'
+    description: 'receive zero actionable feedback',
+    impact: '6 months delayed growth',
+    gradient: 'from-sky-500 to-cyan-500'
   },
-  { 
-    value: 70, 
-    label: "Don't know their skill gaps", 
-    suffix: '%', 
+  {
+    value: 70,
+    label: "Don't know their skill gaps",
+    suffix: '%',
     color: '#10B981',
     icon: <Zap className="w-6 h-6" />,
-    description: 'are unaware of critical weaknesses'
+    description: 'are unaware of critical weaknesses',
+    impact: '2x longer preparation',
+    gradient: 'from-emerald-500 to-teal-500'
   },
 ];
 
 export default function CounterSection() {
   const [inView, setInView] = useState(false);
   const [activeCard, setActiveCard] = useState<number | null>(null);
+  const [hoveredStat, setHoveredStat] = useState<number | null>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const sectionRef = useRef<HTMLElement>(null);
+  const statsRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  const isStatsInView = useInView(statsRef, { once: true, amount: 0.3 });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -138,191 +191,527 @@ export default function CounterSection() {
     return () => { if (element) observer.unobserve(element); };
   }, []);
 
+  // Track mouse position for parallax effects
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (sectionRef.current) {
+        const rect = sectionRef.current.getBoundingClientRect();
+        setMousePosition({
+          x: ((e.clientX - rect.left) / rect.width) * 100,
+          y: ((e.clientY - rect.top) / rect.height) * 100
+        });
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
   return (
-    <section 
+    <section
       ref={sectionRef}
       className="relative overflow-hidden bg-white py-20 md:py-32 px-4 sm:px-6 lg:px-8"
     >
-      {/* Background decorative elements */}
-      <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-[#5693C1]/5 to-transparent" />
-      <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-gradient-to-br from-indigo-100/30 to-[#5693C1]/10 blur-3xl" />
-      <div className="absolute bottom-40 -left-40 w-80 h-80 rounded-full bg-gradient-to-tr from-emerald-100/30 to-cyan-100/30 blur-3xl" />
-      
-      <div className="max-w-7xl mx-auto relative">
-        {/* Header */}
-        <div className="text-center mb-16 md:mb-24">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#5693C1]/10 text-[#5693C1] font-semibold text-sm mb-6">
-            <AlertCircle className="w-4 h-4" />
-            The Real Challenge
-          </div>
-          
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-            The Problem <span className="text-[#5693C1] relative">
-              Students
-              <span className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-[#5693C1] to-indigo-300 rounded-full" />
-            </span> Face
-          </h2>
-          
-          <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-            Traditional placement preparation leaves students guessing about their readiness, 
-            leading to frustration and missed opportunities.
-          </p>
-          
-          <div className="flex items-center justify-center gap-4 text-sm text-gray-500">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-emerald-500" />
-              <span>Data-driven insights</span>
-            </div>
-            <div className="w-1 h-1 rounded-full bg-gray-300" />
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-[#5693C1]" />
-              <span>Industry research</span>
-            </div>
-          </div>
-        </div>
+      {/* Enhanced animated background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Gradient orbs with parallax */}
+        <motion.div
+          animate={{
+            x: mousePosition.x * 2,
+            y: mousePosition.y * 2,
+          }}
+          transition={{ type: "spring", damping: 50 }}
+          className="absolute top-20 -right-20 w-96 h-96 rounded-full bg-gradient-to-bl from-indigo-200/20 via-purple-200/20 to-transparent blur-3xl"
+        />
+        <motion.div
+          animate={{
+            x: -mousePosition.x,
+            y: -mousePosition.y,
+          }}
+          transition={{ type: "spring", damping: 50 }}
+          className="absolute bottom-20 -left-20 w-96 h-96 rounded-full bg-gradient-to-tr from-emerald-200/20 via-teal-200/20 to-transparent blur-3xl"
+        />
 
-        {/* Problem Cards Grid */}
+        {/* Grid pattern */}
+        <div className="absolute inset-0 bg-grid-pattern opacity-[0.02]" />
+
+        {/* Floating particles */}
+        {mounted && [...Array(30)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1 h-1 bg-[#5693C1]/20 rounded-full"
+            initial={{
+              x: Math.random() * 100 + "%",
+              y: Math.random() * 100 + "%",
+              scale: 0
+            }}
+            animate={{
+              y: [null, "-30%"],
+              scale: [0, 1, 0],
+              opacity: [0, 1, 0]
+            }}
+            transition={{
+              duration: 4 + Math.random() * 3,
+              repeat: Infinity,
+              delay: Math.random() * 3
+            }}
+          />
+        ))}
+
+        {/* Animated lines */}
+        <svg className="absolute inset-0 w-full h-full">
+          <motion.path
+            d="M0,200 Q300,100 600,200 T1200,200"
+            stroke="url(#gradientLine)"
+            strokeWidth="1"
+            fill="none"
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: 0.1 }}
+            transition={{ duration: 3, repeat: Infinity }}
+          />
+          <defs>
+            <linearGradient id="gradientLine" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#5693C1" stopOpacity="0.2" />
+              <stop offset="100%" stopColor="#2c5a7a" stopOpacity="0.2" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+
+      <div className="max-w-7xl mx-auto relative">
+        {/* Enhanced Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-16 md:mb-24"
+        >
+          {/* Animated badge */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-red-500/10 to-orange-500/10 text-red-600 font-semibold text-sm mb-6 border border-red-200/50 backdrop-blur-sm"
+          >
+            <Flame className="w-4 h-4" />
+            The Real Challenge
+            <Sparkles className="w-4 h-4" />
+          </motion.div>
+
+          {/* Main title with animated gradient */}
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            viewport={{ once: true }}
+            className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight"
+          >
+            The Problem{' '}
+            <motion.span
+              className="text-[#5693C1] relative inline-block"
+              whileHover={{ scale: 1.05 }}
+            >
+              Students
+              <motion.span
+                className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-[#5693C1] to-indigo-300 rounded-full"
+                initial={{ width: 0 }}
+                whileInView={{ width: '100%' }}
+                transition={{ delay: 0.5, duration: 0.8 }}
+                viewport={{ once: true }}
+              />
+            </motion.span>{' '}
+            Face
+          </motion.h2>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            viewport={{ once: true }}
+            className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-8"
+          >
+            Traditional placement preparation leaves students guessing about their readiness,
+            leading to frustration and missed opportunities.
+          </motion.p>
+
+          {/* Feature tags */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            viewport={{ once: true }}
+            className="flex flex-wrap items-center justify-center gap-4 text-sm"
+          >
+            {[
+              { icon: CheckCircle2, text: 'Data-driven insights', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+              { icon: TrendingUp, text: 'Industry research', color: 'text-[#5693C1]', bg: 'bg-[#5693C1]/10' },
+              { icon: Award, text: 'Proven methodology', color: 'text-amber-600', bg: 'bg-amber-50' },
+            ].map((item, idx) => (
+              <motion.div
+                key={idx}
+                whileHover={{ scale: 1.05, y: -2 }}
+                className={`flex items-center gap-2 px-4 py-2 ${item.bg} rounded-full border border-gray-200/50 backdrop-blur-sm`}
+              >
+                <item.icon className={`w-4 h-4 ${item.color}`} />
+                <span className="text-gray-700 font-medium">{item.text}</span>
+              </motion.div>
+            ))}
+          </motion.div>
+        </motion.div>
+
+        {/* Problem Cards Grid with enhanced design and equal heights */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20 md:mb-28">
           {problems.map((problem, index) => (
-            <div 
-              key={index} 
-              className="group relative bg-white rounded-2xl p-8 border border-gray-100 cursor-pointer transition-all duration-500 hover:shadow-2xl hover:-translate-y-2"
-              onMouseEnter={() => setActiveCard(index)}
-              onMouseLeave={() => setActiveCard(null)}
-              style={{
-                transform: activeCard === index ? 'translateY(-8px)' : 'translateY(0)',
-                boxShadow: activeCard === index 
-                  ? '0 25px 50px -12px rgba(0, 0, 0, 0.15)' 
-                  : '0 4px 24px rgba(0, 0, 0, 0.05)'
-              }}
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+              onHoverStart={() => setActiveCard(index)}
+              onHoverEnd={() => setActiveCard(null)}
+              className="group relative h-full flex"
             >
-              {/* Card accent */}
-              <div 
-                className="absolute top-0 left-0 w-full h-1 rounded-t-2xl transition-all duration-300"
-                style={{ 
-                  background: `linear-gradient(90deg, ${problem.color}, ${problem.color}80)`,
-                  opacity: activeCard === index ? 1 : 0.7
+              {/* Animated gradient border - toned down opacity */}
+              <motion.div
+                animate={{
+                  opacity: activeCard === index ? 0.3 : 0, // Reduced from 1 to 0.3
+                  scale: activeCard === index ? 1.03 : 1, // Reduced scale from 1.05 to 1.03
                 }}
+                className={`absolute -inset-0.5 bg-gradient-to-r ${problem.gradient} rounded-2xl blur-md transition-opacity duration-500`} // Changed blur-xl to blur-md
               />
-              
-              {/* Icon container */}
-              <div 
-                className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 ${
-                  activeCard === index 
-                    ? `bg-gradient-to-br ${problem.gradient} text-white scale-110` 
-                    : 'bg-gray-50 text-gray-700'
-                }`}
-                style={{ 
-                  backgroundColor: activeCard === index ? 'transparent' : problem.bgColor 
+
+              {/* Card - fixed height with flex column */}
+              <motion.div
+                animate={{
+                  y: activeCard === index ? -4 : 0, // Reduced from -8 to -4
+                  scale: activeCard === index ? 1.01 : 1, // Reduced from 1.02 to 1.01
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className={`relative bg-white rounded-2xl p-8 border-2 transition-all duration-300 w-full flex flex-col ${activeCard === index
+                  ? 'border-transparent shadow-lg' // Changed from shadow-2xl to shadow-lg
+                  : 'border-gray-100 shadow-md hover:shadow-lg hover:border-gray-200' // Changed shadow-xl to shadow-md, hover:shadow-xl to hover:shadow-lg
+                  }`}
+                style={{
+                  minHeight: '480px', // Fixed minimum height
+                  height: '100%',
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20h20v20H20z' fill='${problem.color.replace('#', '%23')}' fill-opacity='0.03'/%3E%3C/svg%3E")`
                 }}
               >
-                <div className={`transition-transform duration-300 ${activeCard === index ? 'scale-110' : ''}`}>
-                  {problem.icon}
-                </div>
-              </div>
-              
-              <h3 className="text-xl font-bold text-gray-900 mb-4">
-                {problem.title}
-              </h3>
-              
-              <p className="text-gray-600 leading-relaxed mb-6">
-                {problem.description}
-              </p>
-              
-              <div className="flex items-center text-[#5693C1] font-medium text-sm">
-                <span>Learn more</span>
-                <ArrowRight className="w-4 h-4 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
-              </div>
-            </div>
+                {/* Card accent */}
+                <motion.div
+                  className="absolute top-0 left-0 w-full h-1 rounded-t-2xl"
+                  initial={{ width: '0%' }}
+                  whileInView={{ width: '100%' }}
+                  transition={{ delay: index * 0.1 + 0.3, duration: 0.5 }}
+                  viewport={{ once: true }}
+                  style={{
+                    background: `linear-gradient(90deg, ${problem.color}, ${problem.color}80)`,
+                  }}
+                />
+
+                {/* Icon container with enhanced animation */}
+                <motion.div
+                  animate={{
+                    rotate: activeCard === index ? [0, 5, -5, 0] : 0, // Reduced rotation from 10 to 5
+                    scale: activeCard === index ? 1.05 : 1, // Reduced from 1.1 to 1.05
+                  }}
+                  transition={{ duration: 0.4 }}
+                  className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 relative overflow-hidden flex-shrink-0`}
+                  style={{
+                    backgroundColor: problem.bgColor,
+                    color: problem.color
+                  }}
+                >
+                  <div className="relative z-10">
+                    {problem.icon}
+                  </div>
+
+                  {/* Shine effect - toned down */}
+                  <motion.div
+                    animate={{
+                      x: activeCard === index ? ['-100%', '100%'] : '-100%',
+                    }}
+                    transition={{ duration: 0.6 }}
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent" // Reduced from white/30 to white/20
+                  />
+
+                  {/* Animated rings - toned down */}
+                  {activeCard === index && (
+                    <>
+                      <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1.1, opacity: 0 }}
+                        transition={{ duration: 1, repeat: Infinity }}
+                        className="absolute inset-0 rounded-2xl border"
+                        style={{ borderColor: problem.color, borderWidth: '1px' }}
+                      />
+                    </>
+                  )}
+                </motion.div>
+
+                {/* Title - fixed height */}
+                <h3 className="text-xl font-bold text-gray-900 mb-4 group-hover:text-[#5693C1] transition-colors min-h-[56px] flex items-start">
+                  {problem.title}
+                </h3>
+
+                {/* Description - fixed height with line clamping */}
+                <p className="text-gray-600 leading-relaxed mb-6 flex-1 line-clamp-3">
+                  {problem.description}
+                </p>
+
+                {/* Stat badge */}
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 + 0.5 }}
+                  className="flex items-center gap-2 mb-4"
+                >
+                  <div className="w-1 h-4 rounded-full" style={{ backgroundColor: problem.color }} />
+                  <span className="text-xs font-medium" style={{ color: problem.color }}>
+                    {problem.stat}
+                  </span>
+                </motion.div>
+
+                {/* Learn more link - fixed at bottom */}
+                <motion.div
+                  className="flex items-center text-[#5693C1] font-medium text-sm group/link mt-auto pt-2"
+                  whileHover={{ x: 3 }} // Reduced from 5 to 3
+                >
+                  <span>Learn more</span>
+                  <ChevronRight className="w-4 h-4 ml-1 transition-transform duration-300 group-hover/link:translate-x-1" />
+                </motion.div>
+              </motion.div>
+            </motion.div>
           ))}
         </div>
 
-        {/* Stats Section */}
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-white via-gray-50/50 to-white rounded-3xl" />
-          
-          <div className="relative max-w-6xl mx-auto py-12 px-8 md:px-12 rounded-3xl border border-gray-100 bg-white/60 backdrop-blur-sm">
-            <div className="text-center mb-10">
-              <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
-                The Numbers Don't Lie
-              </h3>
-              <p className="text-gray-600 max-w-2xl mx-auto">
-                Based on comprehensive research with thousands of students
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
-              {stats.map((stat, index) => (
-                <div 
-                  key={index} 
-                  className="text-center group"
+        {/* Enhanced Stats Section */}
+        <motion.div
+          ref={statsRef}
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="relative"
+        >
+          {/* Main stats container */}
+          <div className="relative max-w-6xl mx-auto">
+            {/* Background with glass effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-white via-gray-50/80 to-white rounded-3xl" />
+
+            <motion.div
+              className="relative backdrop-blur-xl rounded-3xl border border-gray-200/50 overflow-hidden"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7))',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              {/* Header with animated icon */}
+              <div className="text-center pt-12 pb-8 px-8">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  whileInView={{ scale: 1 }}
+                  viewport={{ once: true }}
+                  className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#5693C1] to-indigo-600 text-white mb-6"
                 >
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl mb-6"
-                    style={{ 
-                      backgroundColor: `${stat.color}15`,
-                      color: stat.color
-                    }}
+                  <PieChart className="w-8 h-8" />
+                </motion.div>
+
+                <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+                  The Numbers Don't Lie
+                </h3>
+                <p className="text-gray-600 max-w-2xl mx-auto">
+                  Based on comprehensive research with thousands of students across 50+ colleges
+                </p>
+              </div>
+
+              {/* Stats grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-8 pb-12">
+                {stats.map((stat, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.2 }}
+                    onHoverStart={() => setHoveredStat(index)}
+                    onHoverEnd={() => setHoveredStat(null)}
+                    className="relative group/stat"
                   >
-                    {stat.icon}
-                  </div>
-                  
-                  <div 
-                    className="text-5xl md:text-6xl font-bold mb-3 tracking-tight"
-                    style={{ color: stat.color }}
-                  >
-                    {inView ? (
-                      <AnimatedCounter 
-                        target={stat.value} 
-                        duration={1800} 
-                        suffix={stat.suffix} 
-                        inView={inView}
-                      />
-                    ) : (
-                      `0${stat.suffix}`
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <h4 className="text-lg font-semibold text-gray-900">
-                      {stat.label}
-                    </h4>
-                    <p className="text-sm text-gray-500">
-                      {stat.description}
-                    </p>
-                  </div>
-                  
-                  {/* Progress bar for visual effect */}
-                  <div className="mt-6 h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full rounded-full transition-all duration-1000 ease-out"
-                      style={{ 
-                        width: inView ? '100%' : '0%',
-                        background: `linear-gradient(90deg, ${stat.color}, ${stat.color}80)`
+                    {/* Animated background - toned down */}
+                    <motion.div
+                      animate={{
+                        opacity: hoveredStat === index ? 0.05 : 0, // Reduced from 0.1 to 0.05
+                        scale: hoveredStat === index ? 1.05 : 1, // Reduced from 1.1 to 1.05
                       }}
+                      className={`absolute -inset-4 bg-gradient-to-r ${stat.gradient} rounded-2xl blur-md`} // Changed blur-xl to blur-md
                     />
+
+                    {/* Stat card - fixed height */}
+                    <div className="relative text-center p-6 rounded-2xl bg-white border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300 h-full flex flex-col"> {/* Changed shadow-lg to shadow-md, hover:shadow-xl to hover:shadow-lg */}
+                      {/* Icon */}
+                      <motion.div
+                        animate={{
+                          rotate: hoveredStat === index ? 15 : 0, // Reduced from 360 to 15
+                          scale: hoveredStat === index ? 1.05 : 1, // Reduced from 1.1 to 1.05
+                        }}
+                        transition={{ duration: 0.3 }}
+                        className="inline-flex items-center justify-center w-14 h-14 rounded-xl mb-4 mx-auto"
+                        style={{
+                          backgroundColor: `${stat.color}15`,
+                          color: stat.color
+                        }}
+                      >
+                        {stat.icon}
+                      </motion.div>
+
+                      {/* Counter */}
+                      <motion.div
+                        className="text-5xl md:text-6xl font-bold mb-2 tracking-tight relative"
+                        style={{ color: stat.color }}
+                      >
+                        {isStatsInView ? (
+                          <AnimatedCounter
+                            target={stat.value}
+                            duration={2000}
+                            suffix={stat.suffix}
+                            inView={isStatsInView}
+                          />
+                        ) : (
+                          `0${stat.suffix}`
+                        )}
+
+                        {/* Glow effect - toned down */}
+                        <motion.div
+                          animate={{
+                            scale: [1, 1.1, 1],
+                            opacity: [0.2, 0.4, 0.2], // Reduced from 0.5,0.8,0.5
+                          }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                          className="absolute inset-0 blur-lg" // Changed blur-xl to blur-lg
+                          style={{ color: stat.color }}
+                        >
+                          {stat.value}{stat.suffix}
+                        </motion.div>
+                      </motion.div>
+
+                      {/* Label */}
+                      <h4 className="text-lg font-semibold text-gray-900 mb-2 min-h-[56px] flex items-center justify-center">
+                        {stat.label}
+                      </h4>
+
+                      {/* Description */}
+                      <p className="text-sm text-gray-500 mb-4 min-h-[40px]">
+                        {stat.description}
+                      </p>
+
+                      {/* Impact badge */}
+                      <motion.div
+                        initial={{ opacity: 0.7, scale: 0.95 }}
+                        animate={{ opacity: hoveredStat === index ? 1 : 0.7, scale: 1 }}
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium mx-auto"
+                        style={{
+                          backgroundColor: `${stat.color}10`,
+                          color: stat.color
+                        }}
+                      >
+                        <TrendingUp className="w-3 h-3" />
+                        {stat.impact}
+                      </motion.div>
+
+                      {/* Progress indicator */}
+                      <motion.div
+                        className="absolute bottom-0 left-0 right-0 h-1 rounded-b-2xl"
+                        initial={{ width: 0 }}
+                        whileInView={{ width: '100%' }}
+                        transition={{ delay: index * 0.2 + 0.5, duration: 0.8 }}
+                        style={{
+                          background: `linear-gradient(90deg, ${stat.color}, ${stat.color}80)`
+                        }}
+                      />
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Bottom CTA */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                viewport={{ once: true }}
+                className="text-center pb-12 px-8"
+              >
+                <div className="max-w-2xl mx-auto pt-8 border-t border-gray-200">
+                  <motion.p
+                    animate={{ scale: [1, 1.01, 1] }} // Reduced from 1.02 to 1.01
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="text-gray-600 mb-6 flex items-center justify-center gap-2"
+                  >
+                    <Sparkles className="w-5 h-5 text-[#5693C1]" />
+                    Ready to solve these problems?
+                    <Sparkles className="w-5 h-5 text-[#5693C1]" />
+                  </motion.p>
+
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <motion.div
+                      whileHover={{ scale: 1.03 }} // Reduced from 1.05 to 1.03
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      <Link
+                        href="/readiness"
+                        className="group relative overflow-hidden inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#5693C1] to-indigo-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-300" // Changed hover:shadow-2xl to hover:shadow-lg
+                      >
+                        <Target className="w-5 h-5" />
+                        <span>Start Your Journey</span>
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        <motion.div
+                          className="absolute inset-0 bg-white"
+                          initial={{ x: '-100%' }}
+                          whileHover={{ x: '100%' }}
+                          transition={{ duration: 0.5 }}
+                          style={{ opacity: 0.15 }} // Reduced from 0.2 to 0.15
+                        />
+                      </Link>
+                    </motion.div>
+
+                    <motion.div
+                      whileHover={{ scale: 1.03 }} // Reduced from 1.05 to 1.03
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      <Link
+                        href="/roadmap"
+                        className="inline-flex items-center gap-2 px-8 py-4 bg-white border-2 border-gray-200 text-gray-700 font-semibold rounded-xl hover:border-[#5693C1] hover:text-[#5693C1] hover:shadow-md transition-all duration-300" // Added hover:shadow-md
+                      >
+                        <PieChart className="w-5 h-5" />
+                        View Roadmap
+                      </Link>
+                    </motion.div>
                   </div>
                 </div>
-              ))}
-            </div>
-            
-            {/* Call to action */}
-            <div className="mt-12 pt-8 border-t border-gray-100 text-center">
-              <p className="text-gray-600 mb-4">
-                Ready to solve these problems?
-              </p>
-              <button className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#5693C1] to-indigo-600 text-white font-semibold rounded-lg hover:shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]">
-                <Target className="w-5 h-5" />
-                Start Your Journey
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
+              </motion.div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       <style jsx>{`
         .counter-value {
           font-variant-numeric: tabular-nums;
+        }
+        
+        .bg-grid-pattern {
+          background-image: 
+            linear-gradient(to right, #e5e7eb 1px, transparent 1px),
+            linear-gradient(to bottom, #e5e7eb 1px, transparent 1px);
+          background-size: 50px 50px;
+        }
+        
+        .line-clamp-3 {
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
         }
         
         @keyframes float {

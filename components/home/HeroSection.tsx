@@ -10,6 +10,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { motion, useMotionValue, useSpring, useTransform, AnimatePresence } from 'framer-motion';
 import { 
     ArrowRight, 
     CheckCircle, 
@@ -19,7 +20,19 @@ import {
     Play,
     Star,
     Users,
-    TrendingUp
+    TrendingUp,
+    Target,
+    Brain,
+    Award,
+    BarChart3,
+    ChevronRight,
+    Cpu,
+    Network,
+    Workflow,
+    Gauge,
+    Rocket,
+    Medal,
+    Bot
 } from 'lucide-react';
 
 interface HeroSectionProps {
@@ -243,6 +256,318 @@ const StatCounter = ({ value, label, icon: Icon, delay }: { value: string; label
   );
 };
 
+// ============================================================================
+// Skill Node Component for the Network Visualization
+// ============================================================================
+const SkillNode = ({ 
+  x, 
+  y, 
+  label, 
+  value, 
+  color, 
+  delay,
+  isActive,
+  onHover
+}: { 
+  x: number; 
+  y: number; 
+  label: string; 
+  value: number; 
+  color: string; 
+  delay: number;
+  isActive: boolean;
+  onHover: () => void;
+}) => {
+  const nodeX = useMotionValue(x);
+  const nodeY = useMotionValue(y);
+  
+  const springX = useSpring(nodeX, { stiffness: 100, damping: 10 });
+  const springY = useSpring(nodeY, { stiffness: 100, damping: 10 });
+
+  useEffect(() => {
+    const animate = () => {
+      const time = Date.now() / 1000;
+      nodeX.set(x + Math.sin(time * 0.5 + delay) * 5);
+      nodeY.set(y + Math.cos(time * 0.3 + delay) * 5);
+    };
+    
+    const interval = setInterval(animate, 50);
+    return () => clearInterval(interval);
+  }, [x, y, delay, nodeX, nodeY]);
+
+  return (
+    <motion.g
+      onMouseEnter={onHover}
+      style={{ x: springX, y: springY }}
+      initial={{ scale: 0, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ delay: delay * 0.1, duration: 0.5 }}
+    >
+      {/* Node glow */}
+      <circle
+        r={30}
+        fill={`${color}20`}
+        className="transition-all duration-300"
+        style={{
+          filter: isActive ? `blur(8px)` : 'blur(4px)',
+        }}
+      />
+      
+      {/* Main node */}
+      <circle
+        r={20}
+        fill={color}
+        className="transition-all duration-300 cursor-pointer"
+        style={{
+          filter: isActive ? 'brightness(1.2)' : 'brightness(1)',
+        }}
+      />
+      
+      {/* Inner glow */}
+      <circle
+        r={12}
+        fill="white"
+        fillOpacity={0.3}
+      />
+      
+      {/* Value text */}
+      <text
+        x={0}
+        y={0}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        className="text-xs font-bold fill-white"
+      >
+        {value}%
+      </text>
+      
+      {/* Label */}
+      <text
+        x={0}
+        y={35}
+        textAnchor="middle"
+        className="text-xs font-medium fill-gray-700"
+      >
+        {label}
+      </text>
+    </motion.g>
+  );
+};
+
+// ============================================================================
+// Connection Line Component
+// ============================================================================
+const ConnectionLine = ({ 
+  start, 
+  end, 
+  color,
+  isActive 
+}: { 
+  start: { x: number; y: number }; 
+  end: { x: number; y: number }; 
+  color: string;
+  isActive: boolean;
+}) => {
+  const [path, setPath] = useState('');
+
+  useEffect(() => {
+    const midX = (start.x + end.x) / 2;
+    const midY = (start.y + end.y) / 2;
+    const controlX = midX + (Math.random() - 0.5) * 40;
+    const controlY = midY + (Math.random() - 0.5) * 40;
+    
+    setPath(`M ${start.x} ${start.y} Q ${controlX} ${controlY} ${end.x} ${end.y}`);
+  }, [start, end]);
+
+  return (
+    <motion.path
+      d={path}
+      stroke={color}
+      strokeWidth={isActive ? 2 : 1}
+      strokeOpacity={isActive ? 0.4 : 0.2}
+      fill="none"
+      initial={{ pathLength: 0, opacity: 0 }}
+      animate={{ pathLength: 1, opacity: isActive ? 0.4 : 0.2 }}
+      transition={{ duration: 1, delay: 0.5 }}
+      strokeDasharray="5,5"
+    />
+  );
+};
+
+// ============================================================================
+// Main Animated Visualization Component
+// ============================================================================
+const RoleReadyVisualization = () => {
+  const [activeNode, setActiveNode] = useState<number | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const [rotation, setRotation] = useState(0);
+
+  useEffect(() => {
+    setMounted(true);
+    const interval = setInterval(() => {
+      setRotation(prev => (prev + 1) % 360);
+    }, 100);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fixed node positions
+  const nodes = [
+    { x: 150, y: 120, label: 'React', value: 85, color: '#5693C1' },
+    { x: 250, y: 80, label: 'Node.js', value: 70, color: '#10B981' },
+    { x: 350, y: 120, label: 'Python', value: 60, color: '#F59E0B' },
+    { x: 180, y: 220, label: 'TypeScript', value: 75, color: '#8B5CF6' },
+    { x: 280, y: 270, label: 'MongoDB', value: 65, color: '#EC4899' },
+    { x: 380, y: 220, label: 'AWS', value: 55, color: '#0EA5E9' },
+    { x: 120, y: 320, label: 'Docker', value: 45, color: '#EF4444' },
+    { x: 220, y: 370, label: 'GraphQL', value: 50, color: '#F97316' },
+    { x: 320, y: 320, label: 'Kubernetes', value: 40, color: '#A855F7' },
+  ];
+
+  // Readiness score calculation
+  const avgScore = Math.round(nodes.reduce((acc, node) => acc + node.value, 0) / nodes.length);
+  const readinessColor = avgScore >= 80 ? '#10B981' : avgScore >= 60 ? '#F59E0B' : '#EF4444';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.8 }}
+      className="relative w-full h-[500px] bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden"
+    >
+      {/* Background grid */}
+      <div className="absolute inset-0" style={{
+        backgroundImage: `radial-gradient(circle at 1px 1px, #5693C1 1px, transparent 0)`,
+        backgroundSize: '20px 20px',
+        opacity: 0.1
+      }} />
+
+      {/* Animated background orbs */}
+      <motion.div
+        animate={{
+          rotate: rotation,
+          scale: [1, 1.1, 1],
+        }}
+        transition={{ duration: 20, repeat: Infinity }}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-[#5693C1]/10 to-[#3a6a8c]/10 rounded-full blur-3xl"
+      />
+
+      {/* Main visualization container */}
+      <div className="absolute inset-0">
+        <svg width="500" height="450" className="absolute inset-0">
+          {/* Connections */}
+          {nodes.map((node, i) => 
+            nodes.slice(i + 1).map((otherNode, j) => (
+              <ConnectionLine
+                key={`${i}-${j}`}
+                start={{ x: node.x, y: node.y }}
+                end={{ x: otherNode.x, y: otherNode.y }}
+                color={node.color}
+                isActive={activeNode === i || activeNode === i + j + 1}
+              />
+            ))
+          )}
+
+          {/* Skill nodes */}
+          {nodes.map((node, index) => (
+            <SkillNode
+              key={index}
+              x={node.x}
+              y={node.y}
+              label={node.label}
+              value={node.value}
+              color={node.color}
+              delay={index}
+              isActive={activeNode === index}
+              onHover={() => setActiveNode(index)}
+            />
+          ))}
+        </svg>
+
+        {/* Central Readiness Score */}
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.8, type: "spring" }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-white rounded-2xl shadow-2xl flex flex-col items-center justify-center border-4"
+          style={{ borderColor: readinessColor }}
+        >
+          <motion.div
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="text-3xl font-bold"
+            style={{ color: readinessColor }}
+          >
+            {avgScore}%
+          </motion.div>
+          <div className="text-xs text-gray-500 mt-1">Readiness</div>
+          <Gauge className="w-4 h-4 mt-1" style={{ color: readinessColor }} />
+        </motion.div>
+
+        {/* Floating info cards */}
+        <AnimatePresence>
+          {activeNode !== null && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-xl shadow-xl p-4 border border-gray-200"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg" style={{ backgroundColor: nodes[activeNode].color }} />
+                <div>
+                  <div className="font-semibold text-gray-900">{nodes[activeNode].label}</div>
+                  <div className="text-sm text-gray-500">Proficiency: {nodes[activeNode].value}%</div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Top right stats */}
+        <motion.div
+          initial={{ x: 20, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-3 border border-gray-200"
+        >
+          <div className="flex items-center gap-2">
+            <Brain className="w-4 h-4 text-[#5693C1]" />
+            <span className="text-xs font-medium">AI Analysis Active</span>
+          </div>
+          <div className="text-[10px] text-gray-400 mt-1">9 skills analyzed</div>
+        </motion.div>
+
+        {/* Bottom right career path */}
+        <motion.div
+          initial={{ x: -20, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 1.2 }}
+          className="absolute bottom-4 right-4 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-3 border border-gray-200"
+        >
+          <div className="flex items-center gap-2">
+            <Target className="w-4 h-4 text-green-500" />
+            <span className="text-xs font-medium">Target: Senior Dev</span>
+          </div>
+          <div className="flex items-center gap-1 mt-1">
+            <div className="h-1 w-16 bg-gray-200 rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: '75%' }}
+                transition={{ delay: 1.5, duration: 1 }}
+                className="h-full bg-gradient-to-r from-[#5693C1] to-green-500"
+              />
+            </div>
+            <span className="text-[10px] text-gray-400">75% match</span>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Bottom gradient */}
+      <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent" />
+    </motion.div>
+  );
+};
+
 export default function HeroSection({ onCheckReadiness, onLearnMore, content }: HeroSectionProps) {
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
@@ -313,7 +638,7 @@ export default function HeroSection({ onCheckReadiness, onLearnMore, content }: 
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[#5693C1]/10 to-[#3a6a8c]/10 text-[#5693C1] text-xs font-semibold uppercase tracking-wider mb-8 border border-[#5693C1]/20 backdrop-blur-sm animate-in fade-in slide-in-from-bottom-4 duration-700">
               <Sparkles className="w-3.5 h-3.5" />
-              AI-Powered Career Validation
+              Be Placement Ready
               <Zap className="w-3.5 h-3.5" />
             </div>
 
@@ -384,45 +709,12 @@ export default function HeroSection({ onCheckReadiness, onLearnMore, content }: 
             </div>
           </div>
 
-          {/* Right Content - Hero Image with 3D Effect */}
+          {/* Right Content - Animated Visualization */}
           <div className="relative animate-in fade-in slide-in-from-right-4 duration-700 delay-500">
-            {/* Main image container */}
-            <div 
-              className="relative rounded-2xl overflow-hidden shadow-2xl transform-gpu transition-transform duration-200 ease-out"
-              style={{
-                transform: mounted ? `perspective(1000px) rotateY(${mousePosition.x * 10}deg) rotateX(${-mousePosition.y * 10}deg) scale3d(1.05, 1.05, 1.05)` : 'none',
-              }}
-            >
-              <div className="relative aspect-[4/3] w-full">
-                <Image
-                  src="/img/hero/hero.png"
-                  alt="RoleReady platform preview"
-                  fill
-                  className="object-cover"
-                  priority
-                />
-              </div>
-              
-              {/* Overlay gradient */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-[#5693C1]/20 via-transparent to-transparent" />
-              
-              {/* Floating stats cards */}
-              <div className="absolute top-6 left-6 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-3 animate-float">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span className="text-sm font-medium">92% success rate</span>
-                </div>
-              </div>
-              
-              <div className="absolute bottom-6 right-6 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-3 animate-float-delayed">
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-[#5693C1]" />
-                  <span className="text-sm font-medium">500+ mentors</span>
-                </div>
-              </div>
-            </div>
+            {/* Main visualization */}
+            <RoleReadyVisualization />
 
-            {/* Stats grid below image */}
+            {/* Stats grid below visualization */}
             <div className="grid grid-cols-3 gap-4 mt-8">
               <StatCounter value="10k+" label="Students" icon={Users} delay={600} />
               <StatCounter value="500+" label="Mentors" icon={Shield} delay={700} />

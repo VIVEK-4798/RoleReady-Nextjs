@@ -18,6 +18,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "RoleReady - Job Readiness Platform",
   description: "Assess your readiness for your dream job role",
+   icons: {
+    icon: "/logo_metatag.png",
+  },
 };
 
 export default function RootLayout({
