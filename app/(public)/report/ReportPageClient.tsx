@@ -159,11 +159,11 @@ const StatusBadge = ({ label, color, size = 'normal', icon: Icon }: StatusBadgeP
             icon: Info
         },
     };
-    
+
     const config = colorMap[color];
     const BadgeIcon = Icon || config.icon;
     const sizeClass = size === 'small' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm';
-    
+
     return (
         <span className={`inline-flex items-center gap-1.5 ${sizeClass} rounded-full font-medium border ${config.bg} ${config.text} ${config.border}`}>
             <BadgeIcon className="w-3.5 h-3.5" />
@@ -186,11 +186,11 @@ const ProgressBar = ({ percentage, color = 'primary', height = 8, showLabel = fa
         success: 'bg-green-500',
         primary: 'bg-[#5693C1]',
     };
-    
+
     return (
         <div className="flex items-center gap-2">
             <div className="flex-1 bg-gray-100 rounded-full overflow-hidden" style={{ height: `${height}px` }}>
-                <div 
+                <div
                     className={`h-full rounded-full transition-all duration-500 ${colorMap[color]}`}
                     style={{ width: `${Math.min(percentage, 100)}%` }}
                 />
@@ -228,10 +228,9 @@ const StatCard = ({ icon: Icon, label, value, color, trend }: StatCardProps) => 
                     <Icon className="w-5 h-5" />
                 </div>
                 {trend && (
-                    <div className={`flex items-center gap-1 text-xs font-medium ${
-                        trend.direction === 'up' ? 'text-green-600' :
-                        trend.direction === 'down' ? 'text-red-600' : 'text-gray-500'
-                    }`}>
+                    <div className={`flex items-center gap-1 text-xs font-medium ${trend.direction === 'up' ? 'text-green-600' :
+                            trend.direction === 'down' ? 'text-red-600' : 'text-gray-500'
+                        }`}>
                         {trend.direction === 'up' && <TrendingUp className="w-3 h-3" />}
                         {trend.direction === 'down' && <TrendingDown className="w-3 h-3" />}
                         {trend.direction === 'stable' && <Minus className="w-3 h-3" />}
@@ -288,22 +287,22 @@ const SkillBadge = ({ name, source, status, importance, isValidated }: SkillBadg
 
 export default function ReportPageClient({ userId, userName }: ReportPageClientProps) {
     const reportRef = useRef<HTMLDivElement>(null);
-    
+
     // State
     const [report, setReport] = useState<Report | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<{ type: string; message: string } | null>(null);
     const [isExporting, setIsExporting] = useState(false);
-    
+
     // Fetch report
     const fetchReport = useCallback(async () => {
         setIsLoading(true);
         setError(null);
-        
+
         try {
             const response = await fetch(`/api/reports/${userId}`);
             const data = await response.json();
-            
+
             if (data.success) {
                 // Deduplicate skills
                 if (data.report?.skill_breakdown) {
@@ -317,20 +316,20 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                             return true;
                         });
                     };
-                    
+
                     data.report.skill_breakdown.met_skills = deduplicateSkills(
                         data.report.skill_breakdown.met_skills || []
                     );
                     data.report.skill_breakdown.missing_skills = deduplicateSkills(
                         data.report.skill_breakdown.missing_skills || []
                     );
-                    
+
                     data.report.skill_breakdown.met_count = data.report.skill_breakdown.met_skills.length;
                     data.report.skill_breakdown.missing_count = data.report.skill_breakdown.missing_skills.length;
-                    data.report.skill_breakdown.total_skills = 
+                    data.report.skill_breakdown.total_skills =
                         data.report.skill_breakdown.met_count + data.report.skill_breakdown.missing_count;
                 }
-                
+
                 setReport(data);
             } else {
                 setError({
@@ -348,17 +347,17 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
             setIsLoading(false);
         }
     }, [userId]);
-    
+
     // Initial fetch
     useEffect(() => {
         fetchReport();
     }, [fetchReport]);
-    
+
     // Handle print
     const handlePrint = () => {
         window.print();
     };
-    
+
     // Handle PDF export
     const handleExportPDF = async () => {
         setIsExporting(true);
@@ -380,8 +379,8 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                     type: 'jpeg',
                     quality: 0.98,
                 } as const,
-                html2canvas: { 
-                    scale: 2, 
+                html2canvas: {
+                    scale: 2,
                     useCORS: true,
                     logging: false,
                     backgroundColor: '#ffffff',
@@ -389,7 +388,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                         // Remove external stylesheets
                         const stylesheets = clonedDoc.querySelectorAll('link[rel="stylesheet"]');
                         stylesheets.forEach(sheet => sheet.remove());
-                        
+
                         // Apply theme color to elements
                         const coloredElements = clonedDoc.querySelectorAll('[class*="blue-"]');
                         coloredElements.forEach(el => {
@@ -422,23 +421,23 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
             setIsExporting(false);
         }
     };
-    
+
     // Calculate trend from history
     const calculateTrend = (history: HistoryEntry[] | undefined) => {
         if (!history || history.length < 2) {
             return { direction: 'stable', icon: Minus, color: 'text-gray-500', text: 'No history' };
         }
-        
+
         const recent = history.slice(0, 3);
         const newest = recent[0]?.percentage || 0;
         const oldest = recent[recent.length - 1]?.percentage || 0;
         const diff = newest - oldest;
-        
+
         if (diff > 5) return { direction: 'up', icon: TrendingUp, color: 'text-green-600', text: `+${diff}% improvement` };
         if (diff < -5) return { direction: 'down', icon: TrendingDown, color: 'text-red-600', text: `${diff}% decline` };
         return { direction: 'stable', icon: Minus, color: 'text-gray-500', text: 'Stable' };
     };
-    
+
     // Get source label
     const getSourceIcon = (source?: string) => {
         switch (source) {
@@ -448,7 +447,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
             default: return Info;
         }
     };
-    
+
     // Get score circle color
     const getScoreColor = (color?: string) => {
         switch (color) {
@@ -458,7 +457,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
             default: return 'border-[#5693C1]';
         }
     };
-    
+
     // ============================================================================
     // Render: Loading State
     // ============================================================================
@@ -478,7 +477,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
             </div>
         );
     }
-    
+
     // ============================================================================
     // Render: Error State
     // ============================================================================
@@ -525,7 +524,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
             </div>
         );
     }
-    
+
     // ============================================================================
     // Prepare Data
     // ============================================================================
@@ -533,13 +532,13 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
     const trend = calculateTrend(history);
     const TrendIcon = trend.icon;
     const hasPendingValidation = (validation?.pending_validation || 0) > 0;
-    
+
     // Combine all skills for table view
     const allSkills: SkillEntry[] = [
         ...(skill_breakdown?.met_skills || []).map(s => ({ ...s, status: 'met' as const })),
         ...(skill_breakdown?.missing_skills || []).map(s => ({ ...s, status: 'missing' as const })),
     ];
-    
+
     // ============================================================================
     // Render: Main Page
     // ============================================================================
@@ -559,7 +558,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                         <ChevronRight className="w-4 h-4" />
                         <span className="text-gray-900 font-medium">Report</span>
                     </div>
-                    
+
                     <div className="flex items-center justify-between">
                         <h1 className="text-4xl font-bold text-gray-900 flex items-center gap-3">
                             <div className="w-12 h-12 bg-gradient-to-r from-[#5693C1] to-[#3a6a8c] rounded-xl flex items-center justify-center">
@@ -567,14 +566,14 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                             </div>
                             Readiness Report
                         </h1>
-                        
+
                         <div className="flex items-center gap-2">
                             <span className="text-sm text-gray-500">
                                 Generated for <span className="font-medium text-gray-900">{reportUser?.name || userName}</span>
                             </span>
                         </div>
                     </div>
-                    
+
                     <p className="text-gray-600 mt-2 ml-14 max-w-2xl">
                         Your defensible proof of skill readiness for{' '}
                         <span className="font-semibold text-[#5693C1]">
@@ -582,7 +581,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                         </span>
                     </p>
                 </div>
-                
+
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row justify-end gap-3 mb-8 print:hidden">
                     <button
@@ -610,11 +609,11 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                         )}
                     </button>
                 </div>
-                
+
                 {/* Report Content */}
-                <div 
-                    ref={reportRef} 
-                    id="readiness-report" 
+                <div
+                    ref={reportRef}
+                    id="readiness-report"
                     className="font-sans bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden print:border-0 print:rounded-none"
                 >
                     {/* Report Header */}
@@ -669,7 +668,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                             </div>
                         </div>
                     </div>
-                    
+
                     {/* Report Body */}
                     <div className="p-8">
                         {/* Validation Pending Disclaimer */}
@@ -681,13 +680,13 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                 <div>
                                     <div className="font-semibold text-amber-800 mb-1">Validation Pending</div>
                                     <div className="text-amber-700 text-sm">
-                                        {validation?.pending_validation} skill(s) are awaiting mentor review. 
+                                        {validation?.pending_validation} skill(s) are awaiting mentor review.
                                         Scores may change after validation.
                                     </div>
                                 </div>
                             </div>
                         )}
-                        
+
                         {/* SECTION 1: READINESS SUMMARY */}
                         <div className="mb-10">
                             <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
@@ -696,7 +695,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                 </div>
                                 Readiness Summary
                             </h2>
-                            
+
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                 {/* Score Circle */}
                                 <div className="flex justify-center lg:justify-start">
@@ -713,9 +712,9 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                             />
                                             <circle
                                                 className={readiness?.status_color === 'danger' ? 'text-red-500' :
-                                                           readiness?.status_color === 'warning' ? 'text-amber-500' :
-                                                           readiness?.status_color === 'success' ? 'text-green-500' :
-                                                           'text-[#5693C1]'}
+                                                    readiness?.status_color === 'warning' ? 'text-amber-500' :
+                                                        readiness?.status_color === 'success' ? 'text-green-500' :
+                                                            'text-[#5693C1]'}
                                                 strokeWidth="8"
                                                 strokeDasharray={452}
                                                 strokeDashoffset={452 - (452 * (readiness?.percentage || 0)) / 100}
@@ -733,38 +732,38 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 {/* Status & Details */}
                                 <div className="lg:col-span-2">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border border-gray-100">
                                             <div className="text-sm text-gray-500 mb-2">Status</div>
-                                            <StatusBadge 
-                                                label={readiness?.status_label || 'Unknown'} 
-                                                color={readiness?.status_color || 'primary'} 
+                                            <StatusBadge
+                                                label={readiness?.status_label || 'Unknown'}
+                                                color={readiness?.status_color || 'primary'}
                                             />
                                             <div className="mt-3 text-sm text-gray-600">
-                                                Last calculated: {readiness?.calculated_at 
+                                                Last calculated: {readiness?.calculated_at
                                                     ? new Date(readiness.calculated_at).toLocaleDateString('en-US', {
                                                         month: 'short', day: 'numeric', year: 'numeric'
-                                                      })
+                                                    })
                                                     : 'Never'}
                                             </div>
                                         </div>
-                                        
+
                                         <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border border-gray-100">
                                             <div className="text-sm text-gray-500 mb-2">Skills Match</div>
                                             <div className="text-2xl font-bold text-gray-900">
                                                 {skill_breakdown?.met_count || 0}/{skill_breakdown?.total_skills || 0}
                                             </div>
                                             <div className="mt-2">
-                                                <ProgressBar 
-                                                    percentage={((skill_breakdown?.met_count || 0) / (skill_breakdown?.total_skills || 1)) * 100} 
+                                                <ProgressBar
+                                                    percentage={((skill_breakdown?.met_count || 0) / (skill_breakdown?.total_skills || 1)) * 100}
                                                     height={6}
                                                 />
                                             </div>
                                         </div>
-                                        
+
                                         <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border border-gray-100 sm:col-span-2">
                                             <div className="flex items-center gap-2 mb-2">
                                                 <TrendIcon className={`w-4 h-4 ${trend.color}`} />
@@ -789,7 +788,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                 </div>
                             </div>
                         </div>
-                        
+
                         {/* SECTION 2: SKILL BREAKDOWN */}
                         <div className="mb-10">
                             <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
@@ -801,7 +800,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                     ({skill_breakdown?.met_count || 0} met, {skill_breakdown?.missing_count || 0} missing)
                                 </span>
                             </h2>
-                            
+
                             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-sm">
@@ -818,11 +817,10 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                             {allSkills.map((skill, idx) => {
                                                 const SourceIcon = getSourceIcon(skill.source);
                                                 return (
-                                                    <tr 
-                                                        key={skill.skill_id || idx} 
-                                                        className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-                                                            skill.status === 'met' ? 'bg-green-50/30' : 'bg-red-50/30'
-                                                        }`}
+                                                    <tr
+                                                        key={skill.skill_id || idx}
+                                                        className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${skill.status === 'met' ? 'bg-green-50/30' : 'bg-red-50/30'
+                                                            }`}
                                                     >
                                                         <td className="px-6 py-4">
                                                             <div className="flex items-center gap-2">
@@ -835,8 +833,8 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                                             </div>
                                                         </td>
                                                         <td className="text-center px-6 py-4">
-                                                            <StatusBadge 
-                                                                label={skill.status === 'met' ? 'Met' : 'Missing'} 
+                                                            <StatusBadge
+                                                                label={skill.status === 'met' ? 'Met' : 'Missing'}
                                                                 color={skill.status === 'met' ? 'success' : 'danger'}
                                                                 size="small"
                                                             />
@@ -846,8 +844,8 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                                                 <SourceIcon className="w-4 h-4 text-gray-400" />
                                                                 <span className="text-gray-600">
                                                                     {skill.source === 'self' ? 'Self' :
-                                                                     skill.source === 'resume' ? 'Resume' :
-                                                                     skill.source === 'validated' ? 'Validated' : 'Unknown'}
+                                                                        skill.source === 'resume' ? 'Resume' :
+                                                                            skill.source === 'validated' ? 'Validated' : 'Unknown'}
                                                                 </span>
                                                             </div>
                                                         </td>
@@ -871,7 +869,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                     </table>
                                 </div>
                             </div>
-                            
+
                             {/* Legend */}
                             <div className="flex flex-wrap items-center gap-4 mt-4 text-xs">
                                 <span className="text-gray-500">Legend:</span>
@@ -889,7 +887,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                 </span>
                             </div>
                         </div>
-                        
+
                         {/* SECTION 3: ROADMAP PRIORITIES */}
                         <div className="mb-10">
                             <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
@@ -898,7 +896,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                 </div>
                                 Roadmap Priorities
                             </h2>
-                            
+
                             {roadmap ? (
                                 <div className="space-y-6">
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -914,7 +912,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                             </div>
                                             <p className="text-xs text-red-600">Critical skills to focus on first</p>
                                         </div>
-                                        
+
                                         <div className="bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-xl p-5 border border-amber-200">
                                             <div className="flex items-center gap-2 mb-2">
                                                 <div className="w-8 h-8 bg-amber-600 rounded-lg flex items-center justify-center">
@@ -927,7 +925,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                             </div>
                                             <p className="text-xs text-amber-600">Recommended for steady progress</p>
                                         </div>
-                                        
+
                                         <div className="bg-gradient-to-br from-green-50 to-green-100/50 rounded-xl p-5 border border-green-200">
                                             <div className="flex items-center gap-2 mb-2">
                                                 <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
@@ -941,7 +939,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                             <p className="text-xs text-green-600">Complete after higher priorities</p>
                                         </div>
                                     </div>
-                                    
+
                                     {/* Top Focus Areas */}
                                     {roadmap?.high_priority_items && roadmap.high_priority_items.length > 0 && (
                                         <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-6 border border-gray-200">
@@ -964,7 +962,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                             </div>
                                         </div>
                                     )}
-                                    
+
                                     {/* Why this matters */}
                                     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-200 flex items-start gap-3">
                                         <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -973,7 +971,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                         <div>
                                             <span className="font-semibold text-blue-800 block mb-1">Why this matters:</span>
                                             <p className="text-sm text-blue-700">
-                                                High priority items represent required skills that are either missing or rejected. 
+                                                High priority items represent required skills that are either missing or rejected.
                                                 Addressing these first will have the biggest impact on your readiness score.
                                             </p>
                                         </div>
@@ -989,7 +987,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                 </div>
                             )}
                         </div>
-                        
+
                         {/* SECTION 4: PROGRESS SNAPSHOT */}
                         <div className="mb-10">
                             <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center justify-between">
@@ -1004,15 +1002,14 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                     {trend.text}
                                 </span>
                             </h2>
-                            
+
                             {history && history.length > 0 ? (
                                 <div className="space-y-4">
                                     {history.slice(0, 5).map((entry, idx) => (
-                                        <div 
-                                            key={idx} 
-                                            className={`flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl border ${
-                                                idx === 0 ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
-                                            }`}
+                                        <div
+                                            key={idx}
+                                            className={`flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl border ${idx === 0 ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+                                                }`}
                                         >
                                             <div className="flex items-center gap-2 w-full sm:w-32">
                                                 <Calendar className="w-4 h-4 text-gray-400" />
@@ -1025,9 +1022,9 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                             <div className="flex-1">
                                                 <ProgressBar percentage={entry.percentage} color={entry.status_color} height={8} showLabel />
                                             </div>
-                                            <StatusBadge 
-                                                label={entry.status_label} 
-                                                color={entry.status_color} 
+                                            <StatusBadge
+                                                label={entry.status_label}
+                                                color={entry.status_color}
                                                 size="small"
                                             />
                                         </div>
@@ -1040,7 +1037,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                 </div>
                             )}
                         </div>
-                        
+
                         {/* SECTION 5: FOOTER */}
                         <div className="mt-10 pt-8 border-t-2 border-gray-200">
                             <div className="text-center mb-6">
@@ -1052,7 +1049,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                     {new Date(report?.generated_at || new Date()).toLocaleString()}
                                 </div>
                             </div>
-                            
+
                             <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-6 text-sm text-gray-600 border border-gray-200">
                                 <div className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                                     <Shield className="w-4 h-4 text-[#5693C1]" />
@@ -1078,7 +1075,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                         </div>
                     </div>
                 </div>
-                
+
                 {/* Navigation */}
                 <div className="flex flex-col sm:flex-row justify-between mt-8 gap-4">
                     <Link
@@ -1097,7 +1094,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                     </Link>
                 </div>
             </div>
-            
+
             {/* Print Styles */}
             <style jsx global>{`
                 @media print {

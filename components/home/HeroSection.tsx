@@ -11,28 +11,28 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion, useMotionValue, useSpring, useTransform, AnimatePresence } from 'framer-motion';
-import { 
-    ArrowRight, 
-    CheckCircle, 
-    Sparkles, 
-    Zap, 
-    Shield, 
-    Play,
-    Star,
-    Users,
-    TrendingUp,
-    Target,
-    Brain,
-    Award,
-    BarChart3,
-    ChevronRight,
-    Cpu,
-    Network,
-    Workflow,
-    Gauge,
-    Rocket,
-    Medal,
-    Bot
+import {
+  ArrowRight,
+  CheckCircle,
+  Sparkles,
+  Zap,
+  Shield,
+  Play,
+  Star,
+  Users,
+  TrendingUp,
+  Target,
+  Brain,
+  Award,
+  BarChart3,
+  ChevronRight,
+  Cpu,
+  Network,
+  Workflow,
+  Gauge,
+  Rocket,
+  Medal,
+  Bot
 } from 'lucide-react';
 
 interface HeroSectionProps {
@@ -117,9 +117,9 @@ const GradientOrb = () => {
 const TypewriterText = ({ text }: { text: string }) => {
   const [displayText, setDisplayText] = useState('Your Career');
   const [mounted, setMounted] = useState(false);
-  
+
   const words = ['Your Career', 'Your Skills', 'Your Future'];
-  
+
   useEffect(() => {
     setMounted(true);
     let currentIndex = 0;
@@ -129,7 +129,7 @@ const TypewriterText = ({ text }: { text: string }) => {
 
     const typeEffect = () => {
       if (!mounted) return;
-      
+
       if (!isDeleting && displayText.length < currentWord.length) {
         // Typing
         setDisplayText(currentWord.slice(0, displayText.length + 1));
@@ -180,7 +180,7 @@ const StatCounter = ({ value, label, icon: Icon, delay }: { value: string; label
 
   useEffect(() => {
     setMounted(true);
-    
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -203,14 +203,14 @@ const StatCounter = ({ value, label, icon: Icon, delay }: { value: string; label
     // Parse the numeric value and suffix correctly
     const numericMatch = value.match(/\d+/);
     const suffixMatch = value.match(/[^0-9]/g)?.join('') || '';
-    
+
     const numericValue = numericMatch ? parseInt(numericMatch[0]) : 0;
     const suffix = suffixMatch;
-    
+
     let start = 0;
     const duration = 2000;
     const increment = numericValue / (duration / 16);
-    
+
     const timer = setInterval(() => {
       start += increment;
       if (start < numericValue) {
@@ -240,7 +240,7 @@ const StatCounter = ({ value, label, icon: Icon, delay }: { value: string; label
   }
 
   return (
-    <div 
+    <div
       ref={ref}
       className="flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both"
       style={{ animationDelay: `${delay}ms` }}
@@ -259,28 +259,28 @@ const StatCounter = ({ value, label, icon: Icon, delay }: { value: string; label
 // ============================================================================
 // Skill Node Component for the Network Visualization
 // ============================================================================
-const SkillNode = ({ 
-  x, 
-  y, 
-  label, 
-  value, 
-  color, 
+const SkillNode = ({
+  x,
+  y,
+  label,
+  value,
+  color,
   delay,
   isActive,
   onHover
-}: { 
-  x: number; 
-  y: number; 
-  label: string; 
-  value: number; 
-  color: string; 
+}: {
+  x: number;
+  y: number;
+  label: string;
+  value: number;
+  color: string;
   delay: number;
   isActive: boolean;
   onHover: () => void;
 }) => {
   const nodeX = useMotionValue(x);
   const nodeY = useMotionValue(y);
-  
+
   const springX = useSpring(nodeX, { stiffness: 100, damping: 10 });
   const springY = useSpring(nodeY, { stiffness: 100, damping: 10 });
 
@@ -290,7 +290,7 @@ const SkillNode = ({
       nodeX.set(x + Math.sin(time * 0.5 + delay) * 5);
       nodeY.set(y + Math.cos(time * 0.3 + delay) * 5);
     };
-    
+
     const interval = setInterval(animate, 50);
     return () => clearInterval(interval);
   }, [x, y, delay, nodeX, nodeY]);
@@ -312,7 +312,7 @@ const SkillNode = ({
           filter: isActive ? `blur(8px)` : 'blur(4px)',
         }}
       />
-      
+
       {/* Main node */}
       <circle
         r={20}
@@ -322,14 +322,14 @@ const SkillNode = ({
           filter: isActive ? 'brightness(1.2)' : 'brightness(1)',
         }}
       />
-      
+
       {/* Inner glow */}
       <circle
         r={12}
         fill="white"
         fillOpacity={0.3}
       />
-      
+
       {/* Value text */}
       <text
         x={0}
@@ -340,7 +340,7 @@ const SkillNode = ({
       >
         {value}%
       </text>
-      
+
       {/* Label */}
       <text
         x={0}
@@ -357,14 +357,14 @@ const SkillNode = ({
 // ============================================================================
 // Connection Line Component
 // ============================================================================
-const ConnectionLine = ({ 
-  start, 
-  end, 
+const ConnectionLine = ({
+  start,
+  end,
   color,
-  isActive 
-}: { 
-  start: { x: number; y: number }; 
-  end: { x: number; y: number }; 
+  isActive
+}: {
+  start: { x: number; y: number };
+  end: { x: number; y: number };
   color: string;
   isActive: boolean;
 }) => {
@@ -375,7 +375,7 @@ const ConnectionLine = ({
     const midY = (start.y + end.y) / 2;
     const controlX = midX + (Math.random() - 0.5) * 40;
     const controlY = midY + (Math.random() - 0.5) * 40;
-    
+
     setPath(`M ${start.x} ${start.y} Q ${controlX} ${controlY} ${end.x} ${end.y}`);
   }, [start, end]);
 
@@ -455,7 +455,7 @@ const RoleReadyVisualization = () => {
       <div className="absolute inset-0">
         <svg width="500" height="450" className="absolute inset-0">
           {/* Connections */}
-          {nodes.map((node, i) => 
+          {nodes.map((node, i) =>
             nodes.slice(i + 1).map((otherNode, j) => (
               <ConnectionLine
                 key={`${i}-${j}`}
@@ -571,13 +571,7 @@ const RoleReadyVisualization = () => {
 export default function HeroSection({ onCheckReadiness, onLearnMore, content }: HeroSectionProps) {
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [mounted, setMounted] = useState(false);
-  const heroRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  /* Removed unused mouse position state that was causing render loop */
 
   const handlePrimaryClick = () => {
     if (content.primaryHref.startsWith('/')) {
@@ -595,19 +589,8 @@ export default function HeroSection({ onCheckReadiness, onLearnMore, content }: 
     }
   };
 
-  // Parallax effect on mouse move
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!heroRef.current || !mounted) return;
-    const { left, top, width, height } = heroRef.current.getBoundingClientRect();
-    const x = (e.clientX - left) / width - 0.5;
-    const y = (e.clientY - top) / height - 0.5;
-    setMousePosition({ x, y });
-  };
-
   return (
-    <section 
-      ref={heroRef}
-      onMouseMove={handleMouseMove}
+    <section
       className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50"
     >
       {/* Background elements */}
@@ -624,7 +607,7 @@ export default function HeroSection({ onCheckReadiness, onLearnMore, content }: 
       {/* Decorative lines */}
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#5693C1]/20 to-transparent" />
       <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#5693C1]/20 to-transparent" />
-      
+
       {/* Diagonal lines */}
       <div className="absolute top-0 left-0 w-full h-full">
         <div className="absolute top-0 left-0 w-px h-full bg-gradient-to-b from-transparent via-[#5693C1]/10 to-transparent" style={{ left: '10%' }} />

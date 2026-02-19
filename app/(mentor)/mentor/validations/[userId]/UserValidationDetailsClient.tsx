@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useToast } from '@/components/ui/Toast';
+import toast from 'react-hot-toast';
 
 interface PendingSkill {
     _id: string;
@@ -23,7 +23,6 @@ interface UserDetails {
 
 export default function UserValidationDetailsClient({ userId }: { userId: string }) {
     const router = useRouter();
-    const { success, error: toastError } = useToast();
     const [skills, setSkills] = useState<PendingSkill[]>([]);
     const [user, setUser] = useState<UserDetails | null>(null);
     const [loading, setLoading] = useState(true);
@@ -49,11 +48,11 @@ export default function UserValidationDetailsClient({ userId }: { userId: string
             }
         } catch (err) {
             console.error('Error:', err);
-            toastError('Failed to load user details');
+            toast.error('Failed to load user details');
         } finally {
             setLoading(false);
         }
-    }, [userId, toastError]);
+    }, [userId]);
 
     useEffect(() => {
         fetchUserDetails();
@@ -71,7 +70,7 @@ export default function UserValidationDetailsClient({ userId }: { userId: string
             const data = await res.json();
 
             if (data.success) {
-                success(`Skill ${action}d successfully`);
+                toast.success(`Skill ${action}d successfully`);
                 // Remove from local state
                 setSkills(prev => prev.filter(s => s._id !== skillId));
 
@@ -82,11 +81,11 @@ export default function UserValidationDetailsClient({ userId }: { userId: string
                     }, 1500);
                 }
             } else {
-                toastError(data.error || `Failed to ${action} skill`);
+                toast.error(data.error || `Failed to ${action} skill`);
             }
         } catch (err) {
             console.error('Action error:', err);
-            toastError('Connection error');
+            toast.error('Connection error');
         } finally {
             setProcessingId(null);
         }

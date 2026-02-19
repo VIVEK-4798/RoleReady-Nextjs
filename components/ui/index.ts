@@ -19,9 +19,6 @@ export {
   SkeletonDashboard,
 } from './Skeleton';
 
-// Toast notifications
-export { ToastProvider, useToast } from './Toast';
-
 // Charts
 export {
   ProgressRing,
@@ -44,3 +41,6 @@ export {
   Pagination,
   Button,
 } from './Table';
+
+// Modals
+export { default as ConfirmationModal } from './ConfirmationModal';

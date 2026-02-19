@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useToast } from '@/components/ui/Toast';
+
 
 interface GroupedUser {
   userId: string;
@@ -15,7 +15,6 @@ interface GroupedUser {
 }
 
 export default function ValidationQueueClient() {
-  const { success, error: toastError } = useToast();
   const [users, setUsers] = useState<GroupedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -132,8 +131,8 @@ export default function ValidationQueueClient() {
                     </td>
                     <td className="px-6 py-5 whitespace-nowrap">
                       <span className={`inline-flex items-center px-3 py-1 rounded-lg text-sm font-bold ${user.targetRole !== 'Not Set'
-                          ? 'bg-blue-50 text-[#5693C1] border border-blue-100'
-                          : 'bg-gray-100 text-gray-500'
+                        ? 'bg-blue-50 text-[#5693C1] border border-blue-100'
+                        : 'bg-gray-100 text-gray-500'
                         }`}>
                         {user.targetRole}
                       </span>

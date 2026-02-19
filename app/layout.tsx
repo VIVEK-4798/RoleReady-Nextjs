@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers";
-import { ToastProvider } from "@/components/ui";
 import TawkChat from "@/components/support/TawkChat";
+import { Toaster } from 'react-hot-toast';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "RoleReady - Job Readiness Platform",
   description: "Assess your readiness for your dream job role",
-   icons: {
+  icons: {
     icon: "/logo_metatag.png",
   },
 };
@@ -34,10 +34,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          <ToastProvider>
-            {children}
-            <TawkChat />
-          </ToastProvider>
+          {children}
+          <TawkChat />
+          <Toaster position="top-center" />
         </AuthProvider>
       </body>
     </html>

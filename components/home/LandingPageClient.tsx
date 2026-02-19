@@ -12,6 +12,7 @@ import {
   AuthenticatedCTASection,
   WhyChooseUsSectionRef,
   MentorBenefitsSection,
+  LandingOpportunitiesSection,
 } from '@/components/home';
 import { useAuth } from '@/hooks';
 import { LANDING_CONTENT } from '@/lib/constants/landingContent';
@@ -78,6 +79,9 @@ export default function LandingPageClient({ isAuthenticated }: LandingPageClient
       <section id="for-who">
         <WhoIsItForSection content={content.whoIsItFor} role={userRole} />
       </section>
+
+      {/* Explore Opportunities */}
+      <LandingOpportunitiesSection />
 
       {/* Conditional Call To Action */}
       {isAuthenticated ? (

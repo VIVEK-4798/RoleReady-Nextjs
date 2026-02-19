@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ConfirmationModal } from '@/components/ui';
+import toast from 'react-hot-toast';
 
 interface Category {
   _id: string;
@@ -66,22 +68,22 @@ export default function MentorJobsClient() {
       if (searchQuery.trim()) {
         params.append('search', searchQuery.trim());
       }
-      
+
       if (statusFilter !== 'all') {
         params.append('status', statusFilter);
       }
 
       const response = await fetch(`/api/mentor/jobs?${params.toString()}`);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data: ApiResponse = await response.json();
 
       if (data.success && Array.isArray(data.data)) {
         setJobs(data.data);
-        
+
         if (data.pagination) {
           setTotalItems(data.pagination.total || 0);
           setTotalPages(data.pagination.pages || 0);
@@ -114,7 +116,7 @@ export default function MentorJobsClient() {
     try {
       const response = await fetch(`/api/mentor/jobs/${job._id}`, {
         method: 'PATCH',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
@@ -126,9 +128,10 @@ export default function MentorJobsClient() {
       }
 
       await fetchJobs();
+      toast.success('Job status updated successfully');
     } catch (error) {
       console.error('Error toggling status:', error);
-      alert('Failed to update job status. Please try again.');
+      toast.error('Failed to update job status. Please try again.');
     }
   };
 
@@ -150,9 +153,10 @@ export default function MentorJobsClient() {
       setDeleteModalOpen(false);
       setJobToDelete(null);
       await fetchJobs();
+      toast.success('Job deleted successfully');
     } catch (error) {
       console.error('Error deleting job:', error);
-      alert('Failed to delete job. Please try again.');
+      toast.error('Failed to delete job. Please try again.');
     }
   };
 
@@ -176,7 +180,7 @@ export default function MentorJobsClient() {
   const paginationButtons = useMemo(() => {
     const buttons: number[] = [];
     const maxVisibleButtons = 5;
-    
+
     if (totalPages <= maxVisibleButtons) {
       for (let i = 1; i <= totalPages; i++) {
         buttons.push(i);
@@ -184,32 +188,32 @@ export default function MentorJobsClient() {
     } else {
       const start = Math.max(2, currentPage - 1);
       const end = Math.min(totalPages - 1, currentPage + 1);
-      
+
       buttons.push(1);
-      
+
       if (start > 2) {
         buttons.push(-1); // Ellipsis marker
       }
-      
+
       for (let i = start; i <= end; i++) {
         buttons.push(i);
       }
-      
+
       if (end < totalPages - 1) {
         buttons.push(-2); // Ellipsis marker
       }
-      
+
       if (totalPages > 1) {
         buttons.push(totalPages);
       }
     }
-    
+
     return buttons;
   }, [currentPage, totalPages]);
 
   const renderJobRow = (job: Job) => (
-    <tr 
-      key={job._id} 
+    <tr
+      key={job._id}
       className="hover:bg-gray-50 transition-colors duration-150"
     >
       <td className="px-4 py-4 md:px-6">
@@ -241,11 +245,10 @@ export default function MentorJobsClient() {
       </td>
       <td className="px-4 py-4 md:px-6 whitespace-nowrap">
         <span
-          className={`inline-flex px-2 py-1 text-xs rounded-full ${
-            job.isActive
+          className={`inline-flex px-2 py-1 text-xs rounded-full ${job.isActive
               ? 'bg-green-100 text-green-700'
               : 'bg-gray-100 text-gray-600'
-          }`}
+            }`}
         >
           {job.isActive ? 'Active' : 'Inactive'}
         </span>
@@ -418,7 +421,7 @@ export default function MentorJobsClient() {
                   >
                     Previous
                   </button>
-                  
+
                   {paginationButtons.map((pageNum, index) => (
                     <span key={`page-${pageNum}-${index}`}>
                       {pageNum < 0 ? (
@@ -426,11 +429,10 @@ export default function MentorJobsClient() {
                       ) : (
                         <button
                           onClick={() => handlePageChange(pageNum)}
-                          className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent ${
-                            currentPage === pageNum
+                          className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent ${currentPage === pageNum
                               ? 'bg-[#5693C1] text-white'
                               : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                          }`}
+                            }`}
                           aria-label={`Page ${pageNum}`}
                           aria-current={currentPage === pageNum ? 'page' : undefined}
                         >
@@ -439,7 +441,7 @@ export default function MentorJobsClient() {
                       )}
                     </span>
                   ))}
-                  
+
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
@@ -456,41 +458,19 @@ export default function MentorJobsClient() {
       </div>
 
       {/* Delete Confirmation Modal */}
-      {deleteModalOpen && jobToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/50 transition-opacity"
-            onClick={() => setDeleteModalOpen(false)}
-            aria-hidden="true"
-          />
-          
-          {/* Modal */}
-          <div className="relative bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-auto animate-in fade-in duration-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Delete Job
-            </h3>
-            <p className="text-gray-600 mb-6 text-sm md:text-base">
-              Are you sure you want to delete <span className="font-medium">&quot;{jobToDelete.title}&quot;</span> at{' '}
-              <span className="font-medium">{jobToDelete.company}</span>? This action cannot be undone.
-            </p>
-            <div className="flex flex-col sm:flex-row justify-end gap-3">
-              <button
-                onClick={() => setDeleteModalOpen(false)}
-                className="px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDelete}
-                className="px-4 py-2.5 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              >
-                Delete Job
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmationModal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setJobToDelete(null);
+        }}
+        onConfirm={handleDelete}
+        title="Delete Job"
+        message={jobToDelete ? `Are you sure you want to delete "${jobToDelete.title}" at ${jobToDelete.company}? This action cannot be undone.` : ''}
+        confirmText="Delete Job"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 }

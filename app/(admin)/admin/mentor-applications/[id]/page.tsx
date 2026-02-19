@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
+import { ConfirmationModal } from '@/components/ui';
 
 export default function AdminApplicationDetail() {
     const { id } = useParams();
@@ -13,6 +14,7 @@ export default function AdminApplicationDetail() {
     const [actionLoading, setActionLoading] = useState(false);
     const [rejectionReason, setRejectionReason] = useState('');
     const [showRejectModal, setShowRejectModal] = useState(false);
+    const [showApproveModal, setShowApproveModal] = useState(false);
 
     useEffect(() => {
         fetchDetail();
@@ -32,9 +34,11 @@ export default function AdminApplicationDetail() {
         }
     };
 
-    const handleApprove = async () => {
-        if (!confirm('Are you sure you want to approve this mentor?')) return;
+    const handleApprove = () => {
+        setShowApproveModal(true);
+    };
 
+    const confirmApprove = async () => {
         setActionLoading(true);
         try {
             const res = await fetch(`/api/admin/mentor-applications/${id}/approve`, {
@@ -43,6 +47,7 @@ export default function AdminApplicationDetail() {
             const data = await res.json();
             if (data.success) {
                 toast.success('Application approved! User is now a mentor.');
+                setShowApproveModal(false);
                 router.push('/admin/mentor-applications');
             } else {
                 toast.error(data.message || 'Approval failed');
@@ -205,6 +210,20 @@ export default function AdminApplicationDetail() {
                     </div>
                 </div>
             )}
+
+
+            {/* Approve Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={showApproveModal}
+                onClose={() => setShowApproveModal(false)}
+                onConfirm={confirmApprove}
+                title="Approve Mentor Application"
+                message="Are you sure you want to approve this mentor? They will gain access to mentor features immediately."
+                confirmText="Approve Candidate"
+                cancelText="Cancel"
+                type="success"
+                isLoading={actionLoading}
+            />
         </div>
     );
 }

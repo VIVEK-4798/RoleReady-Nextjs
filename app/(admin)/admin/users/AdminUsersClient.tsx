@@ -11,6 +11,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { AdminDataTable } from '@/components/admin';
 import MentorAssignmentDropdown from '@/components/admin/MentorAssignmentDropdown';
 import Link from 'next/link';
+import { ConfirmationModal } from '@/components/ui';
+import toast from 'react-hot-toast';
 
 interface User {
   _id: string;
@@ -45,7 +47,15 @@ export default function AdminUsersClient() {
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [roleFilter, setRoleFilter] = useState(searchParams.get('filter') || 'all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  // Modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkAction, setBulkAction] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -79,20 +89,31 @@ export default function AdminUsersClient() {
     return () => clearTimeout(timer);
   }, [fetchUsers]);
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
+  const handleDelete = (id: string) => {
+    setDeleteId(id);
+    setShowDeleteModal(true);
+  };
 
+  const confirmDeleteUser = async () => {
+    if (!deleteId) return;
+
+    setIsProcessing(true);
     try {
-      const response = await fetch(`/api/admin/users/${id}`, {
+      const response = await fetch(`/api/admin/users/${deleteId}`, {
         method: 'DELETE',
       });
 
       if (!response.ok) throw new Error('Failed to delete user');
 
+      toast.success('User deleted successfully');
+      setShowDeleteModal(false);
+      setDeleteId(null);
       fetchUsers();
     } catch (error) {
       console.error('Error deleting user:', error);
-      alert('Failed to delete user');
+      toast.error('Failed to delete user');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -106,36 +127,46 @@ export default function AdminUsersClient() {
 
       if (!response.ok) throw new Error('Failed to update user');
 
+      toast.success('User updated successfully');
       fetchUsers();
     } catch (error) {
       console.error('Error updating user:', error);
-      alert('Failed to update user status');
+      toast.error('Failed to update user status');
     }
   };
 
-  const handleBulkAction = async (action: string) => {
+  const handleBulkAction = (action: string) => {
     if (selectedIds.length === 0) {
-      alert('Please select users first');
+      toast.error('Please select users first');
       return;
     }
+    setBulkAction(action);
+    setShowBulkModal(true);
+  };
 
-    const confirmMessage = `Are you sure you want to ${action} ${selectedIds.length} user(s)?`;
-    if (!window.confirm(confirmMessage)) return;
+  const confirmBulkAction = async () => {
+    if (!bulkAction) return;
 
+    setIsProcessing(true);
     try {
       const response = await fetch('/api/admin/users/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, ids: selectedIds }),
+        body: JSON.stringify({ action: bulkAction, ids: selectedIds }),
       });
 
       if (!response.ok) throw new Error('Failed to perform bulk action');
 
+      toast.success(`Bulk ${bulkAction} completed successfully`);
       setSelectedIds([]);
+      setShowBulkModal(false);
+      setBulkAction(null);
       fetchUsers();
     } catch (error) {
       console.error('Error performing bulk action:', error);
-      alert('Failed to perform bulk action');
+      toast.error('Failed to perform bulk action');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -658,6 +689,39 @@ export default function AdminUsersClient() {
           </>
         )}
       </div>
-    </div>
+
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeleteId(null);
+        }}
+        onConfirm={confirmDeleteUser}
+        title="Delete User"
+        message="Are you sure you want to delete this user? This action cannot be undone."
+        confirmText="Delete User"
+        cancelText="Cancel"
+        type="danger"
+        isLoading={isProcessing}
+      />
+
+      {/* Bulk Action Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showBulkModal}
+        onClose={() => {
+          setShowBulkModal(false);
+          setBulkAction(null);
+        }}
+        onConfirm={confirmBulkAction}
+        title={`Confirm Bulk ${bulkAction?.charAt(0).toUpperCase()}${bulkAction?.slice(1)}`}
+        message={`Are you sure you want to ${bulkAction} ${selectedIds.length} selected user(s)?`}
+        confirmText={`Yes, ${bulkAction}`}
+        cancelText="Cancel"
+        type={bulkAction === 'delete' ? 'danger' : 'warning'}
+        isLoading={isProcessing}
+      />
+    </div >
   );
 }

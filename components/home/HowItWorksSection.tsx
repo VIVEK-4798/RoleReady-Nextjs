@@ -501,24 +501,7 @@ export default function HowItWorksSection({ content }: HowItWorksSectionProps) {
                   </Link>
                 </motion.div>
 
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                  className="text-white/60 text-sm text-center mt-4 flex items-center justify-center gap-1"
-                >
-                  {user?.role === 'mentor' ? (
-                    <>
-                      <Shield className="w-3 h-3" />
-                      Centralized validation workflow
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="w-3 h-3" />
-                      No credit card required • 5-min setup
-                    </>
-                  )}
-                </motion.p>
+
 
 
               </div>

@@ -9,6 +9,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminDataTable } from '@/components/admin';
+import { ConfirmationModal } from '@/components/ui';
+import toast from 'react-hot-toast';
 
 interface Job {
   _id: string;
@@ -37,6 +39,13 @@ export default function AdminJobsClient() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<string>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  // Modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkAction, setBulkAction] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const limit = 10;
 
@@ -77,20 +86,24 @@ export default function AdminJobsClient() {
   }, [fetchJobs]);
 
   // Handle bulk actions
-  const handleBulkAction = async (action: string) => {
+  const handleBulkAction = (action: string) => {
     if (selectedIds.length === 0) {
-      alert('Please select jobs first');
+      toast.error('Please select jobs first');
       return;
     }
+    setBulkAction(action);
+    setShowBulkModal(true);
+  };
 
-    const confirmMessage = `Are you sure you want to ${action} ${selectedIds.length} job(s)?`;
-    if (!window.confirm(confirmMessage)) return;
+  const confirmBulkAction = async () => {
+    if (!bulkAction) return;
 
+    setIsProcessing(true);
     try {
       const response = await fetch('/api/admin/jobs/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, ids: selectedIds }),
+        body: JSON.stringify({ action: bulkAction, ids: selectedIds }),
       });
 
       const data = await response.json();
@@ -98,22 +111,32 @@ export default function AdminJobsClient() {
       if (data.success) {
         setSelectedIds([]);
         fetchJobs();
-        alert(data.message);
+        toast.success(data.message);
+        setShowBulkModal(false);
+        setBulkAction(null);
       } else {
-        alert(data.error || 'Action failed');
+        toast.error(data.error || 'Action failed');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('An error occurred');
+      toast.error('An error occurred');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   // Handle delete
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this job?')) return;
+  const handleDelete = (id: string) => {
+    setDeleteId(id);
+    setShowDeleteModal(true);
+  };
 
+  const confirmDeleteJob = async () => {
+    if (!deleteId) return;
+
+    setIsProcessing(true);
     try {
-      const response = await fetch(`/api/admin/jobs/${id}`, {
+      const response = await fetch(`/api/admin/jobs/${deleteId}`, {
         method: 'DELETE',
       });
 
@@ -121,13 +144,17 @@ export default function AdminJobsClient() {
 
       if (data.success) {
         fetchJobs();
-        alert(data.message);
+        toast.success(data.message);
+        setShowDeleteModal(false);
+        setDeleteId(null);
       } else {
-        alert(data.error || 'Delete failed');
+        toast.error(data.error || 'Delete failed');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('An error occurred');
+      toast.error('An error occurred');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -655,6 +682,39 @@ export default function AdminJobsClient() {
           </>
         )}
       </div>
-    </div>
+
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeleteId(null);
+        }}
+        onConfirm={confirmDeleteJob}
+        title="Delete Job"
+        message="Are you sure you want to delete this job? This action cannot be undone."
+        confirmText="Delete Job"
+        cancelText="Cancel"
+        type="danger"
+        isLoading={isProcessing}
+      />
+
+      {/* Bulk Action Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showBulkModal}
+        onClose={() => {
+          setShowBulkModal(false);
+          setBulkAction(null);
+        }}
+        onConfirm={confirmBulkAction}
+        title={`Confirm Bulk ${bulkAction?.charAt(0).toUpperCase()}${bulkAction?.slice(1)}`}
+        message={`Are you sure you want to ${bulkAction} ${selectedIds.length} selected job(s)?`}
+        confirmText={`Yes, ${bulkAction}`}
+        cancelText="Cancel"
+        type={bulkAction === 'delete' ? 'danger' : 'warning'}
+        isLoading={isProcessing}
+      />
+    </div >
   );
 }

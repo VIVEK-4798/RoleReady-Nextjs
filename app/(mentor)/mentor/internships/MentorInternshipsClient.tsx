@@ -9,6 +9,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ConfirmationModal } from '@/components/ui';
+import toast from 'react-hot-toast';
 
 interface Internship {
   _id: string;
@@ -51,7 +53,10 @@ export default function MentorInternshipsClient() {
   const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const limit = 10;
 
@@ -88,26 +93,31 @@ export default function MentorInternshipsClient() {
   }, [fetchInternships]);
 
   // Handle delete
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this internship? This action cannot be undone.')) {
-      return;
-    }
+  const handleDelete = (id: string) => {
+    setDeleteId(id);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteInternship = async () => {
+    if (!deleteId) return;
 
     try {
-      const response = await fetch(`/api/mentor/internships/${id}`, {
+      const response = await fetch(`/api/mentor/internships/${deleteId}`, {
         method: 'DELETE'
       });
       const result = await response.json();
 
       if (result.success) {
         fetchInternships(); // Refresh list and stats
-        alert('Internship deleted successfully!');
+        toast.success('Internship deleted successfully!');
+        setShowDeleteModal(false);
+        setDeleteId(null);
       } else {
         throw new Error(result.error);
       }
     } catch (error) {
       console.error('Error deleting internship:', error);
-      alert('Failed to delete internship. Please try again.');
+      toast.error('Failed to delete internship. Please try again.');
     }
   };
 
@@ -128,7 +138,7 @@ export default function MentorInternshipsClient() {
       }
     } catch (error) {
       console.error('Error toggling status:', error);
-      alert('Failed to update status. Please try again.');
+      toast.error('Failed to update status. Please try again.');
     }
   };
 
@@ -149,7 +159,7 @@ export default function MentorInternshipsClient() {
       }
     } catch (error) {
       console.error('Error toggling featured:', error);
-      alert('Failed to update featured status. Please try again.');
+      toast.error('Failed to update featured status. Please try again.');
     }
   };
 
@@ -513,8 +523,8 @@ export default function MentorInternshipsClient() {
                           <button
                             onClick={() => toggleStatus(internship)}
                             className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors ${internship.isActive
-                                ? 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                                : 'border border-green-300 text-green-700 hover:bg-green-50'
+                              ? 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                              : 'border border-green-300 text-green-700 hover:bg-green-50'
                               }`}
                           >
                             {internship.isActive ? 'Deactivate' : 'Activate'}
@@ -523,8 +533,8 @@ export default function MentorInternshipsClient() {
                           <button
                             onClick={() => toggleFeatured(internship)}
                             className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors ${internship.isFeatured
-                                ? 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                                : 'border border-yellow-300 text-yellow-700 hover:bg-yellow-50'
+                              ? 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                              : 'border border-yellow-300 text-yellow-700 hover:bg-yellow-50'
                               }`}
                           >
                             {internship.isFeatured ? 'Remove Feature' : 'Feature'}
@@ -583,8 +593,8 @@ export default function MentorInternshipsClient() {
                   key={pageNum}
                   onClick={() => setPage(pageNum)}
                   className={`w-10 h-10 rounded-lg text-sm font-medium ${page === pageNum
-                      ? 'bg-[#5693C1] text-white'
-                      : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                    ? 'bg-[#5693C1] text-white'
+                    : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
                     }`}
                 >
                   {pageNum}
@@ -626,6 +636,22 @@ export default function MentorInternshipsClient() {
           </div>
         </div>
       </div>
-    </div>
+
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeleteId(null);
+        }}
+        onConfirm={confirmDeleteInternship}
+        title="Delete Internship"
+        message="Are you sure you want to delete this internship? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
+    </div >
   );
 }

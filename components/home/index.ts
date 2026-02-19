@@ -15,5 +15,6 @@ export { default as AuthenticatedCTASection } from './AuthenticatedCTASection';
 export { default as FooterSection } from './FooterSection';
 export { default as MentorBenefitsSection } from './MentorBenefitsSection';
 export { default as LandingPageClient } from './LandingPageClient';
+export { default as LandingOpportunitiesSection } from './LandingOpportunitiesSection';
 
 export type { WhyChooseUsSectionRef } from './WhyChooseUsSection';

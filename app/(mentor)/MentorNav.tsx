@@ -76,8 +76,21 @@ const renderIcon = (iconKey: string, isOpen = false): ReactNode => {
   return icon;
 };
 
+interface SubMenuItem {
+  href: string;
+  label: string;
+}
+
+interface NavItem {
+  href: string;
+  label: string;
+  icon: string;
+  exact?: boolean;
+  submenu?: SubMenuItem[];
+}
+
 // Navigation items
-const navItems = [
+const navItems: NavItem[] = [
   {
     href: '/mentor',
     label: 'Dashboard',
@@ -89,24 +102,7 @@ const navItems = [
     label: 'Skill Validation',
     icon: 'validation',
   },
-  {
-    href: '/mentor/internships',
-    label: 'Internships',
-    icon: 'internships',
-    submenu: [
-      { href: '/mentor/internships', label: 'All Internships' },
-      { href: '/mentor/internships/add', label: 'Add Internship' },
-    ],
-  },
-  {
-    href: '/mentor/jobs',
-    label: 'Jobs',
-    icon: 'jobs',
-    submenu: [
-      { href: '/mentor/jobs', label: 'All Jobs' },
-      { href: '/mentor/jobs/add', label: 'Add Job' },
-    ],
-  },
+
   {
     href: '/mentor/notifications',
     label: 'Notifications',
@@ -123,19 +119,6 @@ const navItems = [
     icon: 'profile',
   },
 ];
-
-interface SubMenuItem {
-  href: string;
-  label: string;
-}
-
-interface NavItem {
-  href: string;
-  label: string;
-  icon: string;
-  exact?: boolean;
-  submenu?: SubMenuItem[];
-}
 
 export default function MentorNav() {
   const pathname = usePathname();

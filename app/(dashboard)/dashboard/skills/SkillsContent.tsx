@@ -8,7 +8,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks';
-import { SkeletonPage, ProgressBar, useToast } from '@/components/ui';
+import { SkeletonPage, ProgressBar, ConfirmationModal } from '@/components/ui';
+import toast from 'react-hot-toast';
 
 interface UserSkill {
   id: string;
@@ -44,7 +45,6 @@ const DOMAINS = [
 
 export default function SkillsContent() {
   const { user, isLoading: authLoading } = useAuth();
-  const { addToast } = useToast();
   const [skills, setSkills] = useState<UserSkill[]>([]);
   const [availableSkills, setAvailableSkills] = useState<AvailableSkill[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,18 +53,23 @@ export default function SkillsContent() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [error, setError] = useState('');
 
+  // Delete modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [skillToDelete, setSkillToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const fetchSkills = useCallback(async () => {
     if (!user?.id) return;
-    
+
     try {
       const params = new URLSearchParams();
       if (selectedDomain !== 'all') {
         params.set('domain', selectedDomain);
       }
-      
+
       const response = await fetch(`/api/users/${user.id}/skills?${params}`);
       const data = await response.json();
-      
+
       if (data.success) {
         const skillsData = data.data?.skills || data.skills || [];
         setSkills(Array.isArray(skillsData) ? skillsData : []);
@@ -84,7 +89,7 @@ export default function SkillsContent() {
     try {
       const response = await fetch('/api/skills?limit=1000&active=true');
       const data = await response.json();
-      
+
       if (data.success) {
         const skillsData = data.data || [];
         setAvailableSkills(Array.isArray(skillsData) ? skillsData : []);
@@ -106,7 +111,7 @@ export default function SkillsContent() {
 
   const handleAddSkill = async (skillId: string, proficiency: number) => {
     if (!user?.id) return;
-    
+
     try {
       const response = await fetch(`/api/users/${user.id}/skills`, {
         method: 'POST',
@@ -119,21 +124,21 @@ export default function SkillsContent() {
       if (data.success) {
         fetchSkills();
         setShowAddModal(false);
-        addToast('success', 'Skill added successfully');
+        toast.success('Skill added successfully');
       } else {
         setError(data.error || 'Failed to add skill');
-        addToast('error', data.error || 'Failed to add skill');
+        toast.error(data.error || 'Failed to add skill');
       }
     } catch (err) {
       console.error('Failed to add skill:', err);
       setError('Failed to add skill');
-      addToast('error', 'Failed to add skill');
+      toast.error('Failed to add skill');
     }
   };
 
   const handleUpdateProficiency = async (userSkillId: string, proficiency: number) => {
     if (!user?.id) return;
-    
+
     try {
       const response = await fetch(`/api/users/${user.id}/skills/${userSkillId}`, {
         method: 'PUT',
@@ -144,36 +149,46 @@ export default function SkillsContent() {
       const data = await response.json();
 
       if (data.success) {
-        setSkills(prev => prev.map(s => 
+        setSkills(prev => prev.map(s =>
           s.id === userSkillId ? { ...s, proficiency } : s
         ));
-        addToast('success', 'Proficiency updated');
+        toast.success('Proficiency updated');
       }
     } catch (err) {
       console.error('Failed to update skill:', err);
-      addToast('error', 'Failed to update proficiency');
+      toast.error('Failed to update proficiency');
     }
   };
 
-  const handleRemoveSkill = async (userSkillId: string) => {
-    if (!user?.id) return;
-    
-    if (!confirm('Are you sure you want to remove this skill?')) return;
+  const handleRemoveSkill = (userSkillId: string) => {
+    setSkillToDelete(userSkillId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteSkill = async () => {
+    if (!user?.id || !skillToDelete) return;
 
     try {
-      const response = await fetch(`/api/users/${user.id}/skills/${userSkillId}`, {
+      setIsDeleting(true);
+      const response = await fetch(`/api/users/${user.id}/skills/${skillToDelete}`, {
         method: 'DELETE',
       });
 
       const data = await response.json();
 
       if (data.success) {
-        setSkills(prev => prev.filter(s => s.id !== userSkillId));
-        addToast('success', 'Skill removed');
+        setSkills(prev => prev.filter(s => s.id !== skillToDelete));
+        toast.success('Skill removed');
+        setShowDeleteModal(false);
+        setSkillToDelete(null);
+      } else {
+        toast.error(data.error || 'Failed to remove skill');
       }
     } catch (err) {
       console.error('Failed to remove skill:', err);
-      addToast('error', 'Failed to remove skill');
+      toast.error('Failed to remove skill');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -186,18 +201,18 @@ export default function SkillsContent() {
       const data = await response.json();
 
       if (data.success) {
-        setSkills(prev => prev.map(s => 
-          s.id === userSkillId 
+        setSkills(prev => prev.map(s =>
+          s.id === userSkillId
             ? { ...s, validationStatus: 'pending' as const }
             : s
         ));
-        addToast('success', 'Validation requested successfully');
+        toast.success('Validation requested successfully');
       } else {
-        addToast('error', data.error || 'Failed to request validation');
+        toast.error(data.error || 'Failed to request validation');
       }
     } catch (err) {
       console.error('Failed to request validation:', err);
-      addToast('error', 'Failed to request validation');
+      toast.error('Failed to request validation');
     }
   };
 
@@ -274,8 +289,8 @@ export default function SkillsContent() {
             <div>
               <p className="text-sm text-gray-500">Avg. Proficiency</p>
               <p className="text-2xl font-bold text-[#5693C1]">
-                {skills?.length > 0 
-                  ? Math.round(skills.reduce((sum, s) => sum + s.proficiency, 0) / skills.length) 
+                {skills?.length > 0
+                  ? Math.round(skills.reduce((sum, s) => sum + s.proficiency, 0) / skills.length)
                   : 0}%
               </p>
             </div>
@@ -386,6 +401,22 @@ export default function SkillsContent() {
           onClose={() => setShowAddModal(false)}
         />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setSkillToDelete(null);
+        }}
+        onConfirm={confirmDeleteSkill}
+        title="Remove Skill"
+        message="Are you sure you want to remove this skill? This action cannot be undone and will affect your readiness score."
+        confirmText="Remove Skill"
+        cancelText="Cancel"
+        type="danger"
+        isLoading={isDeleting}
+      />
     </div>
   );
 }
@@ -582,8 +613,8 @@ function AddSkillModal({ availableSkills, onAdd, onClose }: AddSkillModalProps) 
             <h3 className="text-lg font-semibold text-gray-900">
               Add Skill
             </h3>
-            <button 
-              onClick={onClose} 
+            <button
+              onClick={onClose}
               className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#5693C1] rounded"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

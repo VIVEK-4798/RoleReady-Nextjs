@@ -1638,7 +1638,7 @@ const stats = [
           <div className="grid grid-cols-2 gap-4 mb-6">
             {[
               { icon: XCircle, label: 'Traditional Approach', color: 'red' },
-              { icon: CheckCircle, label: 'RoleReady AI', color: 'green' }
+              { icon: CheckCircle, label: 'RoleReady', color: 'green' }
             ].map((item, idx) => (
               <motion.div
                 key={idx}

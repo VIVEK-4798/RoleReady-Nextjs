@@ -9,6 +9,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminDataTable } from '@/components/admin';
+import { ConfirmationModal } from '@/components/ui';
+import toast from 'react-hot-toast';
 
 interface Internship {
   _id: string;
@@ -35,6 +37,13 @@ export default function AdminInternshipsClient() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<string>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  // Modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkAction, setBulkAction] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const limit = 10;
 
@@ -74,20 +83,24 @@ export default function AdminInternshipsClient() {
   }, [fetchInternships]);
 
   // Handle bulk actions
-  const handleBulkAction = async (action: string) => {
+  const handleBulkAction = (action: string) => {
     if (selectedIds.length === 0) {
-      alert('Please select internships first');
+      toast.error('Please select internships first');
       return;
     }
+    setBulkAction(action);
+    setShowBulkModal(true);
+  };
 
-    const confirmMessage = `Are you sure you want to ${action} ${selectedIds.length} internship(s)?`;
-    if (!window.confirm(confirmMessage)) return;
+  const confirmBulkAction = async () => {
+    if (!bulkAction) return;
 
+    setIsProcessing(true);
     try {
       const response = await fetch('/api/admin/internships/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, ids: selectedIds }),
+        body: JSON.stringify({ action: bulkAction, ids: selectedIds }),
       });
 
       const data = await response.json();
@@ -95,22 +108,32 @@ export default function AdminInternshipsClient() {
       if (data.success) {
         setSelectedIds([]);
         fetchInternships();
-        alert(data.message);
+        toast.success(data.message);
+        setShowBulkModal(false);
+        setBulkAction(null);
       } else {
-        alert(data.error || 'Action failed');
+        toast.error(data.error || 'Action failed');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('An error occurred');
+      toast.error('An error occurred');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   // Handle delete
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this internship?')) return;
+  const handleDelete = (id: string) => {
+    setDeleteId(id);
+    setShowDeleteModal(true);
+  };
 
+  const confirmDeleteInternship = async () => {
+    if (!deleteId) return;
+
+    setIsProcessing(true);
     try {
-      const response = await fetch(`/api/admin/internships/${id}`, {
+      const response = await fetch(`/api/admin/internships/${deleteId}`, {
         method: 'DELETE',
       });
 
@@ -118,13 +141,17 @@ export default function AdminInternshipsClient() {
 
       if (data.success) {
         fetchInternships();
-        alert(data.message);
+        toast.success(data.message);
+        setShowDeleteModal(false);
+        setDeleteId(null);
       } else {
-        alert(data.error || 'Delete failed');
+        toast.error(data.error || 'Delete failed');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('An error occurred');
+      toast.error('An error occurred');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -540,6 +567,39 @@ export default function AdminInternshipsClient() {
           </>
         )}
       </div>
-    </div>
+
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeleteId(null);
+        }}
+        onConfirm={confirmDeleteInternship}
+        title="Delete Internship"
+        message="Are you sure you want to delete this internship? This action cannot be undone."
+        confirmText="Delete Internship"
+        cancelText="Cancel"
+        type="danger"
+        isLoading={isProcessing}
+      />
+
+      {/* Bulk Action Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showBulkModal}
+        onClose={() => {
+          setShowBulkModal(false);
+          setBulkAction(null);
+        }}
+        onConfirm={confirmBulkAction}
+        title={`Confirm Bulk ${bulkAction?.charAt(0).toUpperCase()}${bulkAction?.slice(1)}`}
+        message={`Are you sure you want to ${bulkAction} ${selectedIds.length} selected internship(s)?`}
+        confirmText={`Yes, ${bulkAction}`}
+        cancelText="Cancel"
+        type={bulkAction === 'delete' ? 'danger' : 'warning'}
+        isLoading={isProcessing}
+      />
+    </div >
   );
 }

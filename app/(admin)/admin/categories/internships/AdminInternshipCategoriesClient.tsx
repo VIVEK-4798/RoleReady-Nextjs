@@ -8,6 +8,8 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { AdminDataTable } from '@/components/admin';
+import { ConfirmationModal } from '@/components/ui';
+import toast from 'react-hot-toast';
 
 interface Category {
   _id: string;
@@ -42,9 +44,17 @@ export default function AdminInternshipCategoriesClient() {
     description: '',
     isActive: true,
   });
+  /* Existing state */
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<string>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  // Modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkAction, setBulkAction] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const limit = 10;
 
@@ -79,16 +89,16 @@ export default function AdminInternshipCategoriesClient() {
     const timer = setTimeout(() => {
       fetchCategories();
     }, 300);
-    
+
     return () => clearTimeout(timer);
   }, [fetchCategories]);
 
   // Handle create/update
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
-      alert('Category name is required');
+      toast.error('Category name is required');
       return;
     }
 
@@ -96,7 +106,7 @@ export default function AdminInternshipCategoriesClient() {
       const url = editingCategory
         ? `/api/admin/categories/internships/${editingCategory._id}`
         : '/api/admin/categories/internships';
-      
+
       const method = editingCategory ? 'PATCH' : 'POST';
 
       const response = await fetch(url, {
@@ -112,22 +122,28 @@ export default function AdminInternshipCategoriesClient() {
         setEditingCategory(null);
         setFormData({ name: '', colorClass: '#3B82F6', description: '', isActive: true });
         fetchCategories();
-        alert(data.message);
+        toast.success(data.message);
       } else {
-        alert(data.error || 'Operation failed');
+        toast.error(data.error || 'Operation failed');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('An error occurred');
+      toast.error('An error occurred');
     }
   };
 
   // Handle delete
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this category? This action cannot be undone.')) return;
+  const handleDelete = (id: string) => {
+    setDeleteId(id);
+    setShowDeleteModal(true);
+  };
 
+  const confirmDeleteCategory = async () => {
+    if (!deleteId) return;
+
+    setIsProcessing(true);
     try {
-      const response = await fetch(`/api/admin/categories/internships/${id}`, {
+      const response = await fetch(`/api/admin/categories/internships/${deleteId}`, {
         method: 'DELETE',
       });
 
@@ -135,13 +151,17 @@ export default function AdminInternshipCategoriesClient() {
 
       if (data.success) {
         fetchCategories();
-        alert(data.message);
+        toast.success(data.message);
+        setShowDeleteModal(false);
+        setDeleteId(null);
       } else {
-        alert(data.error || 'Delete failed');
+        toast.error(data.error || 'Delete failed');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('An error occurred');
+      toast.error('An error occurred');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -158,12 +178,13 @@ export default function AdminInternshipCategoriesClient() {
 
       if (data.success) {
         fetchCategories();
+        toast.success('Status updated successfully');
       } else {
-        alert(data.error || 'Status update failed');
+        toast.error(data.error || 'Status update failed');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('An error occurred');
+      toast.error('An error occurred');
     }
   };
 
@@ -180,20 +201,24 @@ export default function AdminInternshipCategoriesClient() {
   };
 
   // Bulk actions
-  const handleBulkAction = async (action: string) => {
+  const handleBulkAction = (action: string) => {
     if (selectedIds.length === 0) {
-      alert('Please select categories first');
+      toast.error('Please select categories first');
       return;
     }
+    setBulkAction(action);
+    setShowBulkModal(true);
+  };
 
-    const confirmMessage = `Are you sure you want to ${action} ${selectedIds.length} category(s)?`;
-    if (!window.confirm(confirmMessage)) return;
+  const confirmBulkAction = async () => {
+    if (!bulkAction) return;
 
+    setIsProcessing(true);
     try {
       const response = await fetch('/api/admin/categories/internships/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, ids: selectedIds }),
+        body: JSON.stringify({ action: bulkAction, ids: selectedIds }),
       });
 
       const data = await response.json();
@@ -201,13 +226,17 @@ export default function AdminInternshipCategoriesClient() {
       if (data.success) {
         setSelectedIds([]);
         fetchCategories();
-        alert(data.message);
+        toast.success(data.message);
+        setShowBulkModal(false);
+        setBulkAction(null);
       } else {
-        alert(data.error || 'Bulk action failed');
+        toast.error(data.error || 'Bulk action failed');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('An error occurred');
+      toast.error('An error occurred');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -222,8 +251,8 @@ export default function AdminInternshipCategoriesClient() {
 
   // Toggle single selection
   const toggleSelect = (id: string) => {
-    setSelectedIds(prev => 
-      prev.includes(id) 
+    setSelectedIds(prev =>
+      prev.includes(id)
         ? prev.filter(catId => catId !== id)
         : [...prev, id]
     );
@@ -270,7 +299,7 @@ export default function AdminInternshipCategoriesClient() {
     {
       key: 'name',
       label: (
-        <button 
+        <button
           onClick={() => handleSort('name')}
           className="flex items-center gap-1 font-medium text-gray-700 hover:text-gray-900"
         >
@@ -286,7 +315,7 @@ export default function AdminInternshipCategoriesClient() {
       ),
       render: (category: Category) => (
         <div className="flex items-center gap-3">
-          <div 
+          <div
             className="w-10 h-10 rounded-lg border border-gray-200 flex items-center justify-center text-white font-semibold text-sm"
             style={{ backgroundColor: category.colorClass }}
           >
@@ -308,7 +337,7 @@ export default function AdminInternshipCategoriesClient() {
       render: (category: Category) => (
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <div 
+            <div
               className="w-6 h-6 rounded border border-gray-200"
               style={{ backgroundColor: category.colorClass }}
             />
@@ -328,11 +357,10 @@ export default function AdminInternshipCategoriesClient() {
         <div className="space-y-1">
           <button
             onClick={() => handleToggleStatus(category._id, category.isActive)}
-            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-              category.isActive
-                ? 'bg-green-100 text-green-800 border border-green-200 hover:bg-green-200'
-                : 'bg-gray-100 text-gray-800 border border-gray-200 hover:bg-gray-200'
-            }`}
+            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors ${category.isActive
+              ? 'bg-green-100 text-green-800 border border-green-200 hover:bg-green-200'
+              : 'bg-gray-100 text-gray-800 border border-gray-200 hover:bg-gray-200'
+              }`}
           >
             <span className={`w-2 h-2 rounded-full mr-2 ${category.isActive ? 'bg-green-500' : 'bg-gray-400'}`}></span>
             {category.isActive ? 'Active' : 'Inactive'}
@@ -450,7 +478,7 @@ export default function AdminInternshipCategoriesClient() {
             <div>
               <p className="text-sm text-gray-500">Avg. Internships</p>
               <p className="text-2xl font-bold text-gray-900 mt-1">
-                {categories.length > 0 
+                {categories.length > 0
                   ? Math.round(categories.reduce((sum, cat) => sum + (cat.internshipCount || 0), 0) / categories.length)
                   : 0}
               </p>
@@ -721,7 +749,7 @@ export default function AdminInternshipCategoriesClient() {
                   </label>
                   <div className="flex items-center gap-3">
                     <div className="relative">
-                      <div 
+                      <div
                         className="w-12 h-12 rounded-xl border-2 border-gray-300"
                         style={{ backgroundColor: formData.colorClass }}
                       />
@@ -748,11 +776,10 @@ export default function AdminInternshipCategoriesClient() {
                         key={color}
                         type="button"
                         onClick={() => setFormData({ ...formData, colorClass: color })}
-                        className={`w-8 h-8 rounded border-2 ${
-                          formData.colorClass === color 
-                            ? 'border-gray-900' 
-                            : 'border-gray-300 hover:border-gray-400'
-                        }`}
+                        className={`w-8 h-8 rounded border-2 ${formData.colorClass === color
+                          ? 'border-gray-900'
+                          : 'border-gray-300 hover:border-gray-400'
+                          }`}
                         style={{ backgroundColor: color }}
                         title={color}
                       />
@@ -798,6 +825,7 @@ export default function AdminInternshipCategoriesClient() {
                       />
                       <span className="text-gray-900">Inactive</span>
                     </label>
+
                   </div>
                 </div>
 
@@ -825,6 +853,38 @@ export default function AdminInternshipCategoriesClient() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeleteId(null);
+        }}
+        onConfirm={confirmDeleteCategory}
+        title="Delete Category"
+        message="Are you sure you want to delete this category? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        isLoading={isProcessing}
+      />
+
+      {/* Bulk Action Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showBulkModal}
+        onClose={() => {
+          setShowBulkModal(false);
+          setBulkAction(null);
+        }}
+        onConfirm={confirmBulkAction}
+        title={`Confirm Bulk ${bulkAction?.charAt(0).toUpperCase()}${bulkAction?.slice(1)}`}
+        message={`Are you sure you want to ${bulkAction} ${selectedIds.length} selected category(s)?`}
+        confirmText={`Yes, ${bulkAction}`}
+        cancelText="Cancel"
+        type={bulkAction === 'delete' ? 'danger' : 'warning'}
+        isLoading={isProcessing}
+      />
     </div>
   );
 }

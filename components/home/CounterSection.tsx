@@ -474,13 +474,12 @@ export default function CounterSection() {
                 </motion.div>
 
                 {/* Learn more link - fixed at bottom */}
-                <motion.div
+                <div
                   className="flex items-center text-[#5693C1] font-medium text-sm group/link mt-auto pt-2"
-                  whileHover={{ x: 3 }} // Reduced from 5 to 3
                 >
                   <span>Learn more</span>
                   <ChevronRight className="w-4 h-4 ml-1 transition-transform duration-300 group-hover/link:translate-x-1" />
-                </motion.div>
+                </div>
               </motion.div>
             </motion.div>
           ))}

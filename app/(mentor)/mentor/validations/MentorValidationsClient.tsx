@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useToast } from '@/components/ui/Toast';
+
 import {
     CheckCircle,
     XCircle,
@@ -31,7 +31,6 @@ interface Stats {
 }
 
 export default function MentorValidationsClient() {
-    const { success, error: toastError } = useToast();
     const [users, setUsers] = useState<GroupedUser[]>([]);
     const [stats, setStats] = useState<Stats | null>(null);
     const [loading, setLoading] = useState(true);

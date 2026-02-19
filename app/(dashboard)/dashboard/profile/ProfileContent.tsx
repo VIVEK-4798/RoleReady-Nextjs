@@ -8,7 +8,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks';
-import { SkeletonPage, useToast } from '@/components/ui';
+import { SkeletonPage } from '@/components/ui';
+import toast from 'react-hot-toast';
 import PasswordChangeSection from './PasswordChangeSection';
 
 interface ProfileData {
@@ -67,7 +68,6 @@ interface Project {
 
 export default function ProfileContent() {
   const { user, isLoading: authLoading } = useAuth();
-  const { addToast } = useToast();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -87,11 +87,11 @@ export default function ProfileContent() {
 
   const fetchProfile = useCallback(async () => {
     if (!user?.id) return;
-    
+
     try {
       const response = await fetch(`/api/users/${user.id}/profile`);
       const data = await response.json();
-      
+
       if (data.success) {
         setProfile(data.data);
         setFormData({
@@ -126,7 +126,7 @@ export default function ProfileContent() {
 
   const handleSave = async () => {
     if (!user?.id) return;
-    
+
     setIsSaving(true);
     setError('');
 
@@ -151,17 +151,17 @@ export default function ProfileContent() {
       const data = await response.json();
 
       if (data.success) {
-        addToast('success', 'Profile updated successfully');
+        toast.success('Profile updated successfully');
         setIsEditing(false);
         fetchProfile();
       } else {
         setError(data.error || 'Failed to update profile');
-        addToast('error', data.error || 'Failed to update profile');
+        toast.error(data.error || 'Failed to update profile');
       }
     } catch (err) {
       console.error('Failed to save profile:', err);
       setError('Failed to save profile');
-      addToast('error', 'Failed to save profile');
+      toast.error('Failed to save profile');
     } finally {
       setIsSaving(false);
     }
@@ -370,7 +370,7 @@ export default function ProfileContent() {
                   {profile.profile.bio}
                 </p>
               )}
-              
+
               {/* Social Links */}
               <div className="flex flex-wrap gap-3 mt-4">
                 {profile?.profile?.linkedinUrl && (

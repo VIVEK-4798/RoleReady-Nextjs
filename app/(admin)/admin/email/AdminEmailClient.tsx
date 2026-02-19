@@ -11,7 +11,7 @@
  */
 
 import { useState, useRef, ChangeEvent } from 'react';
-import { useToast } from '@/components/ui';
+import toast from 'react-hot-toast';
 import { parseEmailsFromCSV, parseEmailsFromText } from '@/lib/utils/csvParser';
 import RecipientSelector from '@/components/admin/RecipientSelector';
 
@@ -19,7 +19,6 @@ type Tab = 'single' | 'bulk';
 
 export default function AdminEmailClient() {
     const [activeTab, setActiveTab] = useState<Tab>('single');
-    const { success, error: showError } = useToast();
 
     return (
         <div className="max-w-6xl mx-auto space-y-6">
@@ -82,9 +81,9 @@ export default function AdminEmailClient() {
                 {/* Tab Content */}
                 <div className="p-6">
                     {activeTab === 'single' ? (
-                        <SingleEmailTab success={success} showError={showError} />
+                        <SingleEmailTab />
                     ) : (
-                        <BulkEmailTab success={success} showError={showError} />
+                        <BulkEmailTab />
                     )}
                 </div>
             </div>
@@ -95,12 +94,8 @@ export default function AdminEmailClient() {
 /**
  * Single Email Tab Component
  */
-interface TabProps {
-    success: (message: string) => void;
-    showError: (message: string) => void;
-}
 
-function SingleEmailTab({ success, showError }: TabProps) {
+function SingleEmailTab() {
     const [recipient, setRecipient] = useState('');
     const [subject, setSubject] = useState('');
     const [content, setContent] = useState('');
@@ -109,17 +104,17 @@ function SingleEmailTab({ success, showError }: TabProps) {
     const handleSend = async () => {
         // Validation
         if (!recipient.trim()) {
-            showError('Please enter recipient email');
+            toast.error('Please enter recipient email');
             return;
         }
 
         if (!subject.trim()) {
-            showError('Please enter email subject');
+            toast.error('Please enter email subject');
             return;
         }
 
         if (!content.trim()) {
-            showError('Please enter email content');
+            toast.error('Please enter email content');
             return;
         }
 
@@ -135,16 +130,16 @@ function SingleEmailTab({ success, showError }: TabProps) {
             const data = await response.json();
 
             if (data.success) {
-                success('Email sent successfully!');
+                toast.success('Email sent successfully!');
                 // Clear form
                 setRecipient('');
                 setSubject('');
                 setContent('');
             } else {
-                showError(data.error || 'Failed to send email');
+                toast.error(data.error || 'Failed to send email');
             }
         } catch (err) {
-            showError('Network error. Please try again.');
+            toast.error('Network error. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -157,7 +152,7 @@ function SingleEmailTab({ success, showError }: TabProps) {
                 value={recipient}
                 onChange={setRecipient}
                 disabled={loading}
-                onError={showError}
+                onError={(msg) => toast.error(msg)}
             />
 
             {/* Subject */}
@@ -225,7 +220,7 @@ function SingleEmailTab({ success, showError }: TabProps) {
 /**
  * Bulk Email Tab Component
  */
-function BulkEmailTab({ success, showError }: TabProps) {
+function BulkEmailTab() {
     const [emailsText, setEmailsText] = useState('');
     const [subject, setSubject] = useState('');
     const [content, setContent] = useState('');
@@ -239,7 +234,7 @@ function BulkEmailTab({ success, showError }: TabProps) {
 
         // Validate file type
         if (!file.name.endsWith('.csv')) {
-            showError('Please upload a CSV file');
+            toast.error('Please upload a CSV file');
             return;
         }
 
@@ -250,7 +245,7 @@ function BulkEmailTab({ success, showError }: TabProps) {
             const emails = parseEmailsFromCSV(csvContent);
 
             if (emails.length === 0) {
-                showError('No valid emails found in CSV file');
+                toast.error('No valid emails found in CSV file');
                 return;
             }
 
@@ -258,11 +253,11 @@ function BulkEmailTab({ success, showError }: TabProps) {
             const currentEmails = emailsText.trim();
             const newEmails = emails.join(', ');
             setEmailsText(currentEmails ? `${currentEmails}, ${newEmails}` : newEmails);
-            success(`Added ${emails.length} emails from CSV`);
+            toast.success(`Added ${emails.length} emails from CSV`);
         };
 
         reader.onerror = () => {
-            showError('Failed to read CSV file');
+            toast.error('Failed to read CSV file');
         };
 
         reader.readAsText(file);
@@ -276,17 +271,17 @@ function BulkEmailTab({ success, showError }: TabProps) {
     const handleSend = async () => {
         // Validation
         if (!emailsText.trim()) {
-            showError('Please enter recipient emails');
+            toast.error('Please enter recipient emails');
             return;
         }
 
         if (!subject.trim()) {
-            showError('Please enter email subject');
+            toast.error('Please enter email subject');
             return;
         }
 
         if (!content.trim()) {
-            showError('Please enter email content');
+            toast.error('Please enter email content');
             return;
         }
 
@@ -294,12 +289,12 @@ function BulkEmailTab({ success, showError }: TabProps) {
         const recipients = parseEmailsFromText(emailsText);
 
         if (recipients.length === 0) {
-            showError('No valid email addresses found');
+            toast.error('No valid email addresses found');
             return;
         }
 
         if (recipients.length > 200) {
-            showError(`Too many recipients. Maximum 200 emails per request. You have ${recipients.length}.`);
+            toast.error(`Too many recipients. Maximum 200 emails per request. You have ${recipients.length}.`);
             return;
         }
 
@@ -317,16 +312,16 @@ function BulkEmailTab({ success, showError }: TabProps) {
 
             if (data.success) {
                 setStats({ sent: data.sent, failed: data.failed });
-                success(`Bulk email sent! ${data.sent} successful, ${data.failed} failed`);
+                toast.success(`Bulk email sent! ${data.sent} successful, ${data.failed} failed`);
                 // Clear form
                 setEmailsText('');
                 setSubject('');
                 setContent('');
             } else {
-                showError(data.error || 'Failed to send bulk email');
+                toast.error(data.error || 'Failed to send bulk email');
             }
         } catch (err) {
-            showError('Network error. Please try again.');
+            toast.error('Network error. Please try again.');
         } finally {
             setLoading(false);
         }

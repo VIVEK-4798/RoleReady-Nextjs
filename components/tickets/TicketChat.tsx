@@ -133,12 +133,7 @@ export default function TicketChat({ ticketId, basePath }: TicketChatProps) {
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/50">
                 {messages.map((msg) => {
-                    const isMe = msg.senderId._id === user?.id; // Assuming user.id is string and senderId._id is string in API response
-                    // If senderId is populated object, we need to check properly. 
-                    // Usually API returns populated senderId. Let's assume senderId has _id property.
-                    // Wait, in my API I populated senderId. So msg.senderId is an object.
-                    // But user.id from useAuth is likely string.
-                    // Let's safe check.
+
                     const senderId = typeof msg.senderId === 'object' ? (msg.senderId as any)._id : msg.senderId;
                     const isCurrentUser = String(senderId) === String(user?.id);
 
