@@ -56,6 +56,7 @@ const ResumeSchema = new Schema({
   fileName: { type: String, required: true },
   uploadedAt: { type: Date, default: Date.now },
   parsedText: { type: String },
+  publicId: { type: String },
 }, { _id: false });
 
 const ProfileSchema = new Schema<IUserProfile>({

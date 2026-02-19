@@ -194,7 +194,7 @@ export default function NewProfileContent() {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      const response = await fetch(`/api/users/${user.id}/resume`, {
+      const response = await fetch('/api/user/upload-resume', {
         method: 'POST',
         body: formData,
       });
@@ -471,9 +471,9 @@ export default function NewProfileContent() {
 
     try {
       const formData = new FormData();
-      formData.append('image', file);
+      formData.append('file', file);
 
-      const response = await fetch(`/api/users/${user.id}/upload-image`, {
+      const response = await fetch('/api/user/upload-avatar', {
         method: 'POST',
         body: formData,
       });
@@ -486,7 +486,7 @@ export default function NewProfileContent() {
 
       if (result.success) {
         // Update local profile state
-        const newImageUrl = result.data.imageUrl;
+        const newImageUrl = result.user.image;
         setProfile(prev => prev ? { ...prev, image: newImageUrl } : null);
 
         // Update session

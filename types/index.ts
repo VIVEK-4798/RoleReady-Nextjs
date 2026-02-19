@@ -76,6 +76,7 @@ export interface IResume {
   fileName: string;
   uploadedAt: Date;
   parsedText?: string;
+  publicId?: string;
 }
 
 export interface IUserProfile {
@@ -123,6 +124,7 @@ export interface IUser {
     systemAnnouncements: boolean;
     marketingEmails: boolean;
   };
+  profile?: IUserProfile;
   privacySettings?: {
     profileVisibility: 'public' | 'private' | 'connections';
     showEmail: boolean;
