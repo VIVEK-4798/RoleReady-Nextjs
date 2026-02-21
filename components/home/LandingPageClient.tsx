@@ -13,6 +13,7 @@ import {
   WhyChooseUsSectionRef,
   MentorBenefitsSection,
   LandingOpportunitiesSection,
+  FeedbackSection,
 } from '@/components/home';
 import { useAuth } from '@/hooks';
 import { LANDING_CONTENT } from '@/lib/constants/landingContent';
@@ -89,6 +90,9 @@ export default function LandingPageClient({ isAuthenticated }: LandingPageClient
       ) : (
         <GuestCTASection />
       )}
+
+      {/* Feedback Section */}
+      <FeedbackSection />
 
       <PublicFooter />
     </>
