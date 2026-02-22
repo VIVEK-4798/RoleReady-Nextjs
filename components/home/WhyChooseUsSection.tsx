@@ -77,33 +77,33 @@ const LEVEL_POINTS: Record<SkillLevel, number> = {
 const LEVEL_ORDER: SkillLevel[] = ['none', 'beginner', 'intermediate', 'advanced', 'expert'];
 
 const LEVEL_COLORS: Record<SkillLevel, { bg: string; text: string; border: string; gradient: string }> = {
-  none: { 
-    bg: 'bg-gray-50', 
-    text: 'text-gray-400', 
+  none: {
+    bg: 'bg-gray-50',
+    text: 'text-gray-400',
     border: 'border-gray-200',
     gradient: 'from-gray-50 to-gray-100'
   },
-  beginner: { 
-    bg: 'bg-blue-50', 
-    text: 'text-blue-600', 
+  beginner: {
+    bg: 'bg-blue-50',
+    text: 'text-blue-600',
     border: 'border-blue-200',
     gradient: 'from-blue-50 to-blue-100'
   },
-  intermediate: { 
-    bg: 'bg-green-50', 
-    text: 'text-green-600', 
+  intermediate: {
+    bg: 'bg-green-50',
+    text: 'text-green-600',
     border: 'border-green-200',
     gradient: 'from-green-50 to-green-100'
   },
-  advanced: { 
-    bg: 'bg-purple-50', 
-    text: 'text-purple-600', 
+  advanced: {
+    bg: 'bg-purple-50',
+    text: 'text-purple-600',
     border: 'border-purple-200',
     gradient: 'from-purple-50 to-purple-100'
   },
-  expert: { 
-    bg: 'bg-amber-50', 
-    text: 'text-amber-600', 
+  expert: {
+    bg: 'bg-amber-50',
+    text: 'text-amber-600',
     border: 'border-amber-200',
     gradient: 'from-amber-50 to-amber-100'
   },
@@ -124,6 +124,8 @@ interface WhyChooseUsSectionProps {
       text: string;
     }[];
   };
+  isDemoOpen?: boolean;
+  setIsDemoOpen?: (open: boolean) => void;
 }
 
 interface RoleOption {
@@ -141,6 +143,18 @@ interface Benchmark {
   required: boolean;
   category?: string;
 }
+
+// Popular roles for quick selection
+const POPULAR_ROLES: RoleOption[] = [
+  { id: '1', name: 'Frontend Developer', category: 'Development', popularity: 95 },
+  { id: '2', name: 'Backend Developer', category: 'Development', popularity: 92 },
+  { id: '3', name: 'Full Stack Developer', category: 'Development', popularity: 98 },
+  { id: '4', name: 'DevOps Engineer', category: 'Infrastructure', popularity: 88 },
+  { id: '5', name: 'Data Scientist', category: 'Data', popularity: 90 },
+  { id: '6', name: 'Product Manager', category: 'Product', popularity: 85 },
+  { id: '7', name: 'UX Designer', category: 'Design', popularity: 87 },
+  { id: '8', name: 'ML Engineer', category: 'AI/ML', popularity: 89 },
+];
 
 // ============================================================================
 // Demo Modal Component
@@ -173,17 +187,7 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Popular roles for quick selection
-  const popularRoles: RoleOption[] = [
-    { id: '1', name: 'Frontend Developer', category: 'Development', popularity: 95 },
-    { id: '2', name: 'Backend Developer', category: 'Development', popularity: 92 },
-    { id: '3', name: 'Full Stack Developer', category: 'Development', popularity: 98 },
-    { id: '4', name: 'DevOps Engineer', category: 'Infrastructure', popularity: 88 },
-    { id: '5', name: 'Data Scientist', category: 'Data', popularity: 90 },
-    { id: '6', name: 'Product Manager', category: 'Product', popularity: 85 },
-    { id: '7', name: 'UX Designer', category: 'Design', popularity: 87 },
-    { id: '8', name: 'ML Engineer', category: 'AI/ML', popularity: 89 },
-  ];
+
 
   // Focus input on mount
   useEffect(() => {
@@ -194,7 +198,7 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
   useEffect(() => {
     const fetchRoles = async () => {
       if (!debouncedQuery.trim() || activeTab !== 'search') {
-        if (activeTab === 'search') setResults([]);
+        if (activeTab === 'search' && results.length > 0) setResults([]);
         return;
       }
 
@@ -202,7 +206,7 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
       try {
         // Simulated API call - replace with actual
         await new Promise(resolve => setTimeout(resolve, 500));
-        const mockResults = popularRoles.filter(role => 
+        const mockResults = POPULAR_ROLES.filter(role =>
           role.name.toLowerCase().includes(debouncedQuery.toLowerCase())
         );
         setResults(mockResults);
@@ -216,7 +220,7 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
     };
 
     fetchRoles();
-  }, [debouncedQuery, activeTab, popularRoles]);
+  }, [debouncedQuery, activeTab]); // Removed POPULAR_ROLES dependency
 
   // Fetch benchmarks when role is selected
   useEffect(() => {
@@ -237,65 +241,65 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
         // Simulated API call - replace with actual
         await new Promise(resolve => setTimeout(resolve, 800));
         const mockBenchmarks: Benchmark[] = [
-          { 
-            skillId: '1', 
-            skillName: 'JavaScript/TypeScript', 
-            requiredLevel: 'advanced', 
-            weight: 25, 
+          {
+            skillId: '1',
+            skillName: 'JavaScript/TypeScript',
+            requiredLevel: 'advanced',
+            weight: 25,
             required: true,
             category: 'Core Languages'
           },
-          { 
-            skillId: '2', 
-            skillName: 'React.js', 
-            requiredLevel: 'advanced', 
-            weight: 20, 
+          {
+            skillId: '2',
+            skillName: 'React.js',
+            requiredLevel: 'advanced',
+            weight: 20,
             required: true,
             category: 'Frontend Frameworks'
           },
-          { 
-            skillId: '3', 
-            skillName: 'HTML/CSS', 
-            requiredLevel: 'intermediate', 
-            weight: 15, 
+          {
+            skillId: '3',
+            skillName: 'HTML/CSS',
+            requiredLevel: 'intermediate',
+            weight: 15,
             required: true,
             category: 'Core Languages'
           },
-          { 
-            skillId: '4', 
-            skillName: 'State Management', 
-            requiredLevel: 'intermediate', 
-            weight: 15, 
+          {
+            skillId: '4',
+            skillName: 'State Management',
+            requiredLevel: 'intermediate',
+            weight: 15,
             required: false,
             category: 'Frontend Frameworks'
           },
-          { 
-            skillId: '5', 
-            skillName: 'REST APIs', 
-            requiredLevel: 'intermediate', 
-            weight: 15, 
+          {
+            skillId: '5',
+            skillName: 'REST APIs',
+            requiredLevel: 'intermediate',
+            weight: 15,
             required: true,
             category: 'Backend Concepts'
           },
-          { 
-            skillId: '6', 
-            skillName: 'Version Control (Git)', 
-            requiredLevel: 'intermediate', 
-            weight: 10, 
+          {
+            skillId: '6',
+            skillName: 'Version Control (Git)',
+            requiredLevel: 'intermediate',
+            weight: 10,
             required: true,
             category: 'Development Tools'
           },
         ];
-        
+
         setBenchmarks(mockBenchmarks);
         benchmarkCache.current[selectedRole.id] = mockBenchmarks;
-        
+
         // Initialize expanded categories
         const categories = [...new Set(mockBenchmarks.map(b => b.category))];
         const expanded: Record<string, boolean> = {};
         categories.forEach(cat => { if (cat) expanded[cat] = true; });
         setExpandedCategories(expanded);
-        
+
       } catch (error) {
         console.error('Failed to fetch benchmarks:', error);
       } finally {
@@ -464,7 +468,7 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
         {/* Header with gradient */}
         <div className="relative flex items-center justify-between p-6 border-b border-gray-100 shrink-0 bg-gradient-to-r from-gray-50 via-white to-gray-50">
           <div className="absolute inset-0 bg-grid-pattern opacity-5" />
-          
+
           <div className="relative flex items-center gap-4">
             <motion.div
               initial={{ rotate: -10, scale: 0.9 }}
@@ -472,18 +476,18 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
               transition={{ delay: 0.2 }}
               className="w-14 h-14 bg-gradient-to-br from-[#5693C1] via-[#3a7aa5] to-[#2c5a7a] rounded-2xl flex items-center justify-center shadow-lg shadow-[#5693C1]/30"
             >
-              <Bot className="w-7 h-7 text-white" />
+              <Target className="w-7 h-7 text-white" />
             </motion.div>
             <div>
-              <motion.h3 
+              <motion.h3
                 initial={{ x: -10, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
                 className="text-2xl font-bold text-gray-900"
               >
-                AI-Powered Readiness Analysis
+                Role Readiness Analysis
               </motion.h3>
-              <motion.p 
+              <motion.p
                 initial={{ x: -10, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.4 }}
@@ -514,11 +518,10 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab('search')}
-                className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
-                  activeTab === 'search'
-                    ? 'bg-[#5693C1] text-white shadow-lg shadow-[#5693C1]/30'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${activeTab === 'search'
+                  ? 'bg-[#5693C1] text-white shadow-lg shadow-[#5693C1]/30'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
               >
                 <Search className="w-4 h-4 inline mr-2" />
                 Search Roles
@@ -527,11 +530,10 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab('popular')}
-                className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
-                  activeTab === 'popular'
-                    ? 'bg-[#5693C1] text-white shadow-lg shadow-[#5693C1]/30'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${activeTab === 'popular'
+                  ? 'bg-[#5693C1] text-white shadow-lg shadow-[#5693C1]/30'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
               >
                 <TrendingUp className="w-4 h-4 inline mr-2" />
                 Popular Roles
@@ -588,11 +590,10 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.05 }}
-                            className={`w-full text-left cursor-pointer select-none relative py-3 px-4 transition-colors ${
-                              index === highlightedIndex
-                                ? 'bg-[#5693C1]/10 text-[#5693C1]'
-                                : 'text-gray-900 hover:bg-gray-50'
-                            } ${selectedRole?.id === role.id ? 'bg-[#5693C1]/5' : ''}`}
+                            className={`w-full text-left cursor-pointer select-none relative py-3 px-4 transition-colors ${index === highlightedIndex
+                              ? 'bg-[#5693C1]/10 text-[#5693C1]'
+                              : 'text-gray-900 hover:bg-gray-50'
+                              } ${selectedRole?.id === role.id ? 'bg-[#5693C1]/5' : ''}`}
                             onClick={() => handleSelect(role)}
                             onMouseEnter={() => setHighlightedIndex(index)}
                           >
@@ -610,7 +611,7 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
                           </motion.button>
                         ))
                       ) : (
-                        <motion.div 
+                        <motion.div
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           className="py-8 px-4 text-center"
@@ -635,7 +636,7 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {popularRoles.map((role, index) => (
+                {POPULAR_ROLES.map((role, index) => (
                   <motion.button
                     key={role.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -644,16 +645,14 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
                     whileHover={{ scale: 1.05, y: -2 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => handleSelect(role)}
-                    className={`p-4 rounded-xl border-2 transition-all text-left ${
-                      selectedRole?.id === role.id
-                        ? 'border-[#5693C1] bg-[#5693C1]/5 shadow-lg'
-                        : 'border-gray-200 hover:border-[#5693C1]/50 hover:shadow-md'
-                    }`}
+                    className={`p-4 rounded-xl border-2 transition-all text-left ${selectedRole?.id === role.id
+                      ? 'border-[#5693C1] bg-[#5693C1]/5 shadow-lg'
+                      : 'border-gray-200 hover:border-[#5693C1]/50 hover:shadow-md'
+                      }`}
                   >
                     <div className="flex items-center gap-2 mb-2">
-                      <div className={`w-2 h-2 rounded-full ${
-                        role.popularity && role.popularity > 90 ? 'bg-green-500' : 'bg-blue-500'
-                      }`} />
+                      <div className={`w-2 h-2 rounded-full ${role.popularity && role.popularity > 90 ? 'bg-green-500' : 'bg-blue-500'
+                        }`} />
                       <span className="text-xs font-medium text-gray-500">{role.category}</span>
                     </div>
                     <p className="font-semibold text-gray-900">{role.name}</p>
@@ -672,14 +671,13 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
           {/* Dynamic Content Area */}
           <motion.div
             initial={false}
-            animate={{ 
+            animate={{
               opacity: selectedRole ? 1 : 0.5,
               y: selectedRole ? 0 : 20
             }}
             transition={{ duration: 0.5 }}
-            className={`bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 border border-gray-200 ${
-              selectedRole ? '' : 'pointer-events-none'
-            }`}
+            className={`bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 border border-gray-200 ${selectedRole ? '' : 'pointer-events-none'
+              }`}
           >
             {isLoadingBenchmarks ? (
               <div className="flex flex-col items-center justify-center py-16">
@@ -697,20 +695,20 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
                     <Cpu className="w-8 h-8 text-[#5693C1] opacity-50" />
                   </motion.div>
                 </motion.div>
-                <motion.p 
+                <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3 }}
                   className="text-gray-600 font-medium mt-4"
                 >
-                  Loading AI analysis...
+                  Loading role analysis...
                 </motion.p>
                 <p className="text-sm text-gray-400 mt-1">Fetching benchmarks for {selectedRole?.name}</p>
               </div>
             ) : selectedRole ? (
               <>
                 {/* Enhanced Stats with Animations */}
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8"
@@ -749,7 +747,7 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
                       className="bg-white rounded-xl p-5 shadow-lg border border-gray-100 relative overflow-hidden group"
                     >
                       <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
-                      
+
                       <div className="flex items-start justify-between mb-3">
                         <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                           {stat.label}
@@ -761,9 +759,9 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
                           <stat.icon className="w-4 h-4 text-gray-400" />
                         </motion.div>
                       </div>
-                      
+
                       <div className="flex items-baseline gap-1">
-                        <motion.span 
+                        <motion.span
                           key={stat.value}
                           initial={{ scale: 1.5, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
@@ -806,7 +804,7 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
                       </motion.div>
                       <h4 className="text-lg font-semibold text-gray-900">Role Requirements</h4>
                     </div>
-                    <motion.span 
+                    <motion.span
                       animate={{ scale: [1, 1.05, 1] }}
                       transition={{ duration: 2, repeat: Infinity }}
                       className="text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full"
@@ -866,13 +864,12 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
                                       initial={{ opacity: 0, x: -20 }}
                                       animate={{ opacity: 1, x: 0 }}
                                       transition={{ delay: idx * 0.05 }}
-                                      className={`p-4 transition-all ${
-                                        benchmark.required
-                                          ? isRequirementMet
-                                            ? 'bg-emerald-50/30'
-                                            : 'bg-amber-50/30'
-                                          : ''
-                                      }`}
+                                      className={`p-4 transition-all ${benchmark.required
+                                        ? isRequirementMet
+                                          ? 'bg-emerald-50/30'
+                                          : 'bg-amber-50/30'
+                                        : ''
+                                        }`}
                                     >
                                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                         <div className="flex-1">
@@ -913,9 +910,8 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
                                             <motion.div
                                               initial={{ scale: 0 }}
                                               animate={{ scale: 1 }}
-                                              className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                                                isRequirementMet ? 'bg-emerald-100' : 'bg-amber-100'
-                                              }`}
+                                              className={`w-8 h-8 rounded-full flex items-center justify-center ${isRequirementMet ? 'bg-emerald-100' : 'bg-amber-100'
+                                                }`}
                                             >
                                               {isRequirementMet ? (
                                                 <Check className="w-4 h-4 text-emerald-600" />
@@ -967,7 +963,7 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
                 className="flex flex-col items-center justify-center text-center py-16"
               >
                 <motion.div
-                  animate={{ 
+                  animate={{
                     scale: [1, 1.1, 1],
                     rotate: [0, 5, -5, 0]
                   }}
@@ -1121,11 +1117,10 @@ const DifferenceCard = ({ icon, title, text, color, gradient, index, isHovered, 
       {/* Card */}
       <motion.div
         animate={isHovered ? { y: -8 } : { y: 0 }}
-        className={`relative bg-white rounded-2xl p-8 border border-gray-100 transition-all duration-500 ${
-          isHovered
-            ? 'shadow-2xl border-transparent'
-            : 'shadow-lg hover:shadow-xl hover:-translate-y-1 hover:border-gray-200'
-        }`}
+        className={`relative bg-white rounded-2xl p-8 border border-gray-100 transition-all duration-500 ${isHovered
+          ? 'shadow-2xl border-transparent'
+          : 'shadow-lg hover:shadow-xl hover:-translate-y-1 hover:border-gray-200'
+          }`}
       >
         {/* Icon with animated background */}
         <motion.div
@@ -1142,7 +1137,7 @@ const DifferenceCard = ({ icon, title, text, color, gradient, index, isHovered, 
           >
             {icon}
           </motion.div>
-          
+
           {/* Shine effect */}
           <motion.div
             animate={isHovered ? { x: '100%' } : { x: '-100%' }}
@@ -1176,9 +1171,8 @@ const DifferenceCard = ({ icon, title, text, color, gradient, index, isHovered, 
 // Main Component
 // ============================================================================
 
-const WhyChooseUsSection = forwardRef<WhyChooseUsSectionRef, WhyChooseUsSectionProps>(({ content }, ref) => {
+const WhyChooseUsSection = forwardRef<WhyChooseUsSectionRef, WhyChooseUsSectionProps>(({ content, isDemoOpen, setIsDemoOpen }, ref) => {
   const ctaRef = useRef<HTMLDivElement>(null);
-  const [showDemo, setShowDemo] = useState(false);
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const [activeComparison, setActiveComparison] = useState<number | null>(null);
   const { user } = useAuth();
@@ -1190,7 +1184,7 @@ const WhyChooseUsSection = forwardRef<WhyChooseUsSectionRef, WhyChooseUsSectionP
     scrollToCTAAndOpenDemo() {
       ctaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       setTimeout(() => {
-        setShowDemo(true);
+        if (setIsDemoOpen) setIsDemoOpen(true);
       }, 400);
     },
   }));
@@ -1199,8 +1193,8 @@ const WhyChooseUsSection = forwardRef<WhyChooseUsSectionRef, WhyChooseUsSectionP
   const differences = [
     {
       icon: <Rocket className="w-7 h-7" />,
-      title: "AI-Powered Readiness",
-      text: "Our advanced AI analyzes your skills against industry standards, providing real-time readiness scores and personalized improvement paths.",
+      title: "Role Readiness",
+      text: "Our analysis engine evaluates your skills against industry standards, providing real-time readiness scores and personalized improvement paths.",
       color: '#5693C1',
       gradient: 'from-blue-500 to-[#5693C1]'
     },
@@ -1234,8 +1228,8 @@ const WhyChooseUsSection = forwardRef<WhyChooseUsSectionRef, WhyChooseUsSectionP
     },
     {
       icon: <Bot className="w-7 h-7" />,
-      title: "24/7 AI Mentor",
-      text: "Get instant answers, practice interviews, and career advice from our AI mentor anytime.",
+      title: "24/7 Career Mentor",
+      text: "Get instant answers, practice interviews, and career advice from our industry-aligned mentor system anytime.",
       color: '#EC4899',
       gradient: 'from-pink-500 to-rose-500'
     },
@@ -1252,7 +1246,7 @@ const WhyChooseUsSection = forwardRef<WhyChooseUsSectionRef, WhyChooseUsSectionP
     },
     {
       traditional: 'Generic learning paths',
-      roleready: 'AI-personalized skill development',
+      roleready: "Data-driven skill development",
       traditionalIcon: XCircle,
       rolereadyIcon: CheckCircle,
       metric: '3x faster skill acquisition'
@@ -1274,32 +1268,32 @@ const WhyChooseUsSection = forwardRef<WhyChooseUsSectionRef, WhyChooseUsSectionP
   ];
 
   // Stats for social proof
-const stats = [
-  { 
-    label: 'Explainable Scoring Model', 
-    value: 'Weighted & Transparent', 
-    icon: Calculator, 
-    color: '#5693C1' 
-  },
-  { 
-    label: 'Mentor Validation System', 
-    value: 'Credibility Driven', 
-    icon: ShieldCheck, 
-    color: '#10B981' 
-  },
-  { 
-    label: 'Role-Based Benchmarks', 
-    value: 'Structured & Dynamic', 
-    icon: Globe, 
-    color: '#8B5CF6' 
-  },
-  { 
-    label: 'Progress Tracking', 
-    value: 'Snapshot History', 
-    icon: TrendingUp, 
-    color: '#F59E0B' 
-  },
-];
+  const stats = [
+    {
+      label: 'Explainable Scoring Model',
+      value: 'Weighted & Transparent',
+      icon: Calculator,
+      color: '#5693C1'
+    },
+    {
+      label: 'Mentor Validation System',
+      value: 'Credibility Driven',
+      icon: ShieldCheck,
+      color: '#10B981'
+    },
+    {
+      label: 'Role-Based Benchmarks',
+      value: 'Structured & Dynamic',
+      icon: Globe,
+      color: '#8B5CF6'
+    },
+    {
+      label: 'Progress Tracking',
+      value: 'Snapshot History',
+      icon: TrendingUp,
+      color: '#F59E0B'
+    },
+  ];
 
   return (
     <section className="relative overflow-hidden bg-white py-20 md:py-32 px-4 sm:px-6 lg:px-8">
@@ -1307,7 +1301,7 @@ const stats = [
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Gradient orbs */}
         <motion.div
-          animate={{ 
+          animate={{
             x: [0, 100, 0],
             y: [0, -50, 0],
           }}
@@ -1315,17 +1309,17 @@ const stats = [
           className="absolute top-20 -right-20 w-96 h-96 rounded-full bg-gradient-to-bl from-[#5693C1]/10 via-blue-200/10 to-transparent blur-3xl"
         />
         <motion.div
-          animate={{ 
+          animate={{
             x: [0, -100, 0],
             y: [0, 50, 0],
           }}
           transition={{ duration: 25, repeat: Infinity }}
           className="absolute bottom-20 -left-20 w-96 h-96 rounded-full bg-gradient-to-tr from-emerald-200/10 via-teal-200/10 to-transparent blur-3xl"
         />
-        
+
         {/* Grid pattern */}
         <div className="absolute inset-0 bg-grid-pattern opacity-[0.02]" />
-        
+
         {/* Animated lines */}
         <svg className="absolute inset-0 w-full h-full">
           <motion.line
@@ -1383,14 +1377,14 @@ const stats = [
           <div className="relative bg-white rounded-3xl p-8 md:p-12 border border-gray-200 shadow-2xl hover:shadow-3xl transition-all duration-500 overflow-hidden group">
             {/* Animated background gradient */}
             <motion.div
-              animate={{ 
+              animate={{
                 rotate: [0, 360],
                 scale: [1, 1.2, 1],
               }}
               transition={{ duration: 20, repeat: Infinity }}
               className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-[#5693C1]/10 to-[#2c5a7a]/10 rounded-full blur-3xl"
             />
-            
+
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
 
             <div className="relative grid lg:grid-cols-2 gap-8 items-center">
@@ -1413,7 +1407,7 @@ const stats = [
                 >
                   Transform Your Career Journey with{' '}
                   <span className="bg-gradient-to-r from-[#5693C1] to-[#2c5a7a] bg-clip-text text-transparent relative">
-                    AI-Powered Insights
+                    Structured, Data-Driven Insights
                     <motion.span
                       animate={{ scale: [1, 1.2, 1] }}
                       transition={{ duration: 2, repeat: Infinity }}
@@ -1430,7 +1424,7 @@ const stats = [
                   transition={{ delay: 0.4 }}
                   className="text-gray-600 text-lg mb-8 max-w-xl leading-relaxed"
                 >
-                  Stop guessing your readiness. Our AI analyzes your profile against 500+ roles, providing personalized roadmaps and real-time feedback.
+                  Stop guessing your readiness. Measure your skills against structured role benchmarks and follow a clear, personalized roadmap to improve with confidence.
                 </motion.p>
 
                 {/* Feature pills */}
@@ -1442,7 +1436,7 @@ const stats = [
                 >
                   {[
                     { icon: Zap, text: '5-min setup' },
-                    { icon: Cpu, text: 'AI-powered' },
+                    { icon: Cpu, text: 'Role-Focused Insights' },
                     { icon: Shield, text: 'Free analysis' },
                     { icon: TrendingUp, text: 'Real-time insights' },
                   ].map((feature, idx) => (
@@ -1489,7 +1483,7 @@ const stats = [
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setShowDemo(true)}
+                  onClick={() => setIsDemoOpen?.(true)}
                   className="group relative overflow-hidden w-full h-16 bg-white text-[#5693C1] border-2 border-[#5693C1] rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-gradient-to-r hover:from-[#5693C1] hover:to-[#2c5a7a] hover:text-white transition-all duration-300"
                 >
                   <PlayCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
@@ -1501,19 +1495,13 @@ const stats = [
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
                   transition={{ delay: 0.6 }}
-                  className="flex items-center justify-center gap-4 pt-4"
+                  className="flex items-center justify-center gap-3 pt-4"
                 >
-                  <div className="flex -space-x-2">
-                    {[1, 2, 3, 4].map((i) => (
-                      <motion.div
-                        key={i}
-                        whileHover={{ scale: 1.1, y: -2 }}
-                        className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 border-2 border-white"
-                      />
-                    ))}
+                  <div className="w-8 h-8 rounded-full bg-[#5693C1]/10 flex items-center justify-center">
+                    <Check className="w-4 h-4 text-[#5693C1]" />
                   </div>
-                  <span className="text-sm text-gray-500">
-                    <span className="font-semibold text-gray-900">10,000+</span> professionals
+                  <span className="text-sm text-gray-600">
+                    Structured scoring. Transparent logic. Measurable progress.
                   </span>
                 </motion.div>
               </motion.div>
@@ -1620,7 +1608,7 @@ const stats = [
         >
           {/* Decorative elements */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#5693C1]/5 to-transparent rounded-full blur-3xl" />
-          
+
           <div className="text-center mb-10">
             <motion.h3
               initial={{ opacity: 0, y: 20 }}
@@ -1655,7 +1643,7 @@ const stats = [
                   <item.icon className={`w-8 h-8 mx-auto mb-2 text-${item.color}-500`} />
                 </motion.div>
                 <span className={`font-semibold text-${item.color}-700`}>{item.label}</span>
-                
+
                 {/* Shine effect */}
                 <motion.div
                   className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
@@ -1784,7 +1772,7 @@ const stats = [
 
       {/* Demo Modal */}
       <AnimatePresence>
-        {showDemo && <DemoModal onClose={() => setShowDemo(false)} />}
+        {isDemoOpen && setIsDemoOpen && <DemoModal onClose={() => setIsDemoOpen(false)} />}
       </AnimatePresence>
 
       <style jsx>{`

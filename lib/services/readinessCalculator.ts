@@ -68,6 +68,18 @@ export interface BenchmarkInput {
   requiredLevel: SkillLevel;
 }
 
+export interface BenchmarkGroupInput {
+  name: string;
+  type: 'ALL_REQUIRED' | 'ANY_ONE_REQUIRED';
+  weight: number;
+  required: boolean;
+  skills: {
+    skillId: string;
+    skillName: string;
+    requiredLevel: SkillLevel;
+  }[];
+}
+
 export interface UserSkillInput {
   skillId: string;
   skillName: string;
@@ -92,31 +104,42 @@ export interface SkillReadinessBreakdown {
   isMissing: boolean;        // User doesn't have this skill
   source: SkillSource | null;
   validationStatus: ValidationStatus | null;
+  groupName?: string;
+  groupType?: 'ALL_REQUIRED' | 'ANY_ONE_REQUIRED';
 }
 
 export interface ReadinessResult {
   userId: string;
   roleId: string;
   roleName: string;
-  
+
   // Summary scores
   totalScore: number;
   maxPossibleScore: number;
   percentage: number;
-  
+
   // Requirement status
   hasAllRequired: boolean;
   requiredSkillsMet: number;
   requiredSkillsTotal: number;
-  
+
   // Breakdown counts
   totalBenchmarks: number;
   skillsMatched: number;
   skillsMissing: number;
-  
+
   // Detailed breakdown per skill
   breakdown: SkillReadinessBreakdown[];
-  
+
+  // Group results
+  groupResults?: {
+    name: string;
+    type: 'ALL_REQUIRED' | 'ANY_ONE_REQUIRED';
+    score: number;
+    maxScore: number;
+    satisfied: boolean;
+  }[];
+
   // Metadata
   calculatedAt: Date;
 }
@@ -172,12 +195,12 @@ function getValidationMultiplier(
   if (validationStatus === 'validated') {
     return VALIDATION_MULTIPLIERS['validated'];
   }
-  
+
   // Otherwise, use source-based multiplier
   if (source && source in VALIDATION_MULTIPLIERS) {
     return VALIDATION_MULTIPLIERS[source];
   }
-  
+
   // Default for missing skills
   return 0;
 }
@@ -217,83 +240,74 @@ export function calculateReadiness(
   roleId: string,
   roleName: string,
   benchmarks: BenchmarkInput[],
-  userSkills: UserSkillInput[]
+  userSkills: UserSkillInput[],
+  benchmarkGroups: BenchmarkGroupInput[] = []
 ): ReadinessResult {
   console.log('[calculateReadiness] ===== STARTING CALCULATION =====');
   console.log('[calculateReadiness] Role:', roleName);
   console.log('[calculateReadiness] Benchmarks count:', benchmarks.length);
+  console.log('[calculateReadiness] Groups count:', benchmarkGroups.length);
   console.log('[calculateReadiness] User skills count:', userSkills.length);
-  console.log('[calculateReadiness] User skills:', userSkills.map(s => ({
-    skillId: s.skillId,
-    skillName: s.skillName,
-    level: s.level,
-    source: s.source,
-    validationStatus: s.validationStatus
-  })));
-  
+
   // Create a map of user skills by skillId for O(1) lookup
   const userSkillMap = new Map<string, UserSkillInput>();
   for (const skill of userSkills) {
     userSkillMap.set(skill.skillId, skill);
   }
-  
-  // Calculate breakdown for each benchmark
+
+  // Trackers
   const breakdown: SkillReadinessBreakdown[] = [];
+  const groupResults: {
+    name: string;
+    type: 'ALL_REQUIRED' | 'ANY_ONE_REQUIRED';
+    score: number;
+    maxScore: number;
+    satisfied: boolean;
+  }[] = [];
+
   let totalScore = 0;
   let maxPossibleScore = 0;
-  let requiredSkillsMet = 0;
-  let requiredSkillsTotal = 0;
+  let requiredItemsMet = 0;
+  let requiredItemsTotal = 0;
   let skillsMatched = 0;
   let skillsMissing = 0;
-  
+
+  // 1. Process Flat Benchmarks (Backward Compatibility)
   for (const benchmark of benchmarks) {
     const userSkill = userSkillMap.get(benchmark.skillId);
     const isMissing = !userSkill;
-    
-    console.log(`[calculateReadiness] Processing benchmark: ${benchmark.skillName} (${benchmark.skillId})`);
-    console.log(`[calculateReadiness] - Has user skill: ${!isMissing}`);
-    if (userSkill) {
-      console.log(`[calculateReadiness] - User level: ${userSkill.level}, Required: ${benchmark.minimumLevel}, Source: ${userSkill.source}, Validation: ${userSkill.validationStatus}`);
-    }
-    
-    // Get user's level (default to 'none' if missing)
+
     const userLevel: SkillLevel = userSkill?.level || 'none';
     const levelPoints = LEVEL_POINTS[userLevel];
-    
-    // Get validation multiplier
     const validationMultiplier = getValidationMultiplier(
       userSkill?.source || null,
       userSkill?.validationStatus || null
     );
-    
-    // Calculate scores
+
     const rawScore = levelPoints * validationMultiplier;
     const weightedScore = rawScore * benchmark.weight;
-    const maxForThisSkill = benchmark.weight; // Max is 1 point × weight
-    
-    // Check if requirement is met
+    const maxForThisSkill = benchmark.weight;
+
     const meets = meetsLevelRequirement(userLevel, benchmark.requiredLevel);
-    
-    // Track required skills
+
+    // Track required status
     if (benchmark.importance === 'required') {
-      requiredSkillsTotal++;
+      requiredItemsTotal++;
       if (meets && !isMissing) {
-        requiredSkillsMet++;
+        requiredItemsMet++;
       }
     }
-    
-    // Track matched vs missing
+
+    // Track counts
     if (isMissing || userLevel === 'none') {
       skillsMissing++;
     } else {
       skillsMatched++;
     }
-    
-    // Accumulate totals
+
     totalScore += weightedScore;
     maxPossibleScore += maxForThisSkill;
-    
-    // Add to breakdown
+
     breakdown.push({
       skillId: benchmark.skillId,
       skillName: benchmark.skillName,
@@ -312,15 +326,106 @@ export function calculateReadiness(
       validationStatus: userSkill?.validationStatus || null,
     });
   }
-  
-  // Calculate final percentage (avoid division by zero)
+
+  // 2. Process Benchmark Groups
+  for (const group of benchmarkGroups) {
+    let groupScore = 0;
+    let groupSatisfied = true;
+    let anySkillMet = false;
+    let bestSkillRawScore = 0;
+
+    const skillCount = group.skills.length;
+    if (skillCount === 0) continue;
+
+    for (const skillItem of group.skills) {
+      const userSkill = userSkillMap.get(skillItem.skillId);
+      const isMissing = !userSkill;
+      const userLevel: SkillLevel = userSkill?.level || 'none';
+      const levelPoints = LEVEL_POINTS[userLevel];
+      const validationMultiplier = getValidationMultiplier(
+        userSkill?.source || null,
+        userSkill?.validationStatus || null
+      );
+
+      const rawScore = levelPoints * validationMultiplier;
+      const meets = meetsLevelRequirement(userLevel, skillItem.requiredLevel);
+
+      // Track counts
+      if (isMissing || userLevel === 'none') {
+        skillsMissing++;
+      } else {
+        skillsMatched++;
+      }
+
+      const relativeWeight = group.weight / skillCount;
+
+      if (group.type === 'ALL_REQUIRED') {
+        groupScore += rawScore * relativeWeight;
+        if (!meets || isMissing) groupSatisfied = false;
+      } else {
+        // ANY_ONE_REQUIRED
+        if (rawScore > bestSkillRawScore) {
+          bestSkillRawScore = rawScore;
+        }
+        if (meets && !isMissing) {
+          anySkillMet = true;
+        }
+      }
+
+      // Add to main breakdown for UI clarity
+      breakdown.push({
+        skillId: skillItem.skillId,
+        skillName: skillItem.skillName,
+        importance: group.required ? 'required' : 'optional',
+        weight: relativeWeight,
+        requiredLevel: skillItem.requiredLevel,
+        userLevel,
+        levelPoints,
+        validationMultiplier,
+        rawScore,
+        weightedScore: rawScore * relativeWeight,
+        maxPossibleScore: relativeWeight,
+        meetsRequirement: meets,
+        isMissing,
+        source: userSkill?.source || null,
+        validationStatus: userSkill?.validationStatus || null,
+        groupName: group.name,
+        groupType: group.type
+      });
+    }
+
+    if (group.type === 'ANY_ONE_REQUIRED') {
+      groupScore = bestSkillRawScore * group.weight;
+      groupSatisfied = anySkillMet;
+    }
+
+    totalScore += groupScore;
+    maxPossibleScore += group.weight;
+
+    if (group.required) {
+      requiredItemsTotal++;
+      if (groupSatisfied) {
+        requiredItemsMet++;
+      }
+    }
+
+    groupResults.push({
+      name: group.name,
+      type: group.type,
+      score: groupScore,
+      maxScore: group.weight,
+      satisfied: groupSatisfied
+    });
+  }
+
+  // Calculate final percentage
   const percentage = maxPossibleScore > 0
-    ? Math.round((totalScore / maxPossibleScore) * 100 * 10) / 10 // Round to 1 decimal
+    ? Math.round((totalScore / maxPossibleScore) * 100 * 10) / 10
     : 0;
-  
-  // Check if all required skills are met
-  const hasAllRequired = requiredSkillsMet === requiredSkillsTotal;
-  
+
+  // Check if all required items are met
+  const hasAllRequired = requiredItemsMet === requiredItemsTotal;
+
   return {
     userId,
     roleId,
@@ -329,12 +434,13 @@ export function calculateReadiness(
     maxPossibleScore,
     percentage,
     hasAllRequired,
-    requiredSkillsMet,
-    requiredSkillsTotal,
-    totalBenchmarks: benchmarks.length,
+    requiredSkillsMet: requiredItemsMet,
+    requiredSkillsTotal: requiredItemsTotal,
+    totalBenchmarks: benchmarks.length + breakdown.length - benchmarks.length,
     skillsMatched,
     skillsMissing,
     breakdown,
+    groupResults,
     calculatedAt: new Date(),
   };
 }
@@ -358,18 +464,42 @@ export interface SkillGap {
  */
 export function getSkillGaps(result: ReadinessResult): SkillGap[] {
   const gaps: SkillGap[] = [];
-  
+  const processedGroups = new Set<string>();
+
   for (const item of result.breakdown) {
-    // Only include skills that don't meet requirements
+    // Handle ANY_ONE_REQUIRED groups
+    if (item.groupName && item.groupType === 'ANY_ONE_REQUIRED') {
+      if (processedGroups.has(item.groupName)) continue;
+
+      const groupResult = result.groupResults?.find(g => g.name === item.groupName);
+      if (groupResult && !groupResult.satisfied) {
+        // Group not satisfied, suggest all options in one gap entry
+        const groupSkills = result.breakdown.filter(b => b.groupName === item.groupName);
+        const skillNames = groupSkills.map(s => s.skillName).join(', ');
+
+        gaps.push({
+          skillId: `group:${item.groupName}`,
+          skillName: `Add at least one of the following: ${skillNames}`,
+          currentLevel: 'none',
+          requiredLevel: groupSkills[0].requiredLevel, // Use first as proxy
+          importance: item.importance,
+          levelsNeeded: 1,
+          priority: (item.importance === 'required' ? 105 : 5) + (item.weight || 0),
+        });
+        processedGroups.add(item.groupName);
+      }
+      continue;
+    }
+
+    // Handle normal benchmarks or ALL_REQUIRED group skills
     if (!item.meetsRequirement) {
       const currentRank = LEVEL_RANK[item.userLevel];
       const requiredRank = LEVEL_RANK[item.requiredLevel];
       const levelsNeeded = requiredRank - currentRank;
-      
-      // Priority: required skills have higher priority, weighted by levels needed
+
       const importanceBonus = item.importance === 'required' ? 100 : 0;
       const priority = importanceBonus + (levelsNeeded * 10) + item.weight;
-      
+
       gaps.push({
         skillId: item.skillId,
         skillName: item.skillName,
@@ -381,7 +511,7 @@ export function getSkillGaps(result: ReadinessResult): SkillGap[] {
       });
     }
   }
-  
+
   // Sort by priority (highest first)
   return gaps.sort((a, b) => b.priority - a.priority);
 }

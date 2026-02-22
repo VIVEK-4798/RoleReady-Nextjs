@@ -54,33 +54,44 @@ export interface ISkillBreakdown {
   validationStatus: ValidationStatus | null;
 }
 
+export interface IGroupResult {
+  name: string;
+  type: 'ALL_REQUIRED' | 'ANY_ONE_REQUIRED';
+  score: number;
+  maxScore: number;
+  satisfied: boolean;
+}
+
 export interface IReadinessSnapshot {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
   roleId: Types.ObjectId;
-  
+
   // Summary scores
   totalScore: number;
   maxPossibleScore: number;
   percentage: number;
-  
+
   // Requirement status
   hasAllRequired: boolean;
   requiredSkillsMet: number;
   requiredSkillsTotal: number;
-  
+
   // Breakdown counts
   totalBenchmarks: number;
   skillsMatched: number;
   skillsMissing: number;
-  
+
   // Detailed breakdown
   breakdown: ISkillBreakdown[];
-  
+
+  // Group results
+  groupResults: IGroupResult[];
+
   // Trigger info
   trigger: SnapshotTrigger;
   triggerDetails?: string; // Optional context (e.g., "Switched from Frontend Developer")
-  
+
   // Timestamps
   createdAt: Date;
   updatedAt: Date;
@@ -90,7 +101,7 @@ export interface IReadinessSnapshot {
 // Document Interface
 // ============================================================================
 
-export interface IReadinessSnapshotDocument extends Omit<IReadinessSnapshot, '_id'>, Document {}
+export interface IReadinessSnapshotDocument extends Omit<IReadinessSnapshot, '_id'>, Document { }
 
 // ============================================================================
 // Model Interface with Static Methods
@@ -104,7 +115,7 @@ interface IReadinessSnapshotModel extends Model<IReadinessSnapshotDocument> {
     userId: string | Types.ObjectId,
     roleId: string | Types.ObjectId
   ): Promise<IReadinessSnapshotDocument | null>;
-  
+
   /**
    * Get snapshot history for a user (optionally filtered by role)
    */
@@ -184,28 +195,40 @@ const ReadinessSnapshotSchema = new Schema<IReadinessSnapshotDocument>(
       required: [true, 'Role reference is required'],
       index: true,
     },
-    
+
     // Summary scores
     totalScore: { type: Number, required: true },
     maxPossibleScore: { type: Number, required: true },
     percentage: { type: Number, required: true, min: 0, max: 100 },
-    
+
     // Requirement status
     hasAllRequired: { type: Boolean, required: true },
     requiredSkillsMet: { type: Number, required: true, min: 0 },
     requiredSkillsTotal: { type: Number, required: true, min: 0 },
-    
+
     // Breakdown counts
     totalBenchmarks: { type: Number, required: true, min: 0 },
     skillsMatched: { type: Number, required: true, min: 0 },
     skillsMissing: { type: Number, required: true, min: 0 },
-    
+
     // Detailed breakdown
     breakdown: {
       type: [SkillBreakdownSchema],
       default: [],
     },
-    
+    groupResults: {
+      type: [
+        {
+          name: String,
+          type: { type: String, enum: ['ALL_REQUIRED', 'ANY_ONE_REQUIRED'] },
+          score: Number,
+          maxScore: Number,
+          satisfied: Boolean,
+        },
+      ],
+      default: [],
+    },
+
     // Trigger info
     trigger: {
       type: String,
@@ -257,19 +280,19 @@ ReadinessSnapshotSchema.statics.getHistory = async function (
   }
 ): Promise<IReadinessSnapshotDocument[]> {
   const query: Record<string, unknown> = { userId };
-  
+
   if (options?.roleId) {
     query.roleId = options.roleId;
   }
-  
+
   let historyQuery = this.find(query)
     .populate('roleId', 'name description colorClass')
     .sort({ createdAt: -1 });
-  
+
   if (options?.limit) {
     historyQuery = historyQuery.limit(options.limit);
   }
-  
+
   return historyQuery.exec();
 };
 

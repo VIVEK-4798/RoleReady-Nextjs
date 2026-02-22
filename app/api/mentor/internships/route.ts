@@ -129,6 +129,9 @@ export async function POST(request: NextRequest) {
       workDetail: workDetail || '',
       isActive: isActive !== false,
       isFeatured: isFeatured || false,
+      source: 'internal',
+      postedByRole: 'mentor',
+      priority: 80,
       createdBy: new Types.ObjectId(user.id),
     });
 

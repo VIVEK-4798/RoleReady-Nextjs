@@ -18,15 +18,22 @@ import {
 import { useAuth } from '@/hooks';
 import { LANDING_CONTENT } from '@/lib/constants/landingContent';
 import PublicFooter from '@/components/layout/PublicFooter';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 interface LandingPageClientProps {
   isAuthenticated: boolean;
 }
 
 export default function LandingPageClient({ isAuthenticated }: LandingPageClientProps) {
+  const { data: session } = useSession();
   const { user } = useAuth();
+  const router = useRouter();
   const whyChooseUsRef = useRef<WhyChooseUsSectionRef>(null);
   const howItWorksRef = useRef<HTMLElement>(null);
+  const [isDemoOpen, setIsDemoOpen] = useState(false);
+
   const userRole = (user?.role === 'mentor' ? 'mentor' : 'student') as 'student' | 'mentor';
   const content = LANDING_CONTENT[userRole];
 
@@ -39,6 +46,20 @@ export default function LandingPageClient({ isAuthenticated }: LandingPageClient
       behavior: 'smooth',
       block: 'start',
     });
+  };
+
+  const handleStudentCTA = () => {
+    setIsDemoOpen(true);
+  };
+
+  const handleMentorCTA = () => {
+    if (!session) {
+      router.push('/login?intent=mentor');
+    } else if ((session.user as any)?.role === 'mentor') {
+      router.push('/mentor');
+    } else {
+      router.push('/dashboard');
+    }
   };
 
   return (
@@ -70,7 +91,12 @@ export default function LandingPageClient({ isAuthenticated }: LandingPageClient
       </section>
 
       <section id="features">
-        <WhyChooseUsSection ref={whyChooseUsRef} content={content.problem} />
+        <WhyChooseUsSection
+          ref={whyChooseUsRef}
+          content={content.problem}
+          isDemoOpen={isDemoOpen}
+          setIsDemoOpen={setIsDemoOpen}
+        />
       </section>
 
       {/* Mentor Benefits - For Verified Mentors and Guests */}
@@ -78,7 +104,12 @@ export default function LandingPageClient({ isAuthenticated }: LandingPageClient
 
       {/* Who Is It For */}
       <section id="for-who">
-        <WhoIsItForSection content={content.whoIsItFor} role={userRole} />
+        <WhoIsItForSection
+          content={content.whoIsItFor}
+          role={userRole}
+          onStudentCTA={handleStudentCTA}
+          onMentorCTA={handleMentorCTA}
+        />
       </section>
 
       {/* Explore Opportunities */}

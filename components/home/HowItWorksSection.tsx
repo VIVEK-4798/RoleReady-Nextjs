@@ -469,7 +469,7 @@ export default function HowItWorksSection({ content }: HowItWorksSectionProps) {
                   transition={{ delay: 0.2, type: "spring" }}
                   className="w-16 h-16 bg-white/20 backdrop-blur-lg rounded-2xl flex items-center justify-center mb-8 border border-white/30"
                 >
-                  <Bot className="w-8 h-8 text-white" />
+                  <Target className="w-8 h-8 text-white" />
                 </motion.div>
 
                 <h3 className="text-2xl md:text-3xl font-bold mb-4">

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { internshipAggregatorService } from '@/services/internships/internshipAggregatorService';
+import { internshipService } from '@/services/internships/internshipService';
 
 export async function GET(
     request: NextRequest,
@@ -8,7 +8,7 @@ export async function GET(
     const { id } = await context.params;
 
     try {
-        const internship = await internshipAggregatorService.getInternshipById(id);
+        const internship = await internshipService.getInternshipById(id);
         if (!internship) {
             return NextResponse.json({ error: 'Internship not found' }, { status: 404 });
         }

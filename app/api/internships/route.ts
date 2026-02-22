@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { internshipAggregatorService } from '@/services/internships/internshipAggregatorService';
+import { internshipService } from '@/services/internships/internshipService';
 import { internshipPersonalizationService } from '@/services/internships/internshipPersonalizationService';
 
 export async function GET(request: NextRequest) {
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
     try {
         const session = await auth();
-        const rawItems = await internshipAggregatorService.fetchAggregatedInternships(query, page);
+        const rawItems = await internshipService.getInternships(query, page);
 
         const meta = {
             total: rawItems.length,

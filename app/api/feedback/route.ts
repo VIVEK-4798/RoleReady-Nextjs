@@ -16,7 +16,7 @@ const DUPLICATE_WINDOW = 10 * 60 * 1000; // 10 minutes
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { email, message } = body;
+        const { email, message, type } = body;
 
         // Get IP - handling various deployment scenarios
         const forwarded = req.headers.get('x-forwarded-for');
@@ -26,6 +26,14 @@ export async function POST(req: NextRequest) {
         if (!email || !message) {
             return NextResponse.json(
                 { error: 'Email and message are required' },
+                { status: 400 }
+            );
+        }
+
+        const validTypes = ['suggestion', 'issue', 'praise', 'other'];
+        if (type && !validTypes.includes(type)) {
+            return NextResponse.json(
+                { error: 'Invalid feedback type' },
                 { status: 400 }
             );
         }
@@ -100,10 +108,23 @@ export async function POST(req: NextRequest) {
         await Feedback.create({
             email: email.toLowerCase().trim(),
             message: message.trim(),
+            type: type || 'suggestion',
             ...(session?.user?.id && { userId: session.user.id }),
             ipAddress: ip,
             status: 'new',
         });
+
+        // 4. Send Thank You Email (Non-blocking)
+        try {
+            const { sendFeedbackThankYouEmail } = await import('@/services/email/feedbackEmailService');
+            // We don't await this to keep the API response fast
+            sendFeedbackThankYouEmail({
+                email: email.toLowerCase().trim(),
+                type: type || 'suggestion'
+            }).catch(err => console.error('Delayed email error:', err));
+        } catch (emailError) {
+            console.error('Failed to trigger thank you email:', emailError);
+        }
 
         return NextResponse.json(
             { message: 'Thank you for your feedback!' },

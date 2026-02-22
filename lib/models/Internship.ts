@@ -21,6 +21,9 @@ export interface IInternship {
   contactPhone?: string;
   isActive: boolean;
   isFeatured: boolean;
+  source: 'internal' | 'external';
+  postedByRole: 'admin' | 'mentor' | null;
+  priority: number;
   createdBy?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -83,6 +86,20 @@ const internshipSchema = new mongoose.Schema<IInternship>(
       type: Boolean,
       default: false,
     },
+    source: {
+      type: String,
+      enum: ['internal', 'external'],
+      default: 'internal',
+    },
+    postedByRole: {
+      type: String,
+      enum: ['admin', 'mentor', null],
+      default: null,
+    },
+    priority: {
+      type: Number,
+      default: 0,
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -94,9 +111,10 @@ const internshipSchema = new mongoose.Schema<IInternship>(
 );
 
 // Index for faster queries
-internshipSchema.index({ isActive: 1, isFeatured: 1 });
+internshipSchema.index({ isActive: 1, isFeatured: 1, priority: -1 });
 internshipSchema.index({ city: 1, isActive: 1 });
 internshipSchema.index({ category: 1, isActive: 1 });
+internshipSchema.index({ priority: -1, createdAt: -1 });
 
 export default mongoose.models.Internship ||
   mongoose.model<IInternship>('Internship', internshipSchema);

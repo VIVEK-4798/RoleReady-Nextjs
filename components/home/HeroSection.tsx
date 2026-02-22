@@ -114,14 +114,15 @@ const GradientOrb = () => {
 };
 
 // Typewriter effect component - fixed to avoid hydration issues
+const TYPEWRITER_WORDS = ['Your Career', 'Your Skills', 'Your Future'];
+
 const TypewriterText = ({ text }: { text: string }) => {
   const [displayText, setDisplayText] = useState('Your Career');
   const [mounted, setMounted] = useState(false);
 
-  const words = ['Your Career', 'Your Skills', 'Your Future'];
-
   useEffect(() => {
     setMounted(true);
+    const words = TYPEWRITER_WORDS;
     let currentIndex = 0;
     let currentWord = words[0];
     let isDeleting = false;
@@ -156,7 +157,7 @@ const TypewriterText = ({ text }: { text: string }) => {
     timeout = setTimeout(typeEffect, 500);
 
     return () => clearTimeout(timeout);
-  }, [displayText, mounted, words]);
+  }, [mounted]); // Only run once on mount, typeEffect is self-scheduling
 
   // Return initial text during SSR to match server
   if (!mounted) {
@@ -394,6 +395,19 @@ const ConnectionLine = ({
   );
 };
 
+// Fixed node positions
+const VISUALIZATION_NODES = [
+  { x: 150, y: 120, label: 'React', value: 85, color: '#5693C1' },
+  { x: 250, y: 80, label: 'Node.js', value: 70, color: '#10B981' },
+  { x: 350, y: 120, label: 'Python', value: 60, color: '#F59E0B' },
+  { x: 180, y: 220, label: 'TypeScript', value: 75, color: '#8B5CF6' },
+  { x: 280, y: 270, label: 'MongoDB', value: 65, color: '#EC4899' },
+  { x: 380, y: 220, label: 'AWS', value: 55, color: '#0EA5E9' },
+  { x: 120, y: 320, label: 'Docker', value: 45, color: '#EF4444' },
+  { x: 220, y: 370, label: 'GraphQL', value: 50, color: '#F97316' },
+  { x: 320, y: 320, label: 'Kubernetes', value: 40, color: '#A855F7' },
+];
+
 // ============================================================================
 // Main Animated Visualization Component
 // ============================================================================
@@ -406,22 +420,11 @@ const RoleReadyVisualization = () => {
     setMounted(true);
     const interval = setInterval(() => {
       setRotation(prev => (prev + 1) % 360);
-    }, 100);
+    }, 200); // Increased interval to reduce render pressure
     return () => clearInterval(interval);
   }, []);
 
-  // Fixed node positions
-  const nodes = [
-    { x: 150, y: 120, label: 'React', value: 85, color: '#5693C1' },
-    { x: 250, y: 80, label: 'Node.js', value: 70, color: '#10B981' },
-    { x: 350, y: 120, label: 'Python', value: 60, color: '#F59E0B' },
-    { x: 180, y: 220, label: 'TypeScript', value: 75, color: '#8B5CF6' },
-    { x: 280, y: 270, label: 'MongoDB', value: 65, color: '#EC4899' },
-    { x: 380, y: 220, label: 'AWS', value: 55, color: '#0EA5E9' },
-    { x: 120, y: 320, label: 'Docker', value: 45, color: '#EF4444' },
-    { x: 220, y: 370, label: 'GraphQL', value: 50, color: '#F97316' },
-    { x: 320, y: 320, label: 'Kubernetes', value: 40, color: '#A855F7' },
-  ];
+  const nodes = VISUALIZATION_NODES;
 
   // Readiness score calculation
   const avgScore = Math.round(nodes.reduce((acc, node) => acc + node.value, 0) / nodes.length);
@@ -456,15 +459,18 @@ const RoleReadyVisualization = () => {
         <svg width="500" height="450" className="absolute inset-0">
           {/* Connections */}
           {nodes.map((node, i) =>
-            nodes.slice(i + 1).map((otherNode, j) => (
-              <ConnectionLine
-                key={`${i}-${j}`}
-                start={{ x: node.x, y: node.y }}
-                end={{ x: otherNode.x, y: otherNode.y }}
-                color={node.color}
-                isActive={activeNode === i || activeNode === i + j + 1}
-              />
-            ))
+            nodes.slice(i + 1).map((otherNode, j) => {
+              const otherIndex = i + j + 1;
+              return (
+                <ConnectionLine
+                  key={`${i}-${otherIndex}`}
+                  start={node} // Pass node directly which is stable
+                  end={otherNode} // Pass node directly which is stable
+                  color={node.color}
+                  isActive={activeNode === i || activeNode === otherIndex}
+                />
+              );
+            })
           )}
 
           {/* Skill nodes */}
@@ -531,8 +537,8 @@ const RoleReadyVisualization = () => {
           className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-3 border border-gray-200"
         >
           <div className="flex items-center gap-2">
-            <Brain className="w-4 h-4 text-[#5693C1]" />
-            <span className="text-xs font-medium">AI Analysis Active</span>
+            <Target className="w-4 h-4 text-[#5693C1]" />
+            <span className="text-xs font-medium">Profile Analysis Active</span>
           </div>
           <div className="text-[10px] text-gray-400 mt-1">9 skills analyzed</div>
         </motion.div>

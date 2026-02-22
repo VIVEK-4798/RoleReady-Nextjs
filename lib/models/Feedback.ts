@@ -3,6 +3,7 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 export interface IFeedback extends Document {
     email: string;
     message: string;
+    type: 'suggestion' | 'issue' | 'praise' | 'other';
     userId?: mongoose.Types.ObjectId;
     status: 'new' | 'reviewed' | 'resolved';
     ipAddress?: string;
@@ -27,6 +28,11 @@ const FeedbackSchema = new Schema<IFeedback>(
             required: [true, 'Message is required'],
             minlength: [10, 'Message must be at least 10 characters'],
             maxlength: [2000, 'Message cannot exceed 2000 characters'],
+        },
+        type: {
+            type: String,
+            enum: ['suggestion', 'issue', 'praise', 'other'],
+            default: 'suggestion',
         },
         userId: {
             type: Schema.Types.ObjectId,

@@ -12,11 +12,12 @@ import { User } from '@/lib/models';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: userId } = await params;
     const session = await auth();
-    
+
     // Check admin access
     if (!session?.user || (session.user as { role?: string }).role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -25,7 +26,6 @@ export async function PATCH(
     await connectDB();
 
     const body = await request.json();
-    const userId = params.id;
 
     const user = await User.findById(userId);
     if (!user) {
@@ -63,11 +63,12 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: userId } = await params;
     const session = await auth();
-    
+
     // Check admin access
     if (!session?.user || (session.user as { role?: string }).role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -75,7 +76,6 @@ export async function DELETE(
 
     await connectDB();
 
-    const userId = params.id;
 
     const user = await User.findByIdAndDelete(userId);
     if (!user) {

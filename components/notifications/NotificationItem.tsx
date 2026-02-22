@@ -30,7 +30,8 @@ type NotificationType =
   | 'mentor_validation'
   | 'roadmap_updated'
   | 'role_changed'
-  | 'validation_request';
+  | 'validation_request'
+  | 'job_match';
 
 export interface Notification {
   _id: string;
@@ -110,6 +111,17 @@ const typeConfig: Record<NotificationType, {
     iconColor: 'text-indigo-600',
     label: 'New Request',
     defaultUrl: '/mentor/skill-validation',
+  },
+  job_match: {
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+      </svg>
+    ),
+    bgColor: 'bg-emerald-50',
+    iconColor: 'text-emerald-600',
+    label: 'Job Match',
+    defaultUrl: '/jobs',
   },
 };
 

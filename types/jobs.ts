@@ -10,7 +10,16 @@ export type AggregatedJob = {
     salary?: string;
     postedAt?: string;
     source: string;
-    matchScore?: number; // Added for personalization
+    priority?: number;
+    matchScore?: number;
+    experienceLevel?: string;
+    applicants?: number;
+    deadline?: string;
+    skills?: string[];
+    companySize?: string;
+    industry?: string;
+    companyDescription?: string;
+    roleId?: string;
 };
 
 // Keep JobDTO for full backward compatibility with frontend components

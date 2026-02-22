@@ -54,7 +54,12 @@ export class InternshipPersonalizationService {
                 return { ...internship, matchScore: score };
             });
 
-            ranked.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+            // Sort descending by priority (first), then by score
+            ranked.sort((a, b) => {
+                const priorityDiff = (b.priority || 0) - (a.priority || 0);
+                if (priorityDiff !== 0) return priorityDiff;
+                return (b.matchScore || 0) - (a.matchScore || 0);
+            });
 
             const RECOMMENDED_THRESHOLD = 2;
             const recommended = ranked.filter(j => (j.matchScore || 0) >= RECOMMENDED_THRESHOLD);

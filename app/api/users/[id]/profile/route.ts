@@ -22,7 +22,7 @@ interface RouteContext {
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
-    
+
     // Verify authentication
     const session = await auth();
     if (!session?.user) {
@@ -43,40 +43,24 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return errors.notFound('User not found');
     }
 
-    console.log('[PROFILE-API] Raw user from DB:', JSON.stringify(user, null, 2));
-    console.log('[PROFILE-API] Profile exists:', !!user.profile);
-    console.log('[PROFILE-API] Profile.achievements exists:', !!user.profile?.achievements);
 
     // Ensure profile object exists
     if (!user.profile) {
-      user.profile = {} as any;
-      await user.save();
-    }
-    
-    // Ensure sub-arrays exist - initialize if undefined
-    if (!user.profile.achievements) {
-      user.profile.achievements = [];
-    }
-    if (!user.profile.certificates) {
-      user.profile.certificates = [];
-    }
-    if (!user.profile.education) {
-      user.profile.education = [];
-    }
-    if (!user.profile.experience) {
-      user.profile.experience = [];
-    }
-    if (!user.profile.projects) {
-      user.profile.projects = [];
+      user.profile = {};
     }
 
-    console.log('[PROFILE-API] Profile data:', user.profile);
-    console.log('[PROFILE-API] Achievements:', user.profile.achievements);
-    console.log('[PROFILE-API] Achievements length:', user.profile.achievements?.length);
-    console.log('[PROFILE-API] Achievements array:', JSON.stringify(user.profile.achievements));
+    // Ensure sub-arrays exist - initialize if undefined
+    const profile = user.profile;
+    if (profile) {
+      if (!profile.achievements) profile.achievements = [];
+      if (!profile.certificates) profile.certificates = [];
+      if (!profile.education) profile.education = [];
+      if (!profile.experience) profile.experience = [];
+      if (!profile.projects) profile.projects = [];
+    }
 
     return success({
-      id: user._id,
+      id: user.id,
       name: user.name,
       email: user.email,
       mobile: user.mobile,
@@ -98,7 +82,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 export async function PUT(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
-    
+
     // Verify authentication
     const session = await auth();
     if (!session?.user) {
@@ -128,20 +112,27 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     // Update profile fields
     if (body.profile) {
-      const { bio, headline, location, linkedinUrl, githubUrl, portfolioUrl } = body.profile;
-      
-      if (bio !== undefined) user.profile.bio = bio;
-      if (headline !== undefined) user.profile.headline = headline;
-      if (location !== undefined) user.profile.location = location;
-      if (linkedinUrl !== undefined) user.profile.linkedinUrl = linkedinUrl;
-      if (githubUrl !== undefined) user.profile.githubUrl = githubUrl;
-      if (portfolioUrl !== undefined) user.profile.portfolioUrl = portfolioUrl;
+      if (!user.profile) {
+        user.profile = {};
+      }
+
+      const profile = user.profile;
+      if (profile) {
+        const { bio, headline, location, linkedinUrl, githubUrl, portfolioUrl } = body.profile;
+
+        if (bio !== undefined) profile.bio = bio;
+        if (headline !== undefined) profile.headline = headline;
+        if (location !== undefined) profile.location = location;
+        if (linkedinUrl !== undefined) profile.linkedinUrl = linkedinUrl;
+        if (githubUrl !== undefined) profile.githubUrl = githubUrl;
+        if (portfolioUrl !== undefined) profile.portfolioUrl = portfolioUrl;
+      }
     }
 
     await user.save();
 
     return success({
-      id: user._id,
+      id: user.id,
       name: user.name,
       email: user.email,
       mobile: user.mobile,

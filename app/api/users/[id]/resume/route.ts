@@ -10,7 +10,7 @@ import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import connectDB from '@/lib/db/mongoose';
-import { Resume, ActivityLog } from '@/lib/models';
+import { Resume, ActivityLog, User } from '@/lib/models';
 import { success, errors, handleError } from '@/lib/utils/api';
 import { auth } from '@/lib/auth';
 
@@ -140,6 +140,18 @@ export async function POST(request: NextRequest, context: RouteContext) {
       status: 'pending',
       isActive: true,
       version: nextVersion,
+    });
+
+    // Update User Profile with the new resume info
+    await User.findByIdAndUpdate(id, {
+      $set: {
+        'profile.resume': {
+          fileUrl: `/api/users/${id}/resume/${resume._id}`,
+          fileName: file.name,
+          uploadedAt: new Date(),
+          publicId: resume._id.toString(), // Store record ID as publicId for local files
+        }
+      }
     });
 
     console.log(`[resumeUpload] Created resume record: ${resume._id}, status: ${resume.status}`);

@@ -16,10 +16,12 @@ function LoginFormContent() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
 
+  const intent = searchParams.get('intent');
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    role: 'user' as UserRole,
+    role: (intent === 'mentor' ? 'mentor' : 'user') as UserRole,
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -104,6 +106,13 @@ function LoginFormContent() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Mentor Intent Helper */}
+      {intent === 'mentor' && (
+        <div className="bg-[#5693C1]/5 border border-[#5693C1]/20 text-[#5693C1] px-4 py-2 rounded-lg text-sm font-medium text-center mb-4">
+          Log in to apply as a mentor.
+        </div>
+      )}
+
       {/* Error Message */}
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { jobAggregatorService } from '@/services/jobs/jobAggregatorService';
+import { jobService } from '@/services/jobs/jobService';
 import { jobPersonalizationService } from '@/services/jobs/jobPersonalizationService';
 import { JobResponse } from '@/types/jobs';
 
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
     try {
         const session = await auth();
-        const rawJobs = await jobAggregatorService.fetchAggregatedJobs(query, page);
+        const rawJobs = await jobService.getJobs(query, page);
 
         // Define meta for the response
         const meta = {

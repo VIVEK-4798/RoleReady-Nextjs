@@ -7,7 +7,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { motion, useInView, AnimatePresence } from 'framer-motion';
+import { motion, useInView, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import Link from 'next/link';
 import {
   Target,
@@ -165,7 +165,20 @@ export default function CounterSection() {
   const [inView, setInView] = useState(false);
   const [activeCard, setActiveCard] = useState<number | null>(null);
   const [hoveredStat, setHoveredStat] = useState<number | null>(null);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+  // Use MotionValues for parallax to avoid re-renders on mouse move
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  // Create smooth springs for the parallax effect
+  const springX = useSpring(mouseX, { stiffness: 50, damping: 30 });
+  const springY = useSpring(mouseY, { stiffness: 50, damping: 30 });
+
+  // Transforms for different layers
+  const orb1X = useTransform(springX, [0, 100], [0, 20]);
+  const orb1Y = useTransform(springY, [0, 100], [0, 20]);
+  const orb2X = useTransform(springX, [0, 100], [0, -10]);
+  const orb2Y = useTransform(springY, [0, 100], [0, -10]);
   const sectionRef = useRef<HTMLElement>(null);
   const statsRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
@@ -191,21 +204,19 @@ export default function CounterSection() {
     return () => { if (element) observer.unobserve(element); };
   }, []);
 
-  // Track mouse position for parallax effects
+  // Track mouse position with motion values instead of state
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (sectionRef.current) {
         const rect = sectionRef.current.getBoundingClientRect();
-        setMousePosition({
-          x: ((e.clientX - rect.left) / rect.width) * 100,
-          y: ((e.clientY - rect.top) / rect.height) * 100
-        });
+        mouseX.set(((e.clientX - rect.left) / rect.width) * 100);
+        mouseY.set(((e.clientY - rect.top) / rect.height) * 100);
       }
     };
 
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+  }, [mouseX, mouseY]);
 
   return (
     <section
@@ -216,19 +227,17 @@ export default function CounterSection() {
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Gradient orbs with parallax */}
         <motion.div
-          animate={{
-            x: mousePosition.x * 2,
-            y: mousePosition.y * 2,
+          style={{
+            x: orb1X,
+            y: orb1Y,
           }}
-          transition={{ type: "spring", damping: 50 }}
           className="absolute top-20 -right-20 w-96 h-96 rounded-full bg-gradient-to-bl from-indigo-200/20 via-purple-200/20 to-transparent blur-3xl"
         />
         <motion.div
-          animate={{
-            x: -mousePosition.x,
-            y: -mousePosition.y,
+          style={{
+            x: orb2X,
+            y: orb2Y,
           }}
-          transition={{ type: "spring", damping: 50 }}
           className="absolute bottom-20 -left-20 w-96 h-96 rounded-full bg-gradient-to-tr from-emerald-200/20 via-teal-200/20 to-transparent blur-3xl"
         />
 

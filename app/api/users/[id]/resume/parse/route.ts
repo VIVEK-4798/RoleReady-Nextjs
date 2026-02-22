@@ -12,6 +12,8 @@ import { auth } from '@/lib/auth';
 import { parseResumeFile, SkillMatch } from '@/lib/services/resumeParser';
 import path from 'path';
 import fs from 'fs';
+import { promisify } from 'util';
+const unlinkAsync = promisify(fs.unlink);
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -24,7 +26,7 @@ interface RouteContext {
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
-    
+
     const session = await auth();
     if (!session?.user) {
       return errors.unauthorized();
@@ -58,40 +60,70 @@ export async function POST(request: NextRequest, context: RouteContext) {
     resume.status = 'processing';
     await resume.save();
 
-    try {
-      // Get file path - must match upload route UPLOAD_DIR
-      const uploadsDir = path.join(process.cwd(), 'uploads', 'resumes');
-      const filePath = path.join(uploadsDir, resume.filename);
+    let isTempFile = false;
+    let targetPath = '';
 
-      console.log(`[resumeParser] Looking for file: ${filePath}`);
-      console.log(`[resumeParser] File exists: ${fs.existsSync(filePath)}`);
-      
-      if (!fs.existsSync(filePath)) {
-        // List files in directory for debugging
-        if (fs.existsSync(uploadsDir)) {
+    try {
+      // Determine file path - handle local and remote files
+      const uploadsDir = path.join(process.cwd(), 'uploads', 'resumes');
+      const localPathFromFilename = path.join(uploadsDir, resume.filename);
+
+      if (resume.localPath && fs.existsSync(resume.localPath)) {
+        targetPath = resume.localPath;
+      } else if (fs.existsSync(localPathFromFilename)) {
+        targetPath = localPathFromFilename;
+      }
+      // 2. If not local, check if it's a remote URL (e.g., Cloudinary)
+      else if (resume.url && resume.url.startsWith('http')) {
+        console.log(`[resumeParser] Downloading remote resume: ${resume.url}`);
+        const response = await fetch(resume.url);
+
+        if (!response.ok) {
+          throw new Error(`Failed to download resume from URL: ${response.statusText}`);
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        // Create a temp directory
+        const tempDir = path.join(process.cwd(), 'tmp', 'resume-processing');
+        if (!fs.existsSync(tempDir)) {
+          fs.mkdirSync(tempDir, { recursive: true });
+        }
+
+        // Save to temp file
+        const tempFileName = `parse_${id}_${Date.now()}${path.extname(resume.originalName || '.pdf')}`;
+        targetPath = path.join(tempDir, tempFileName);
+        fs.writeFileSync(targetPath, buffer);
+        isTempFile = true;
+
+        console.log(`[resumeParser] Saved remote file to temp path: ${targetPath}`);
+      } else {
+        // Fallback or error if no way to get the file
+        if (!fs.existsSync(uploadsDir)) {
+          console.log(`[resumeParser] Uploads directory doesn't exist: ${uploadsDir}`);
+        } else {
           const files = fs.readdirSync(uploadsDir);
           console.log(`[resumeParser] Files in uploads dir:`, files);
-        } else {
-          console.log(`[resumeParser] Uploads directory doesn't exist: ${uploadsDir}`);
         }
-        throw new Error(`Resume file not found on server: ${filePath}`);
+        throw new Error(`Resume file not found on server or URL missing. Filename: ${resume.filename}`);
       }
 
       // Get all skills from database
       const allSkills = await Skill.find({}).select('_id name normalizedName domain').lean();
-      
+
       console.log(`[resumeParser] Found ${allSkills.length} skills in database`);
-      
+
       if (allSkills.length === 0) {
         resume.status = 'failed';
         resume.parseError = 'No skills found in database. Please add skills first.';
         await resume.save();
-        
+
         return errors.badRequest(
           'No skills in database. Run: npm run seed-skills to populate common skills, or add skills manually.'
         );
       }
-      
+
       const skillsForMatching: SkillMatch[] = allSkills.map(skill => ({
         _id: skill._id.toString(),
         name: skill.name,
@@ -100,8 +132,18 @@ export async function POST(request: NextRequest, context: RouteContext) {
       }));
 
       // Parse resume
-      console.log(`[resumeParser] Parsing resume: ${resume.originalName} (${resume.mimeType})`);
-      const parseResult = await parseResumeFile(filePath, resume.mimeType, skillsForMatching);
+      console.log(`[resumeParser] Parsing resume: ${resume.originalName} (${resume.mimeType}) at ${targetPath}`);
+      const parseResult = await parseResumeFile(targetPath, resume.mimeType, skillsForMatching);
+
+      // Clean up temp file if created
+      if (isTempFile && targetPath) {
+        try {
+          await unlinkAsync(targetPath);
+          console.log(`[resumeParser] Cleaned up temp file: ${targetPath}`);
+        } catch (cleanupError) {
+          console.error('[resumeParser] Failed to cleanup temp file:', cleanupError);
+        }
+      }
 
       // Get user's existing skills to avoid duplicates
       const existingSkills = await UserSkill.find({ userId: id }).select('skillId');
@@ -143,7 +185,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     } catch (parseError: any) {
       console.error('[resumeParser] Parse error:', parseError);
-      
+
+      // Clean up temp file on error if created
+      if (isTempFile && targetPath && fs.existsSync(targetPath)) {
+        try {
+          await unlinkAsync(targetPath);
+        } catch (e) { }
+      }
+
       // Update resume status to failed
       resume.status = 'failed';
       resume.parseError = parseError.message || 'Failed to parse resume';

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import User from '@/lib/models/User';
+import { User, Resume, ActivityLog } from '@/lib/models';
 import dbConnect from '@/lib/db/mongoose';
 import { uploadBufferToCloudinary, deleteFromCloudinary } from '@/lib/uploadToCloudinary';
+import { markEvaluationsOutdated } from '@/lib/services/evaluationService';
 
 export async function POST(request: NextRequest) {
     try {
@@ -64,14 +65,42 @@ export async function POST(request: NextRequest) {
         // Upload to Cloudinary
         const uploadResult = await uploadBufferToCloudinary(buffer, 'roleReady/resumes', { resource_type: 'raw' });
 
-        // Update User
+        // Update User Profile
         dbUser.profile.resume = {
             fileUrl: uploadResult.secure_url,
             fileName: file.name,
             uploadedAt: new Date(),
             publicId: uploadResult.public_id
-            // parsedText could be handled here or in a separate step
         };
+
+        // Sync with Resume Collection (for versioning and detailed tracking)
+        // 1. Get next version number
+        const lastResume = await Resume.findOne({ userId: dbUser._id })
+            .sort({ version: -1 })
+            .select('version');
+        const nextVersion = (lastResume?.version || 0) + 1;
+
+        // 2. Create resume record
+        const resumeRecord = await Resume.create({
+            userId: dbUser._id,
+            filename: uploadResult.public_id,
+            originalName: file.name,
+            mimeType: file.type,
+            size: file.size,
+            url: uploadResult.secure_url,
+            status: 'pending',
+            isActive: true,
+            version: nextVersion,
+        });
+
+        // 3. Log activity
+        await ActivityLog.logActivity(dbUser._id.toString(), 'user', 'resume_uploaded', {
+            resumeId: resumeRecord._id.toString(),
+            version: nextVersion,
+        });
+
+        // 4. Mark evaluations as outdated
+        await markEvaluationsOutdated(dbUser._id.toString(), ['readiness', 'roadmap', 'ats', 'report']);
 
         await dbUser.save();
 

@@ -10,7 +10,12 @@ export type InternshipDTO = {
     stipend?: string;
     postedAt?: string;
     source: string;
-    matchScore?: number; // For personalization
+    priority?: number;
+    matchScore?: number;
+    skills?: string[];
+    applicants?: number;
+    deadline?: string;
+    companyDescription?: string;
 };
 
 export interface InternshipProvider {

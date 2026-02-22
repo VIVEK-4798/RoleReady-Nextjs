@@ -9,12 +9,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import connectDB from '@/lib/db/mongoose';
 import { Job } from '@/lib/models';
+import { notifyUsersForJob } from '@/services/notifications/jobNotificationService';
 
 // GET /api/admin/jobs - List all jobs
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
-    
+
     if (!session?.user || (session.user as { role?: string }).role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
 
     // Build query
     const query: Record<string, unknown> = {};
-    
+
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: 'i' } },
@@ -42,7 +43,7 @@ export async function GET(req: NextRequest) {
         { city: { $regex: search, $options: 'i' } },
       ];
     }
-    
+
     if (status !== 'all') {
       query.isActive = status === 'active';
     }
@@ -83,7 +84,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    
+
     if (!session?.user || (session.user as { role?: string }).role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
@@ -98,6 +99,7 @@ export async function POST(req: NextRequest) {
       title,
       company,
       category,
+      roleId,
       city,
       salary,
       experience,
@@ -122,6 +124,7 @@ export async function POST(req: NextRequest) {
       title,
       company,
       category: category || undefined,
+      roleId: roleId || category || undefined, // Fallback to category if roleId not explicit
       city,
       salary,
       experience,
@@ -133,8 +136,15 @@ export async function POST(req: NextRequest) {
       contactPhone: contactPhone || '',
       isActive: true,
       isFeatured: false,
+      source: 'internal',
+      postedByRole: 'admin',
+      priority: 100,
       createdBy: session.user.id,
     });
+
+    // Trigger role-matched notifications (Background/Non-blocking)
+    // We don't await this to keep the API response snappy
+    notifyUsersForJob(job).catch(err => console.error('Notification trigger error:', err));
 
     return NextResponse.json({
       success: true,

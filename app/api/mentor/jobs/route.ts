@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongoose';
 import { Job, Category, ActivityLog } from '@/lib/models';
+import { notifyUsersForJob } from '@/services/notifications/jobNotificationService';
 import { requireMentorApi } from '@/lib/auth/utils';
 import { Types } from 'mongoose';
 
@@ -95,7 +96,7 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     const body = await request.json();
-    const { title, company, category, city, salary, experience, type, workDetail, isActive, isFeatured } = body;
+    const { title, company, category, roleId, city, salary, experience, type, workDetail, isActive, isFeatured } = body;
 
     // Validate required fields
     if (!title || !company || !city) {
@@ -105,11 +106,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create job
     const job = await Job.create({
       title,
       company,
       category: category ? new Types.ObjectId(category) : undefined,
+      roleId: roleId ? new Types.ObjectId(roleId) : (category ? new Types.ObjectId(category) : undefined),
       city,
       salary: salary || 'Not specified',
       experience: experience || 'Not specified',
@@ -117,8 +118,14 @@ export async function POST(request: NextRequest) {
       workDetail: workDetail || '',
       isActive: isActive !== false,
       isFeatured: isFeatured || false,
+      source: 'internal',
+      postedByRole: 'mentor',
+      priority: 80,
       createdBy: new Types.ObjectId(user.id),
     });
+
+    // Trigger role-matched notifications (Background/Non-blocking)
+    notifyUsersForJob(job).catch(err => console.error('Notification trigger error:', err));
 
     // Log activity for mentor contribution graph
     await ActivityLog.logActivity(user.id, 'mentor', 'job_added', {

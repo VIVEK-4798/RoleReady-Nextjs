@@ -104,9 +104,11 @@ interface WhoIsItForSectionProps {
     order: string[];
   };
   role: 'student' | 'mentor';
+  onStudentCTA: () => void;
+  onMentorCTA: () => void;
 }
 
-export default function WhoIsItForSection({ content, role }: WhoIsItForSectionProps) {
+export default function WhoIsItForSection({ content, role, onStudentCTA, onMentorCTA }: WhoIsItForSectionProps) {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 
   // Map roles to IDs for reordering
@@ -259,8 +261,14 @@ export default function WhoIsItForSection({ content, role }: WhoIsItForSectionPr
                 </div>
 
                 {/* CTA Button */}
-                <Link
-                  href="/signup"
+                <button
+                  onClick={() => {
+                    if (card.id === 4) {
+                      onMentorCTA();
+                    } else {
+                      onStudentCTA();
+                    }
+                  }}
                   className={`group/btn w-full py-3 rounded-xl font-semibold text-center transition-all duration-300 flex items-center justify-center gap-2 ${hoveredCard === card.id
                     ? 'bg-gradient-to-r from-[#5693C1] to-[#4a80b0] text-white shadow-lg'
                     : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
@@ -269,7 +277,7 @@ export default function WhoIsItForSection({ content, role }: WhoIsItForSectionPr
                   Get Started
                   <ArrowRight className={`w-4 h-4 transition-transform duration-300 ${hoveredCard === card.id ? 'translate-x-1' : ''
                     }`} />
-                </Link>
+                </button>
               </div>
             );
           })}

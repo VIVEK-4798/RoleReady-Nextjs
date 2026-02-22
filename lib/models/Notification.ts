@@ -33,7 +33,8 @@ export type NotificationType =
   | 'roadmap_updated'
   | 'role_changed'
   | 'validation_request'
-  | 'mentor_application';
+  | 'mentor_application'
+  | 'job_match';
 
 export interface INotification {
   _id: Types.ObjectId;
@@ -111,7 +112,7 @@ const NotificationSchema = new Schema<INotificationDocument>(
     type: {
       type: String,
       enum: {
-        values: ['readiness_outdated', 'mentor_validation', 'roadmap_updated', 'role_changed', 'validation_request', 'mentor_application'] as NotificationType[],
+        values: ['readiness_outdated', 'mentor_validation', 'roadmap_updated', 'role_changed', 'validation_request', 'mentor_application', 'job_match'] as NotificationType[],
         message: '{VALUE} is not a valid notification type',
       },
       required: [true, 'Notification type is required'],

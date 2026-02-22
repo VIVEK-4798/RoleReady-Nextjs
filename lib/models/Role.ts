@@ -27,7 +27,7 @@
  */
 
 import mongoose, { Schema, Document, Model, Types } from 'mongoose';
-import type { IRole, IRoleBenchmark, SkillImportance, SkillLevel } from '@/types';
+import type { IRole, IRoleBenchmark, IBenchmarkGroup, IBenchmarkGroupSkill, SkillImportance, SkillLevel } from '@/types';
 
 // ============================================================================
 // Benchmark Sub-Schema (Embedded)
@@ -70,6 +70,62 @@ const BenchmarkSchema = new Schema<IRoleBenchmark>(
   { _id: true } // Keep _id for individual benchmark identification
 );
 
+const BenchmarkGroupSkillSchema = new Schema<IBenchmarkGroupSkill>(
+  {
+    skillId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Skill',
+      required: [true, 'Skill reference is required'],
+    },
+    requiredLevel: {
+      type: String,
+      enum: {
+        values: ['none', 'beginner', 'intermediate', 'advanced', 'expert'] as SkillLevel[],
+        message: '{VALUE} is not a valid skill level',
+      },
+      default: 'beginner',
+    },
+  },
+  { _id: false }
+);
+
+const BenchmarkGroupSchema = new Schema<IBenchmarkGroup>(
+  {
+    name: {
+      type: String,
+      required: [true, 'Group name is required'],
+      trim: true,
+    },
+    type: {
+      type: String,
+      enum: {
+        values: ['ALL_REQUIRED', 'ANY_ONE_REQUIRED'],
+        message: '{VALUE} is not a valid group type',
+      },
+      default: 'ALL_REQUIRED',
+    },
+    weight: {
+      type: Number,
+      min: [1, 'Weight must be at least 1'],
+      max: [100, 'Weight cannot exceed 100'],
+      default: 1,
+    },
+    required: {
+      type: Boolean,
+      default: true,
+    },
+    skills: {
+      type: [BenchmarkGroupSkillSchema],
+      default: [],
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+  },
+  { _id: true }
+);
+
 // ============================================================================
 // Role Document Interface
 // ============================================================================
@@ -108,6 +164,10 @@ const RoleSchema = new Schema<IRoleDocument>(
     },
     benchmarks: {
       type: [BenchmarkSchema],
+      default: [],
+    },
+    benchmarkGroups: {
+      type: [BenchmarkGroupSchema],
       default: [],
     },
     updatedBy: {

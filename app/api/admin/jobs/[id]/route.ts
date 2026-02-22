@@ -13,11 +13,12 @@ import { Job } from '@/lib/models';
 // PATCH /api/admin/jobs/[id] - Update job
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await auth();
-    
+
     if (!session?.user || (session.user as { role?: string }).role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
@@ -27,7 +28,6 @@ export async function PATCH(
 
     await connectDB();
 
-    const { id } = params;
     const body = await req.json();
 
     // Find job
@@ -75,11 +75,12 @@ export async function PATCH(
 // DELETE /api/admin/jobs/[id] - Delete job
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await auth();
-    
+
     if (!session?.user || (session.user as { role?: string }).role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
@@ -89,7 +90,6 @@ export async function DELETE(
 
     await connectDB();
 
-    const { id } = params;
 
     // Find and delete job
     const job = await Job.findByIdAndDelete(id);

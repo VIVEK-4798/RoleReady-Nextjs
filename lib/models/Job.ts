@@ -21,6 +21,10 @@ export interface IJob {
   contactPhone?: string;
   isActive: boolean;
   isFeatured: boolean;
+  source: 'internal' | 'external';
+  postedByRole: 'admin' | 'mentor' | null;
+  roleId?: mongoose.Types.ObjectId;
+  priority: number;
   createdBy?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -83,6 +87,24 @@ const jobSchema = new mongoose.Schema<IJob>(
       type: Boolean,
       default: false,
     },
+    source: {
+      type: String,
+      enum: ['internal', 'external'],
+      default: 'internal',
+    },
+    postedByRole: {
+      type: String,
+      enum: ['admin', 'mentor', null],
+      default: null,
+    },
+    roleId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Role',
+    },
+    priority: {
+      type: Number,
+      default: 0,
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -94,9 +116,10 @@ const jobSchema = new mongoose.Schema<IJob>(
 );
 
 // Index for faster queries
-jobSchema.index({ isActive: 1, isFeatured: 1 });
+jobSchema.index({ isActive: 1, isFeatured: 1, priority: -1 });
 jobSchema.index({ city: 1, isActive: 1 });
 jobSchema.index({ category: 1, isActive: 1 });
+jobSchema.index({ priority: -1, createdAt: -1 });
 
 export default mongoose.models.Job ||
   mongoose.model<IJob>('Job', jobSchema);

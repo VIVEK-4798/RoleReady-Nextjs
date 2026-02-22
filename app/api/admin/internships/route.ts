@@ -14,7 +14,7 @@ import { Internship } from '@/lib/models';
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
-    
+
     if (!session?.user || (session.user as { role?: string }).role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
 
     // Build query
     const query: Record<string, unknown> = {};
-    
+
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: 'i' } },
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
         { city: { $regex: search, $options: 'i' } },
       ];
     }
-    
+
     if (status !== 'all') {
       query.isActive = status === 'active';
     }
@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    
+
     if (!session?.user || (session.user as { role?: string }).role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
@@ -133,6 +133,9 @@ export async function POST(req: NextRequest) {
       contactPhone: contactPhone || '',
       isActive: true,
       isFeatured: false,
+      source: 'internal',
+      postedByRole: 'admin',
+      priority: 100,
       createdBy: session.user.id,
     });
 

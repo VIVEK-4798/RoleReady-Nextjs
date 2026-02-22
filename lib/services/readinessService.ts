@@ -24,6 +24,7 @@ import {
   calculateReadiness,
   getSkillGaps,
   type BenchmarkInput,
+  type BenchmarkGroupInput,
   type UserSkillInput,
   type ReadinessResult,
 } from './readinessCalculator';
@@ -66,32 +67,38 @@ export interface CalculateAndSnapshotResult {
 async function fetchBenchmarks(roleId: string): Promise<{
   roleName: string;
   benchmarks: BenchmarkInput[];
+  benchmarkGroups: BenchmarkGroupInput[];
 } | null> {
   await connectDB();
-  
+
   const role = await Role.findById(roleId)
     .populate({
       path: 'benchmarks.skillId',
       model: 'Skill',
       select: 'name category',
     })
+    .populate({
+      path: 'benchmarkGroups.skills.skillId',
+      model: 'Skill',
+      select: 'name',
+    })
     .lean()
     .exec();
-  
+
   if (!role) {
     return null;
   }
-  
+
   const benchmarks: BenchmarkInput[] = [];
-  
+
   for (const benchmark of role.benchmarks || []) {
     // Skip inactive benchmarks
     if (!benchmark.isActive) continue;
-    
+
     // Skip if skill reference is missing or not populated
     const skill = benchmark.skillId as unknown as { _id: Types.ObjectId; name: string } | null;
     if (!skill || typeof skill === 'string' || !('name' in skill)) continue;
-    
+
     benchmarks.push({
       skillId: skill._id.toString(),
       skillName: skill.name,
@@ -100,10 +107,28 @@ async function fetchBenchmarks(roleId: string): Promise<{
       requiredLevel: benchmark.requiredLevel as SkillLevel,
     });
   }
-  
+
+  const benchmarkGroups: BenchmarkGroupInput[] = [];
+  for (const group of role.benchmarkGroups || []) {
+    if (!group.isActive) continue;
+
+    benchmarkGroups.push({
+      name: group.name,
+      type: group.type,
+      weight: group.weight,
+      required: group.required,
+      skills: (group.skills || []).map((s: any) => ({
+        skillId: (s.skillId as any)._id?.toString() || s.skillId.toString(),
+        skillName: (s.skillId as any).name || 'Unknown Skill',
+        requiredLevel: s.requiredLevel as SkillLevel,
+      })),
+    });
+  }
+
   return {
     roleName: role.name,
     benchmarks,
+    benchmarkGroups,
   };
 }
 
@@ -113,7 +138,7 @@ async function fetchBenchmarks(roleId: string): Promise<{
 
 async function fetchUserSkills(userId: string): Promise<UserSkillInput[]> {
   await connectDB();
-  
+
   const userSkills = await UserSkill.find({
     userId: new Types.ObjectId(userId),
   })
@@ -124,13 +149,13 @@ async function fetchUserSkills(userId: string): Promise<UserSkillInput[]> {
     })
     .lean()
     .exec();
-  
+
   const result: UserSkillInput[] = [];
-  
+
   for (const us of userSkills) {
     const skill = us.skillId as unknown as { _id: Types.ObjectId; name: string } | null;
     if (!skill || typeof skill === 'string' || !('name' in skill)) continue;
-    
+
     result.push({
       skillId: skill._id.toString(),
       skillName: skill.name,
@@ -139,7 +164,7 @@ async function fetchUserSkills(userId: string): Promise<UserSkillInput[]> {
       validationStatus: us.validationStatus as ValidationStatus,
     });
   }
-  
+
   return result;
 }
 
@@ -163,27 +188,28 @@ export async function calculateAndSnapshot(
   options: CalculateAndSnapshotOptions
 ): Promise<CalculateAndSnapshotResult> {
   const { userId, roleId, trigger, triggerDetails, skipNotificationResolution } = options;
-  
+
   await connectDB();
-  
+
   // 1. Fetch benchmarks
   const roleData = await fetchBenchmarks(roleId);
   if (!roleData) {
     throw new Error(`Role not found: ${roleId}`);
   }
-  
+
   // 2. Fetch user skills
   const userSkills = await fetchUserSkills(userId);
-  
+
   // 3. Calculate readiness (PURE FUNCTION - no side effects)
   const result: ReadinessResult = calculateReadiness(
     userId,
     roleId,
     roleData.roleName,
     roleData.benchmarks,
-    userSkills
+    userSkills,
+    roleData.benchmarkGroups
   );
-  
+
   // 4. Convert breakdown to DB schema format
   const breakdownForDb: ISkillBreakdown[] = result.breakdown.map((b) => ({
     skillId: new Types.ObjectId(b.skillId),
@@ -202,7 +228,7 @@ export async function calculateAndSnapshot(
     source: b.source,
     validationStatus: b.validationStatus,
   }));
-  
+
   // 5. Create snapshot
   const snapshot = await ReadinessSnapshot.create({
     userId: new Types.ObjectId(userId),
@@ -217,17 +243,18 @@ export async function calculateAndSnapshot(
     skillsMatched: result.breakdown.filter((b) => !b.isMissing).length,
     skillsMissing: result.breakdown.filter((b) => b.isMissing).length,
     breakdown: breakdownForDb,
+    groupResults: result.groupResults || [],
     trigger,
     triggerDetails,
   });
-  
+
   // 6. Update TargetRole.readinessAtChange if this is for the active target role
   const targetRole = await TargetRole.getActiveForUser(userId);
   if (targetRole && targetRole.roleId.toString() === roleId) {
     targetRole.readinessAtChange = result.percentage;
     await targetRole.save();
   }
-  
+
   // 7. Resolve readiness_outdated notifications
   if (!skipNotificationResolution) {
     await Notification.updateMany(
@@ -242,10 +269,10 @@ export async function calculateAndSnapshot(
       }
     );
   }
-  
+
   // 8. Get skill gaps for response
   const gaps = getSkillGaps(result);
-  
+
   return {
     snapshot: {
       id: snapshot._id.toString(),
@@ -279,30 +306,31 @@ export async function calculateReadinessOnly(
 ): Promise<ReadinessResult & { gaps: ReturnType<typeof getSkillGaps> }> {
   console.log('[calculateReadinessOnly] Starting for userId:', userId, 'roleId:', roleId);
   await connectDB();
-  
+
   const roleData = await fetchBenchmarks(roleId);
   if (!roleData) {
     console.log('[calculateReadinessOnly] Role not found:', roleId);
     throw new Error(`Role not found: ${roleId}`);
   }
   console.log('[calculateReadinessOnly] Found role:', roleData.roleName, 'with', roleData.benchmarks.length, 'benchmarks');
-  
+
   const userSkills = await fetchUserSkills(userId);
   console.log('[calculateReadinessOnly] Found', userSkills.length, 'user skills');
-  
+
   const result = calculateReadiness(
     userId,
     roleId,
     roleData.roleName,
     roleData.benchmarks,
-    userSkills
+    userSkills,
+    roleData.benchmarkGroups
   );
   console.log('[calculateReadinessOnly] Calculated readiness:', result.percentage + '%');
   console.log('[calculateReadinessOnly] Breakdown items:', result.breakdown.length);
-  
+
   const gaps = getSkillGaps(result);
   console.log('[calculateReadinessOnly] Skill gaps:', gaps.length);
-  
+
   return {
     ...result,
     gaps: gaps,
@@ -351,12 +379,12 @@ export async function recalculateForActiveRole(
   triggerDetails?: string
 ): Promise<CalculateAndSnapshotResult | null> {
   await connectDB();
-  
+
   const targetRole = await TargetRole.getActiveForUser(userId);
   if (!targetRole) {
     return null;
   }
-  
+
   return calculateAndSnapshot({
     userId,
     roleId: targetRole.roleId.toString(),

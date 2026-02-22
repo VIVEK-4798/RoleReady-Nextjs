@@ -70,8 +70,12 @@ export class JobPersonalizationService {
                 return { ...job, matchScore: score };
             });
 
-            // 4. Sort descending by score
-            rankedJobs.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+            // 4. Sort descending by priority (first), then by score
+            rankedJobs.sort((a, b) => {
+                const priorityDiff = (b.priority || 0) - (a.priority || 0);
+                if (priorityDiff !== 0) return priorityDiff;
+                return (b.matchScore || 0) - (a.matchScore || 0);
+            });
 
             // 5. Categorize (Threshold: score > 2 means at least 1 title match or 3 desc matches)
             const RECOMMENDED_THRESHOLD = 2;

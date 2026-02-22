@@ -178,6 +178,23 @@ export interface ISkill {
 
 export type SkillImportance = 'required' | 'optional';
 
+export type BenchmarkGroupType = 'ALL_REQUIRED' | 'ANY_ONE_REQUIRED';
+
+export interface IBenchmarkGroupSkill {
+  skillId: Types.ObjectId;
+  requiredLevel: SkillLevel;
+}
+
+export interface IBenchmarkGroup {
+  _id?: Types.ObjectId;
+  name: string;
+  type: BenchmarkGroupType;
+  weight: number;
+  required: boolean;
+  skills: IBenchmarkGroupSkill[];
+  isActive: boolean;
+}
+
 export interface IRoleBenchmark {
   _id?: Types.ObjectId;
   skillId: Types.ObjectId;
@@ -194,6 +211,7 @@ export interface IRole {
   colorClass: string;
   isActive: boolean;
   benchmarks: IRoleBenchmark[];
+  benchmarkGroups: IBenchmarkGroup[];
   updatedBy?: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
