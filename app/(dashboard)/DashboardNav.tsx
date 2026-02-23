@@ -17,6 +17,7 @@ import { useAuth } from '@/hooks';
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
   { href: '/dashboard/profile', label: 'Profile', icon: 'user' },
+  { href: '/dashboard/resume', label: 'Resume', icon: 'resume' },
   { href: '/dashboard/skills', label: 'My Skills', icon: 'skills' },
   { href: '/dashboard/reports', label: 'Reports', icon: 'report' },
   { href: '/dashboard/tickets', label: 'Support', icon: 'support' },
@@ -64,6 +65,11 @@ const iconMap: Record<string, ReactNode> = {
   logout: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+    </svg>
+  ),
+  resume: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
     </svg>
   ),
 };

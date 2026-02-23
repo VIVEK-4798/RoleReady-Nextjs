@@ -74,6 +74,11 @@ const ProfileSchema = new Schema<IUserProfile>({
   certificates: [CertificateSchema],
   achievements: [AchievementSchema],
   resume: ResumeSchema,
+  socialLinks: {
+    linkedin: { type: String },
+    github: { type: String },
+    twitter: { type: String },
+  },
   niche: { type: String },
 }, { _id: false });
 
@@ -313,6 +318,42 @@ UserSchema.pre('save', async function () {
   const bcrypt = await import('bcryptjs');
   const salt = await bcrypt.genSalt(10);
   user.password = await bcrypt.hash(user.password, salt);
+});
+
+/**
+ * Sync social links legacy fields
+ */
+UserSchema.pre('save', async function () {
+  const user = this as IUserDocument;
+
+  if (user.profile) {
+    // Ensure socialLinks exists
+    if (!user.profile.socialLinks) {
+      user.profile.socialLinks = {};
+    }
+
+    // If socialLinks was directly modified, sync TO legacy fields
+    if (user.isDirectModified('profile.socialLinks.linkedin')) {
+      user.profile.linkedinUrl = user.profile.socialLinks.linkedin;
+    }
+    if (user.isDirectModified('profile.socialLinks.github')) {
+      user.profile.githubUrl = user.profile.socialLinks.github;
+    }
+    if (user.isDirectModified('profile.socialLinks.portfolio')) {
+      user.profile.portfolioUrl = user.profile.socialLinks.portfolio;
+    }
+
+    // If legacy fields were modified, sync TO socialLinks
+    if (user.isDirectModified('profile.linkedinUrl')) {
+      user.profile.socialLinks.linkedin = user.profile.linkedinUrl;
+    }
+    if (user.isDirectModified('profile.githubUrl')) {
+      user.profile.socialLinks.github = user.profile.githubUrl;
+    }
+    if (user.isDirectModified('profile.portfolioUrl')) {
+      user.profile.socialLinks.portfolio = user.profile.portfolioUrl;
+    }
+  }
 });
 
 // ============================================================================

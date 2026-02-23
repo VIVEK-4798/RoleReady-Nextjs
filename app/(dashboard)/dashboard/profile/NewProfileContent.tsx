@@ -8,7 +8,11 @@ import { useAuth } from '@/hooks';
 import { SkeletonPage, ConfirmationModal } from '@/components/ui';
 import toast from 'react-hot-toast';
 import SkillSuggestionsReview from './SkillSuggestionsReview';
-import { Wand2, Activity, BarChart3, CheckCircle, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Wand2, Activity, BarChart3, CheckCircle, AlertCircle, ChevronDown, ChevronUp, FileText, Sparkles, Upload } from 'lucide-react';
+import Link from 'next/link';
+import { ProfileSocialLinks } from '@/components/profile/ProfileSocialLinks';
+
+
 
 // Types
 interface ProfileData {
@@ -29,6 +33,11 @@ interface ProfileData {
     projects: Project[];
     certificates?: Certificate[];
     achievements?: Achievement[];
+    socialLinks?: {
+      linkedin?: string;
+      github?: string;
+      twitter?: string;
+    };
   };
 }
 
@@ -370,7 +379,14 @@ export default function NewProfileContent() {
           break;
         case 'project':
           endpoint = `/api/users/${user.id}/projects`;
-          body = data;
+          const projectData = { ...data };
+          if (typeof projectData.technologies === 'string') {
+            projectData.technologies = projectData.technologies
+              .split(',')
+              .map(t => t.trim())
+              .filter(t => t);
+          }
+          body = projectData;
           break;
         case 'certificate':
           endpoint = `/api/users/${user.id}/certificates`;
@@ -641,6 +657,14 @@ export default function NewProfileContent() {
                   )}
                 </div>
 
+                {/* Social Links */}
+                <div className="mb-6">
+                  <ProfileSocialLinks
+                    initialLinks={profile?.profile?.socialLinks || {}}
+                    onUpdate={fetchProfile}
+                  />
+                </div>
+
                 {/* Profile Strength */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -866,8 +890,35 @@ export default function NewProfileContent() {
                   <SkillSuggestionsReview onSkillsAdded={() => fetchProfile()} />
                 </div>
               ) : (
-                <div className="text-gray-500 italic">
-                  <p>Upload your resume for better job matching</p>
+                <div className="space-y-4">
+                  <div className="text-center py-6 bg-gray-50/50 rounded-xl border-2 border-dashed border-gray-200">
+                    <div className="mb-3 flex justify-center">
+                      <div className="w-12 h-12 bg-white rounded-full border border-gray-100 flex items-center justify-center text-gray-400 shadow-sm">
+                        <FileText className="w-6 h-6" />
+                      </div>
+                    </div>
+                    <p className="text-gray-600 font-medium mb-1">No resume found</p>
+                    <p className="text-sm text-gray-400 mb-6 px-4 italic">
+                      Upload your existing resume or generate a professional one from your profile.
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row gap-3 px-6">
+                      <button
+                        onClick={() => setActiveModal('resume')}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                      >
+                        <Upload className="w-4 h-4" />
+                        Upload Resume
+                      </button>
+                      <Link
+                        href="/dashboard/resume"
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#5693C1] text-white rounded-lg text-sm font-semibold hover:bg-[#4a80b0] transition-colors shadow-md shadow-[#5693C1]/20"
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        Generate Resume
+                      </Link>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -1380,6 +1431,18 @@ export default function NewProfileContent() {
                         </div>
                       </div>
                     </div>
+
+                    <div className="text-center pt-2">
+                      <p className="text-xs text-gray-400 mb-2">Don't have a resume yet?</p>
+                      <Link
+                        href="/dashboard/resume"
+                        onClick={() => setActiveModal(null)}
+                        className="inline-flex items-center gap-1 text-sm font-semibold text-[#5693C1] hover:underline"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        Generate Professional Resume from Profile
+                      </Link>
+                    </div>
                   </div>
 
                   <div className="flex gap-3 mt-6">
@@ -1579,7 +1642,7 @@ export default function NewProfileContent() {
           )}
 
           {/* Placeholder Modals */}
-          {['responsibility', 'social'].includes(activeModal || '') && (
+          {['responsibility'].includes(activeModal || '') && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
                 <div className="p-6">
@@ -1760,10 +1823,10 @@ export default function NewProfileContent() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Technologies (comma-separated)</label>
                       <input
                         type="text"
-                        value={Array.isArray(editData.technologies) ? (editData.technologies as string[]).join(', ') : ''}
+                        value={Array.isArray(editData.technologies) ? (editData.technologies as string[]).join(', ') : (editData.technologies as string || '')}
                         onChange={(e) => setEditData({
                           ...editData,
-                          technologies: e.target.value.split(',').map(t => t.trim()).filter(t => t)
+                          technologies: e.target.value
                         })}
                         placeholder="React, Node.js, MongoDB"
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent"

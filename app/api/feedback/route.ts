@@ -22,8 +22,12 @@ export async function POST(req: NextRequest) {
         const forwarded = req.headers.get('x-forwarded-for');
         const ip = forwarded ? forwarded.split(',')[0] : 'unknown';
 
+        const session = await auth();
+        // Prioritize the email sent from the form, fallback to session
+        const userEmail = (email || session?.user?.email || '').trim();
+
         // 1. Basic Validation
-        if (!email || !message) {
+        if (!userEmail || !message) {
             return NextResponse.json(
                 { error: 'Email and message are required' },
                 { status: 400 }
@@ -38,8 +42,9 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        // Always validate email format since the user can edit it even if logged in
         const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
-        if (!emailRegex.test(email)) {
+        if (!emailRegex.test(userEmail)) {
             return NextResponse.json(
                 { error: 'Invalid email format' },
                 { status: 400 }
@@ -103,10 +108,9 @@ export async function POST(req: NextRequest) {
 
         // 3. Save Feedback
         await connectDB();
-        const session = await auth();
 
         await Feedback.create({
-            email: email.toLowerCase().trim(),
+            email: userEmail.toLowerCase().trim(),
             message: message.trim(),
             type: type || 'suggestion',
             ...(session?.user?.id && { userId: session.user.id }),
@@ -119,7 +123,7 @@ export async function POST(req: NextRequest) {
             const { sendFeedbackThankYouEmail } = await import('@/services/email/feedbackEmailService');
             // We don't await this to keep the API response fast
             sendFeedbackThankYouEmail({
-                email: email.toLowerCase().trim(),
+                email: userEmail.toLowerCase().trim(),
                 type: type || 'suggestion'
             }).catch(err => console.error('Delayed email error:', err));
         } catch (emailError) {

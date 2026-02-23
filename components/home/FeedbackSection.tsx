@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSession } from 'next-auth/react';
 import {
     Send,
     Mail,
@@ -64,6 +65,7 @@ const FEEDBACK_TYPES: FeedbackOption[] = [
 ];
 
 export default function FeedbackSection() {
+    const { data: session } = useSession();
     const [formData, setFormData] = useState({ email: '', message: '' });
     const [selectedType, setSelectedType] = useState<FeedbackType>('suggestion');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,6 +74,13 @@ export default function FeedbackSection() {
     const [isFocused, setIsFocused] = useState({ email: false, message: false });
     const [showSuccess, setShowSuccess] = useState(false);
     const formRef = useRef<HTMLFormElement>(null);
+
+    // Prefill email if session exists
+    useEffect(() => {
+        if (session?.user?.email) {
+            setFormData(prev => ({ ...prev, email: session?.user?.email as string }));
+        }
+    }, [session]);
 
     const validate = () => {
         const newErrors: { email?: string; message?: string } = {};
@@ -115,7 +124,7 @@ export default function FeedbackSection() {
                 toast.success(data.message || 'Thank you for your feedback!', {
                     icon: '🎉',
                 });
-                setFormData({ email: '', message: '' });
+                setFormData(prev => ({ ...prev, message: '' }));
                 setCharCount(0);
                 setErrors({});
                 setShowSuccess(true);
@@ -324,13 +333,13 @@ export default function FeedbackSection() {
                                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                                 onFocus={() => setIsFocused(prev => ({ ...prev, email: true }))}
                                                 onBlur={() => setIsFocused(prev => ({ ...prev, email: false }))}
-                                                className={`block w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 ${errors.email
+                                                className={`block w-full pl-11 pr-4 py-3.5 border-2 ${errors.email
                                                     ? 'border-red-300 bg-red-50/50'
                                                     : isFocused.email
                                                         ? 'border-[#5693C1] bg-white'
                                                         : 'border-gray-200 hover:border-gray-300'
                                                     } rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5693C1]/20 transition-all duration-300`}
-                                                placeholder="you@example.com"
+                                                placeholder={session?.user?.email || "you@example.com"}
                                             />
                                         </div>
                                         <AnimatePresence>

@@ -94,6 +94,12 @@ export interface IUserProfile {
   certificates?: ICertificate[];
   achievements?: IAchievement[];
   resume?: IResume;
+  socialLinks?: {
+    linkedin?: string;
+    github?: string;
+    twitter?: string;
+    portfolio?: string;
+  };
   niche?: string;
 }
 
