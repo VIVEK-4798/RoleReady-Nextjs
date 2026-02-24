@@ -94,15 +94,21 @@ export const ResumePDF = ({ data }: { data: ResumeData }) => (
             {/* Header */}
             <View style={styles.header}>
                 <Text style={styles.name}>{data.contact.fullName}</Text>
+                {data.contact.headline && (
+                    <Text style={{ fontSize: 11, color: '#4a80b0', fontWeight: 'bold', textAlign: 'center', marginBottom: 4 }}>
+                        {data.contact.headline}
+                    </Text>
+                )}
                 <View style={styles.contactLine}>
                     <Text>{data.contact.email}</Text>
                     {data.contact.phone && <Text>|  {data.contact.phone}</Text>}
                     {data.contact.location && <Text>|  {data.contact.location}</Text>}
                 </View>
-                {(data.contact.linkedin || data.contact.github) && (
+                {(data.contact.linkedin || data.contact.github || data.contact.portfolio) && (
                     <View style={[styles.contactLine, { marginTop: 3 }]}>
                         {data.contact.linkedin && <Text>LinkedIn: {data.contact.linkedin.replace(/^https?:\/\/(www\.)?/, '')}</Text>}
-                        {data.contact.github && <Text>{data.contact.linkedin ? '|  ' : ''}GitHub: {data.contact.github.replace(/^https?:\/\/(www\.)?/, '')}</Text>}
+                        {data.contact.github && <Text>{data.contact.linkedin ? '  |  ' : ''}GitHub: {data.contact.github.replace(/^https?:\/\/(www\.)?/, '')}</Text>}
+                        {data.contact.portfolio && <Text>{(data.contact.linkedin || data.contact.github) ? '  |  ' : ''}Portfolio: {data.contact.portfolio.replace(/^https?:\/\/(www\.)?/, '')}</Text>}
                     </View>
                 )}
             </View>
@@ -119,14 +125,22 @@ export const ResumePDF = ({ data }: { data: ResumeData }) => (
             {data.skills.length > 0 && (
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Technical Skills</Text>
-                    <View style={styles.skillGroup}>
-                        {data.skills.map((skill, i) => (
-                            <View key={i} style={styles.skillItem}>
-                                <Text style={styles.skillName}>{skill.name}</Text>
-                                <Text style={styles.skillLevel}>({skill.level})</Text>
-                            </View>
-                        ))}
-                    </View>
+                    {data.groupedSkills ? (
+                        <View style={{ gap: 4 }}>
+                            {Object.entries(data.groupedSkills).map(([category, skillList], i) => (
+                                <Text key={i} style={{ fontSize: 10 }}>
+                                    <Text style={{ fontWeight: 'bold' }}>{category}: </Text>
+                                    {skillList.join(', ')}
+                                </Text>
+                            ))}
+                        </View>
+                    ) : (
+                        <View style={styles.skillGroup}>
+                            <Text style={{ fontSize: 10 }}>
+                                {data.skills.map(s => s.name).join(', ')}
+                            </Text>
+                        </View>
+                    )}
                 </View>
             )}
 
@@ -147,7 +161,7 @@ export const ResumePDF = ({ data }: { data: ResumeData }) => (
                             {exp.description && exp.description.split('\n').filter(l => l.trim()).map((line, idx) => (
                                 <View key={idx} style={styles.bulletPoint}>
                                     <Text style={styles.bullet}>{'\u2022'}</Text>
-                                    <Text style={styles.bulletText}>{line.replace(/^-\s*/, '')}</Text>
+                                    <Text style={styles.bulletText}>{line}</Text>
                                 </View>
                             ))}
                         </View>
@@ -158,23 +172,28 @@ export const ResumePDF = ({ data }: { data: ResumeData }) => (
             {/* Projects */}
             {data.projects.length > 0 && (
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Projects</Text>
+                    <Text style={styles.sectionTitle}>Key Projects</Text>
                     {data.projects.map((proj, i) => (
-                        <View key={i} style={{ marginBottom: 8 }}>
+                        <View key={i} style={{ marginBottom: 10 }}>
                             <View style={styles.entryHeader}>
                                 <Text>{proj.name}</Text>
                                 <Text>{proj.startDate} - {proj.endDate}</Text>
                             </View>
                             {proj.technologies.length > 0 && (
-                                <Text style={{ fontSize: 8, fontStyle: 'italic', marginBottom: 2 }}>
+                                <Text style={{ fontSize: 9, fontStyle: 'italic', marginBottom: 3, opacity: 0.8 }}>
                                     Technologies: {proj.technologies.join(', ')}
                                 </Text>
                             )}
-                            {proj.description && <Text style={{ marginBottom: 2 }}>{proj.description}</Text>}
+                            {proj.description && proj.description.split('\n').filter(l => l.trim()).map((line, idx) => (
+                                <View key={idx} style={styles.bulletPoint}>
+                                    <Text style={styles.bullet}>{'\u2022'}</Text>
+                                    <Text style={styles.bulletText}>{line}</Text>
+                                </View>
+                            ))}
                             {(proj.url || proj.githubUrl) && (
-                                <View style={{ flexDirection: 'row', gap: 10 }}>
-                                    {proj.url && <Text style={{ fontSize: 8, color: '#0000EE' }}>Link: {proj.url}</Text>}
-                                    {proj.githubUrl && <Text style={{ fontSize: 8, color: '#0000EE' }}>Source: {proj.githubUrl}</Text>}
+                                <View style={{ flexDirection: 'row', gap: 10, marginLeft: 15, marginTop: 2 }}>
+                                    {proj.url && <Text style={{ fontSize: 8, color: '#0000EE' }}>Live: {proj.url.replace(/^https?:\/\/(www\.)?/, '')}</Text>}
+                                    {proj.githubUrl && <Text style={{ fontSize: 8, color: '#0000EE' }}>Source: {proj.githubUrl.replace(/^https?:\/\/(www\.)?/, '')}</Text>}
                                 </View>
                             )}
                         </View>
@@ -187,15 +206,45 @@ export const ResumePDF = ({ data }: { data: ResumeData }) => (
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Education</Text>
                     {data.education.map((edu, i) => (
-                        <View key={i} style={{ marginBottom: 5 }}>
+                        <View key={i} style={{ marginBottom: 8 }}>
                             <View style={styles.entryHeader}>
                                 <Text>{edu.institution}</Text>
                                 <Text>{edu.startDate} - {edu.endDate}</Text>
                             </View>
-                            <View style={styles.entrySubHeader}>
-                                <Text>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</Text>
-                                {edu.grade && <Text>Grade: {edu.grade}</Text>}
-                            </View>
+                            <Text style={{ fontSize: 10 }}>
+                                {edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}{edu.grade ? ` · Grade: ${edu.grade}` : ''}
+                            </Text>
+                        </View>
+                    ))}
+                </View>
+            )}
+
+            {/* Certifications */}
+            {data.certificates && data.certificates.length > 0 && (
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Certifications</Text>
+                    {data.certificates.map((cert, i) => (
+                        <View key={i} style={{ marginBottom: 4 }}>
+                            <Text style={{ fontSize: 10 }}>
+                                <Text style={{ fontWeight: 'bold' }}>{cert.name}</Text> – {cert.issuer} {cert.date ? `(${cert.date})` : ''}
+                            </Text>
+                        </View>
+                    ))}
+                </View>
+            )}
+
+            {/* Achievements */}
+            {data.achievements && data.achievements.length > 0 && (
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Achievements & Awards</Text>
+                    {data.achievements.map((ach, i) => (
+                        <View key={i} style={{ marginBottom: 6 }}>
+                            <Text style={{ fontSize: 10 }}>
+                                <Text style={{ fontWeight: 'bold' }}>{ach.title}</Text> – {ach.issuer} {ach.date ? `(${ach.date})` : ''}
+                            </Text>
+                            {ach.description && (
+                                <Text style={{ fontSize: 9, color: '#444444', marginTop: 1, marginLeft: 10 }}>{ach.description}</Text>
+                            )}
                         </View>
                     ))}
                 </View>

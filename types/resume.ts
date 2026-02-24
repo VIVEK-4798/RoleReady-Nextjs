@@ -7,13 +7,16 @@ export interface ResumeData {
         phone?: string;
         linkedin?: string;
         github?: string;
+        portfolio?: string;
         location?: string;
+        headline?: string;
     };
     summary?: string;
     skills: {
         name: string;
         level: SkillLevel;
     }[];
+    groupedSkills?: Record<string, string[]>;
     experience: {
         title: string;
         company: string;
@@ -40,10 +43,22 @@ export interface ResumeData {
         endDate?: string;
         grade?: string;
     }[];
+    certificates?: {
+        name: string;
+        issuer: string;
+        date?: string;
+    }[];
+    achievements?: {
+        title: string;
+        issuer: string;
+        date?: string;
+        description?: string;
+    }[];
 }
 
 export interface ResumeEligibility {
     eligible: boolean;
     missingFields: string[];
+    missingIds?: string[];
     warnings: string[];
 }

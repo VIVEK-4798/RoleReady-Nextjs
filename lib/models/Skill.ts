@@ -26,7 +26,7 @@ import type { ISkill, SkillDomain } from '@/types';
 // Skill Document Interface
 // ============================================================================
 
-export interface ISkillDocument extends Omit<ISkill, '_id'>, Document {}
+export interface ISkillDocument extends Omit<ISkill, '_id'>, Document { }
 
 // ============================================================================
 // Skill Schema
@@ -132,7 +132,7 @@ SkillSchema.statics.findByNormalizedNames = function (names: string[]) {
       .replace(/[^a-z0-9\s\+\#\.\_\-]/g, '')
       .replace(/\s+/g, ' ')
   );
-  
+
   return this.find({
     normalizedName: { $in: normalizedNames },
     isActive: true,
@@ -143,7 +143,9 @@ SkillSchema.statics.findByNormalizedNames = function (names: string[]) {
 // Model Export
 // ============================================================================
 
+console.log('🔄 Registering Skill model...');
 const Skill: Model<ISkillDocument> =
   mongoose.models.Skill || mongoose.model<ISkillDocument>('Skill', SkillSchema);
+console.log('✅ Skill model registered');
 
 export default Skill;

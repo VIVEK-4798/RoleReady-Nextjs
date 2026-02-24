@@ -1,3 +1,26 @@
+import User from './User';
+import Skill from './Skill';
+import Role from './Role';
+import UserSkill from './UserSkill';
+import Otp from './Otp';
+import { Resume } from './Resume';
+import TargetRole from './TargetRole';
+import Notification from './Notification';
+import ReadinessSnapshot from './ReadinessSnapshot';
+import Roadmap from './Roadmap';
+import Category from './Category';
+import Internship from './Internship';
+import Job from './Job';
+import ActivityLog from './ActivityLog';
+import DemoSession from './DemoSession';
+import { UserEmailEvent } from './UserEmailEvent';
+import Ticket from './Ticket';
+import TicketMessage from './TicketMessage';
+import MentorRoleRequest from './MentorRoleRequest';
+import MentorApplication from './MentorApplication';
+import ATSScore from './ATSScore';
+import Feedback from './Feedback';
+
 /**
  * Models Index
  * 
@@ -5,28 +28,41 @@
  * This ensures consistent imports across the application.
  */
 
-export { default as User } from './User';
-export { default as Skill } from './Skill';
-export { default as Role } from './Role';
-export { default as UserSkill } from './UserSkill';
-export { default as Otp } from './Otp';
-export { Resume } from './Resume';
-export { default as TargetRole } from './TargetRole';
-export { default as Notification } from './Notification';
-export { default as ReadinessSnapshot } from './ReadinessSnapshot';
-export { default as Roadmap } from './Roadmap';
-export { default as Category } from './Category';
-export { default as Internship } from './Internship';
-export { default as Job } from './Job';
-export { default as ActivityLog } from './ActivityLog';
-export { default as DemoSession } from './DemoSession';
-export { UserEmailEvent } from './UserEmailEvent';
-export { default as Ticket } from './Ticket';
-export { default as TicketMessage } from './TicketMessage';
-export { default as MentorRoleRequest } from './MentorRoleRequest';
-export { default as MentorApplication } from './MentorApplication';
-export { default as ATSScore } from './ATSScore';
-export { default as Feedback } from './Feedback';
+export {
+    User,
+    Skill,
+    Role,
+    UserSkill,
+    Otp,
+    Resume,
+    TargetRole,
+    Notification,
+    ReadinessSnapshot,
+    Roadmap,
+    Category,
+    Internship,
+    Job,
+    ActivityLog,
+    DemoSession,
+    UserEmailEvent,
+    Ticket,
+    TicketMessage,
+    MentorRoleRequest,
+    MentorApplication,
+    ATSScore,
+    Feedback
+};
+
+// Explicit initialization function to force registration
+export function initModels() {
+    return {
+        User, Skill, Role, UserSkill, Otp, Resume, TargetRole,
+        Notification, ReadinessSnapshot, Roadmap, Category,
+        Internship, Job, ActivityLog, DemoSession, UserEmailEvent,
+        Ticket, TicketMessage, MentorRoleRequest, MentorApplication,
+        ATSScore, Feedback
+    };
+}
 
 // Re-export document interfaces for convenience
 export type { IUserDocument } from './User';

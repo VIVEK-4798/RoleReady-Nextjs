@@ -29,12 +29,14 @@
 
 import mongoose, { Schema, Document, Model, Types } from 'mongoose';
 import type { IUserSkill, SkillSource, ValidationStatus, SkillLevel } from '@/types';
+import Skill from './Skill'; // Ensure Skill model is registered
+console.log('⛓️ Linking UserSkill to Skill model');
 
 // ============================================================================
 // UserSkill Document Interface
 // ============================================================================
 
-export interface IUserSkillDocument extends Omit<IUserSkill, '_id'>, Document {}
+export interface IUserSkillDocument extends Omit<IUserSkill, '_id'>, Document { }
 
 // ============================================================================
 // UserSkill Schema
@@ -219,8 +221,10 @@ UserSkillSchema.statics.getSkillCountsBySource = async function (
 // Model Export
 // ============================================================================
 
+console.log('🔄 Registering UserSkill model...');
 const UserSkill: UserSkillModel =
   (mongoose.models.UserSkill as UserSkillModel) ||
   mongoose.model<IUserSkillDocument, UserSkillModel>('UserSkill', UserSkillSchema);
+console.log('✅ UserSkill model registered');
 
 export default UserSkill;

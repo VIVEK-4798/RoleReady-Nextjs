@@ -6,6 +6,7 @@
  */
 
 import mongoose from 'mongoose';
+import { initModels } from '@/lib/models'; // Register all models
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -45,6 +46,7 @@ if (!global.mongooseCache) {
  * Returns cached connection if available, otherwise creates a new one
  */
 async function connectDB(): Promise<typeof mongoose> {
+  initModels();
   // Return cached connection if available
   if (cached.conn) {
     return cached.conn;

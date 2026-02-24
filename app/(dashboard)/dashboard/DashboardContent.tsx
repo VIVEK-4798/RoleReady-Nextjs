@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks';
 import { SkeletonDashboard } from '@/components/ui';
 import { OverviewTab, HistoryTab, TrendsTab } from './tabs';
 import MentorApplicationCTA from '@/components/dashboard/MentorApplicationCTA';
+import PerfectResumeCTA from '@/components/dashboard/PerfectResumeCTA';
 
 type TabType = 'overview' | 'history' | 'trends';
 
@@ -141,6 +142,7 @@ export default function DashboardContent() {
 
       {/* Tab Content */}
       <MentorApplicationCTA />
+      <PerfectResumeCTA />
       <div>
         {activeTab === 'overview' && user?.id && <OverviewTab userId={user.id} />}
         {activeTab === 'history' && user?.id && <HistoryTab userId={user.id} />}
