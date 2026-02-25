@@ -355,7 +355,11 @@ function generateSuggestions(
 
     // General suggestions if overall score is low
     if (breakdown.relevance + breakdown.contextDepth + breakdown.structure + breakdown.impact < 200) {
-        suggestions.push('Review the job requirements and align your resume content accordingly');
+        if (breakdown.relevance === 0 && missingKeywords.length === 0) {
+            suggestions.push('Ask an admin to configure skills for this role to see keyword matching');
+        } else {
+            suggestions.push('Review the job requirements and align your resume content accordingly');
+        }
     }
 
     return suggestions;
@@ -408,14 +412,21 @@ export async function calculateATSScore(
             model: 'Skill',
             select: 'name'
         })
+        .populate({
+            path: 'benchmarkGroups.skills.skillId',
+            model: 'Skill',
+            select: 'name'
+        })
         .lean();
 
     if (!role) {
         throw new Error(`Role not found: ${roleId}`);
     }
 
-    // 3. Extract benchmark skills
+    // 3. Extract benchmark skills from both direct benchmarks and benchmark groups
     const benchmarks: BenchmarkSkill[] = [];
+
+    // Process direct benchmarks
     for (const benchmark of role.benchmarks || []) {
         if (!benchmark.isActive) continue;
 
@@ -430,8 +441,21 @@ export async function calculateATSScore(
         });
     }
 
-    if (benchmarks.length === 0) {
-        throw new Error('Role has no active benchmarks configured');
+    // Process skills within groups
+    for (const group of role.benchmarkGroups || []) {
+        if (!group.isActive) continue;
+
+        for (const s of group.skills || []) {
+            const skill = s.skillId as unknown as { _id: Types.ObjectId; name: string } | null;
+            if (!skill || typeof skill === 'string' || !('name' in skill)) continue;
+
+            benchmarks.push({
+                skillId: skill._id.toString(),
+                skillName: skill.name,
+                weight: group.weight, // Use group weight or a default?
+                importance: group.required ? 'required' : 'optional'
+            });
+        }
     }
 
     // 4. Calculate component scores

@@ -10,6 +10,7 @@ import connectDB from '@/lib/db/mongoose';
 import { User } from '@/lib/models';
 import { success, errors, handleError } from '@/lib/utils/api';
 import { auth } from '@/lib/auth';
+import { calculateProfileCompletion } from '@/lib/services/profileCompletionService';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -59,6 +60,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
       if (!profile.projects) profile.projects = [];
     }
 
+    // Calculate profile completion
+    const completion = await calculateProfileCompletion(id);
+
     return success({
       id: user.id,
       name: user.name,
@@ -67,6 +71,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       role: user.role,
       image: user.image,
       profile: user.profile,
+      completion,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     });

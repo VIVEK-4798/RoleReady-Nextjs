@@ -93,6 +93,7 @@ export interface IUserProfile {
   certificates?: ICertificate[];
   achievements?: IAchievement[];
   resume?: IResume;
+  hasGeneratedResume?: boolean;
   socialLinks?: {
     linkedin?: string;
     github?: string;

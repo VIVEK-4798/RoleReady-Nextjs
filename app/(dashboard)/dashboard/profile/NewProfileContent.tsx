@@ -28,6 +28,7 @@ interface ProfileData {
     location?: string;
     linkedinUrl?: string;
     githubUrl?: string;
+    hasGeneratedResume?: boolean;
     education: Education[];
     experience: Experience[];
     projects: Project[];
@@ -38,6 +39,11 @@ interface ProfileData {
       github?: string;
       twitter?: string;
     };
+  };
+  completion?: {
+    percentage: number;
+    filled: number;
+    total: number;
   };
 }
 
@@ -94,6 +100,7 @@ interface Achievement {
 
 interface ResumeInfo {
   hasResume: boolean;
+  hasGeneratedResume?: boolean;
   fileName?: string;
   uploadedAt?: string;
 }
@@ -301,11 +308,15 @@ export default function NewProfileContent() {
         const latestResume = resumeData.data[0];
         setResume({
           hasResume: true,
+          hasGeneratedResume: profileData.data?.profile?.hasGeneratedResume || false,
           fileName: latestResume.originalName || latestResume.fileName,
           uploadedAt: latestResume.createdAt,
         });
       } else {
-        setResume({ hasResume: false });
+        setResume({
+          hasResume: false,
+          hasGeneratedResume: profileData.data?.profile?.hasGeneratedResume || false
+        });
       }
     } catch (err) {
       console.error('Failed to fetch profile:', err);
@@ -324,6 +335,12 @@ export default function NewProfileContent() {
   useEffect(() => {
     if (!profile) return;
 
+    // Use server-side calculation if available
+    if (profile.completion) {
+      setProgress(profile.completion.percentage);
+      return;
+    }
+
     let filled = 0;
     const total = 12; // 9 base sections + 3 social links
 
@@ -333,7 +350,7 @@ export default function NewProfileContent() {
     if (skills.length > 0) filled++;
     if (profile.profile?.experience?.length > 0) filled++;
     if (profile.profile?.education?.length > 0) filled++;
-    if (resume?.hasResume) filled++;
+    if (resume?.hasResume || resume?.hasGeneratedResume) filled++;
     if (profile.profile?.certificates?.length || 0 > 0) filled++;
     if (profile.profile?.projects?.length > 0) filled++;
 

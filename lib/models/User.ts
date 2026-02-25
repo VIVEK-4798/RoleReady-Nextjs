@@ -73,6 +73,7 @@ const ProfileSchema = new Schema<IUserProfile>({
   certificates: [CertificateSchema],
   achievements: [AchievementSchema],
   resume: ResumeSchema,
+  hasGeneratedResume: { type: Boolean, default: false },
   socialLinks: {
     linkedin: { type: String },
     github: { type: String },

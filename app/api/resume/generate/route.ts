@@ -3,24 +3,28 @@ import { auth } from '@/lib/auth';
 import { ResumePDF } from '@/components/resume/ResumePDF';
 import { renderToBuffer } from '@react-pdf/renderer';
 import React from 'react';
+import connectDB from '@/lib/db/mongoose';
+import { User } from '@/lib/models';
 
 export async function POST(req: NextRequest) {
     try {
         const session = await auth();
-        if (!session?.user) {
+        if (!session?.user?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         const data = await req.json();
 
-        // In a real production app, you might want to re-validate eligibility 
-        // or re-fetch data from DB here to ensure the source of truth is the server.
-        // However, the request specifically said "Generate on demand" and "Use structured data only".
-        // We pass data from client to API for immediate generation based on what user sees.
+        // 1. Generate the PDF buffer
+        const buffer = await renderToBuffer(React.createElement(ResumePDF, { data }) as any) as any;
 
-        const buffer = await renderToBuffer(React.createElement(ResumePDF, { data }));
+        // 2. Set the "has generated resume" flag for the user
+        await connectDB();
+        await User.findByIdAndUpdate(session.user.id, {
+            $set: { 'profile.hasGeneratedResume': true }
+        });
 
-        return new NextResponse(buffer, {
+        return new NextResponse(buffer as any, {
             status: 200,
             headers: {
                 'Content-Type': 'application/pdf',
