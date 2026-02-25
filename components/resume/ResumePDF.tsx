@@ -7,71 +7,74 @@ import { ResumeData } from '@/types/resume';
 
 const styles = StyleSheet.create({
     page: {
-        padding: 50,
+        padding: 40,
         fontFamily: 'Helvetica',
-        fontSize: 10,
-        lineHeight: 1.5,
+        fontSize: 9.5, // Reduced from 10
+        lineHeight: 1.3, // Reduced from 1.5
         color: '#000000',
     },
     header: {
-        marginBottom: 20,
-        borderBottom: '2pt solid #000000',
-        paddingBottom: 10,
+        marginBottom: 12, // Reduced from 20
+        borderBottom: '1.5pt solid #000000', // Thinner line
+        paddingBottom: 8,
         textAlign: 'center',
     },
     name: {
-        fontSize: 24,
+        fontSize: 22, // Reduced from 24
         fontWeight: 'bold',
         textTransform: 'uppercase',
-        marginBottom: 5,
+        marginBottom: 2,
     },
     contactLine: {
-        fontSize: 9,
+        fontSize: 8.5,
         flexDirection: 'row',
         justifyContent: 'center',
-        gap: 10,
+        gap: 8,
     },
     section: {
-        marginBottom: 15,
+        marginBottom: 10, // Reduced from 15
     },
     sectionTitle: {
-        fontSize: 12,
+        fontSize: 11, // Reduced from 12
         fontWeight: 'bold',
         textTransform: 'uppercase',
         borderBottom: '1pt solid #000000',
-        marginBottom: 8,
-        paddingTop: 5,
+        marginBottom: 6,
+        paddingTop: 3,
     },
     summary: {
-        marginBottom: 10,
+        marginBottom: 6,
+        textAlign: 'justify', // Cleaner for density
     },
     entryHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         fontWeight: 'bold',
-        marginBottom: 2,
+        marginBottom: 1,
     },
     entrySubHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         fontStyle: 'italic',
-        marginBottom: 3,
+        fontSize: 9,
+        marginBottom: 2,
     },
     bulletPoint: {
         flexDirection: 'row',
-        marginLeft: 15,
-        marginBottom: 2,
+        marginLeft: 12,
+        marginBottom: 1,
     },
     bullet: {
-        width: 10,
+        width: 8,
     },
     bulletText: {
         flex: 1,
+        fontSize: 9,
     },
     skillGroup: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: 10,
+        gap: 8,
     },
     skillItem: {
         flexDirection: 'row',
@@ -95,7 +98,7 @@ export const ResumePDF = ({ data }: { data: ResumeData }) => (
             <View style={styles.header}>
                 <Text style={styles.name}>{data.contact.fullName}</Text>
                 {data.contact.headline && (
-                    <Text style={{ fontSize: 11, color: '#4a80b0', fontWeight: 'bold', textAlign: 'center', marginBottom: 4 }}>
+                    <Text style={{ fontSize: 11, color: '#4a80b0', fontWeight: 'bold', textAlign: 'center', marginTop: 8, marginBottom: 6 }}>
                         {data.contact.headline}
                     </Text>
                 )}
@@ -192,8 +195,8 @@ export const ResumePDF = ({ data }: { data: ResumeData }) => (
                             ))}
                             {(proj.url || proj.githubUrl) && (
                                 <View style={{ flexDirection: 'row', gap: 10, marginLeft: 15, marginTop: 2 }}>
-                                    {proj.url && <Text style={{ fontSize: 8, color: '#0000EE' }}>Live: {proj.url.replace(/^https?:\/\/(www\.)?/, '')}</Text>}
-                                    {proj.githubUrl && <Text style={{ fontSize: 8, color: '#0000EE' }}>Source: {proj.githubUrl.replace(/^https?:\/\/(www\.)?/, '')}</Text>}
+                                    {proj.url && <Text style={{ fontSize: 8, color: '#000000' }}>Live: {proj.url.replace(/^https?:\/\/(www\.)?/, '')}</Text>}
+                                    {proj.githubUrl && <Text style={{ fontSize: 8, color: '#000000' }}>Source: {proj.githubUrl.replace(/^https?:\/\/(www\.)?/, '')}</Text>}
                                 </View>
                             )}
                         </View>
@@ -219,35 +222,63 @@ export const ResumePDF = ({ data }: { data: ResumeData }) => (
                 </View>
             )}
 
-            {/* Certifications */}
-            {data.certificates && data.certificates.length > 0 && (
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Certifications</Text>
-                    {data.certificates.map((cert, i) => (
-                        <View key={i} style={{ marginBottom: 4 }}>
-                            <Text style={{ fontSize: 10 }}>
-                                <Text style={{ fontWeight: 'bold' }}>{cert.name}</Text> – {cert.issuer} {cert.date ? `(${cert.date})` : ''}
-                            </Text>
+            {/* Merged or Separate Certifications & Achievements */}
+            {(data as any).shouldMergeSmallSections ? (
+                (data.certificates || data.achievements) && (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Certifications & Achievements</Text>
+                        {data.certificates?.map((cert, i) => (
+                            <View key={`cert-${i}`} style={{ marginBottom: 3 }}>
+                                <Text style={{ fontSize: 9 }}>
+                                    <Text style={{ fontWeight: 'bold' }}>{cert.name}</Text> – {cert.issuer} {cert.date ? `(${cert.date})` : ''}
+                                </Text>
+                            </View>
+                        ))}
+                        {data.achievements?.map((ach, i) => (
+                            <View key={`ach-${i}`} style={{ marginBottom: 4, marginTop: data.certificates?.length ? 2 : 0 }}>
+                                <Text style={{ fontSize: 9 }}>
+                                    <Text style={{ fontWeight: 'bold' }}>{ach.title}</Text> – {ach.issuer} {ach.date ? `(${ach.date})` : ''}
+                                </Text>
+                                {ach.description && (
+                                    <Text style={{ fontSize: 8.5, color: '#444444', marginLeft: 10 }}>{ach.description}</Text>
+                                )}
+                            </View>
+                        ))}
+                    </View>
+                )
+            ) : (
+                <>
+                    {/* Certifications */}
+                    {data.certificates && data.certificates.length > 0 && (
+                        <View style={styles.section}>
+                            <Text style={styles.sectionTitle}>Certifications</Text>
+                            {data.certificates.map((cert, i) => (
+                                <View key={i} style={{ marginBottom: 3 }}>
+                                    <Text style={{ fontSize: 9 }}>
+                                        <Text style={{ fontWeight: 'bold' }}>{cert.name}</Text> – {cert.issuer} {cert.date ? `(${cert.date})` : ''}
+                                    </Text>
+                                </View>
+                            ))}
                         </View>
-                    ))}
-                </View>
-            )}
+                    )}
 
-            {/* Achievements */}
-            {data.achievements && data.achievements.length > 0 && (
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Achievements & Awards</Text>
-                    {data.achievements.map((ach, i) => (
-                        <View key={i} style={{ marginBottom: 6 }}>
-                            <Text style={{ fontSize: 10 }}>
-                                <Text style={{ fontWeight: 'bold' }}>{ach.title}</Text> – {ach.issuer} {ach.date ? `(${ach.date})` : ''}
-                            </Text>
-                            {ach.description && (
-                                <Text style={{ fontSize: 9, color: '#444444', marginTop: 1, marginLeft: 10 }}>{ach.description}</Text>
-                            )}
+                    {/* Achievements */}
+                    {data.achievements && data.achievements.length > 0 && (
+                        <View style={styles.section}>
+                            <Text style={styles.sectionTitle}>Achievements & Awards</Text>
+                            {data.achievements.map((ach, i) => (
+                                <View key={i} style={{ marginBottom: 4 }}>
+                                    <Text style={{ fontSize: 9 }}>
+                                        <Text style={{ fontWeight: 'bold' }}>{ach.title}</Text> – {ach.issuer} {ach.date ? `(${ach.date})` : ''}
+                                    </Text>
+                                    {ach.description && (
+                                        <Text style={{ fontSize: 8.5, color: '#444444', marginLeft: 10 }}>{ach.description}</Text>
+                                    )}
+                                </View>
+                            ))}
                         </View>
-                    ))}
-                </View>
+                    )}
+                </>
             )}
         </Page>
     </Document>
