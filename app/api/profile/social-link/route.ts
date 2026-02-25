@@ -40,7 +40,7 @@ export async function PATCH(request: NextRequest) {
         }
 
         // platform validation
-        const validPlatforms: SocialPlatform[] = ['linkedin', 'github', 'twitter', 'portfolio'];
+        const validPlatforms: SocialPlatform[] = ['linkedin', 'github', 'twitter'];
         if (!validPlatforms.includes(platform as SocialPlatform)) {
             return NextResponse.json({ error: 'Invalid platform selection' }, { status: 400 });
         }
@@ -76,7 +76,7 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ error: 'Platform is required' }, { status: 400 });
         }
 
-        const validPlatforms: SocialPlatform[] = ['linkedin', 'github', 'twitter', 'portfolio'];
+        const validPlatforms: SocialPlatform[] = ['linkedin', 'github', 'twitter'];
         if (!validPlatforms.includes(platform as SocialPlatform)) {
             return NextResponse.json({ error: 'Invalid platform selection' }, { status: 400 });
         }

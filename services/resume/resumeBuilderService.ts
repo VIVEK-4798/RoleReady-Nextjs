@@ -161,9 +161,6 @@ export async function buildResumeData(userId: string): Promise<ResumeData> {
         throw new Error('User not found');
     }
 
-    console.log('🔍 DEBUG: User ID:', userId);
-    console.log('🔍 DEBUG: Profile object:', JSON.stringify(user.profile, null, 2));
-
     // CRITICAL: Fetch active target role from TargetRole model (source of truth)
     // We use a direct query to be 100% sure and handle potential population issues
     const activeTargetRole = await mongoose.model('TargetRole').findOne({
@@ -213,7 +210,7 @@ export async function buildResumeData(userId: string): Promise<ResumeData> {
         }
     };
 
-    // Summary Enrichment & Compression (Max ~3 lines / 280 chars)
+    // Summary Enrichment
     let userAbout = user.profile?.about || user.profile?.bio || '';
     let summary = cleanDescription(userAbout);
 
@@ -224,12 +221,9 @@ export async function buildResumeData(userId: string): Promise<ResumeData> {
         const topSkillsGroup = skillNames.slice(0, 5).join(', ');
         summary = `${finalRoleHeadline} with a strong foundation in ${topSkillsGroup}. Dedicated to building efficient, scalable applications and solving complex technical challenges with modern development practices.`;
     } else if (targetRoleName && summary.toLowerCase().includes('full stack developer') && targetRoleName !== 'Full Stack Developer') {
+        // If user has a specific target role (e.g. Backend Developer) but their manual 'about' says 'Full Stack', 
+        // we respect the target role choice and update the summary to match.
         summary = summary.replace(/full\s+stack\s+developer/gi, targetRoleName);
-    }
-
-    // Hard limit summary length for one-page fit (approx 3 lines)
-    if (summary.length > 280) {
-        summary = summary.substring(0, 277) + '...';
     }
 
     const resumeData: ResumeData = {
@@ -239,7 +233,6 @@ export async function buildResumeData(userId: string): Promise<ResumeData> {
             phone: user.mobile,
             linkedin: user.profile?.linkedinUrl || user.profile?.socialLinks?.linkedin,
             github: user.profile?.githubUrl || user.profile?.socialLinks?.github || (user.githubUsername ? `https://github.com/${user.githubUsername}` : undefined),
-            portfolio: user.profile?.portfolioUrl || user.profile?.socialLinks?.portfolio,
             location: user.profile?.location,
             headline: finalRoleHeadline
         },
@@ -256,8 +249,7 @@ export async function buildResumeData(userId: string): Promise<ResumeData> {
                     startDate: formatDate(exp.startDate),
                     endDate: exp.isCurrent ? 'Present' : formatDate(exp.endDate),
                     isCurrent: exp.isCurrent,
-                    // COMPRESSION: Limit to 3 bullets
-                    description: bullets.length >= 1 ? bullets.slice(0, 3).join('\n') : undefined
+                    description: bullets.length >= 1 ? bullets.slice(0, 5).join('\n') : undefined
                 };
             })
             .filter((exp: any) => exp.title && exp.company && exp.description),
@@ -284,8 +276,7 @@ export async function buildResumeData(userId: string): Promise<ResumeData> {
 
                 return {
                     name: proj.name,
-                    // COMPRESSION: Limit to 3 bullets
-                    description: bullets.length >= 1 ? bullets.slice(0, 3).join('\n') : undefined,
+                    description: bullets.length >= 1 ? bullets.slice(0, 5).join('\n') : undefined,
                     technologies: techs,
                     url: proj.url,
                     githubUrl: proj.githubUrl,
@@ -320,15 +311,6 @@ export async function buildResumeData(userId: string): Promise<ResumeData> {
                 description: ach.description ? cleanDescription(ach.description) : undefined
             }))
     };
-
-    // SMART MERGE: If either certificates or achievements has only 1-2 items, they can be merged in the UI
-    // But we keep them separate in resumeData to allow the UI/PDF component to decide layout.
-    // However, if we want to force it globally:
-    const certCount = resumeData.certificates?.length || 0;
-    const achCount = resumeData.achievements?.length || 0;
-
-    // Use a flag for the UI to know it should merge
-    (resumeData as any).shouldMergeSmallSections = (certCount > 0 && certCount <= 2) || (achCount > 0 && achCount <= 2);
 
     // Cleanup empty sections
     if (resumeData.certificates && resumeData.certificates.length === 0) delete resumeData.certificates;

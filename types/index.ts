@@ -86,7 +86,6 @@ export interface IUserProfile {
   location?: string;
   linkedinUrl?: string;
   githubUrl?: string;
-  portfolioUrl?: string;
   targetRoleId?: Types.ObjectId;
   education?: IEducation[];
   experience?: IExperience[];
@@ -98,7 +97,6 @@ export interface IUserProfile {
     linkedin?: string;
     github?: string;
     twitter?: string;
-    portfolio?: string;
   };
   niche?: string;
 }

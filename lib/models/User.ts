@@ -66,7 +66,6 @@ const ProfileSchema = new Schema<IUserProfile>({
   location: { type: String },
   linkedinUrl: { type: String },
   githubUrl: { type: String },
-  portfolioUrl: { type: String },
   targetRoleId: { type: Schema.Types.ObjectId, ref: 'Role' },
   education: [EducationSchema],
   experience: [ExperienceSchema],
@@ -339,19 +338,11 @@ UserSchema.pre('save', async function () {
     if (user.isDirectModified('profile.socialLinks.github')) {
       user.profile.githubUrl = user.profile.socialLinks.github;
     }
-    if (user.isDirectModified('profile.socialLinks.portfolio')) {
-      user.profile.portfolioUrl = user.profile.socialLinks.portfolio;
-    }
-
-    // If legacy fields were modified, sync TO socialLinks
     if (user.isDirectModified('profile.linkedinUrl')) {
       user.profile.socialLinks.linkedin = user.profile.linkedinUrl;
     }
     if (user.isDirectModified('profile.githubUrl')) {
       user.profile.socialLinks.github = user.profile.githubUrl;
-    }
-    if (user.isDirectModified('profile.portfolioUrl')) {
-      user.profile.socialLinks.portfolio = user.profile.portfolioUrl;
     }
   }
 });

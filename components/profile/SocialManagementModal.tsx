@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
-import { X, Linkedin, Github, Twitter, Globe, Save, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { X, Linkedin, Github, Twitter, Save, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export type SocialPlatform = 'linkedin' | 'github' | 'twitter' | 'portfolio';
+export type SocialPlatform = 'linkedin' | 'github' | 'twitter';
 
 interface SocialLinks {
     linkedin?: string;
     github?: string;
     twitter?: string;
-    portfolio?: string;
 }
 
 interface SocialManagementModalProps {
@@ -26,34 +25,29 @@ export const SocialManagementModal = ({ initialLinks, onSave, onClose }: SocialM
     const [isSaving, setIsSaving] = useState<Record<SocialPlatform, boolean>>({
         linkedin: false,
         github: false,
-        twitter: false,
-        portfolio: false
+        twitter: false
     });
     const [errors, setErrors] = useState<Record<SocialPlatform, string>>({
         linkedin: '',
         github: '',
-        twitter: '',
-        portfolio: ''
+        twitter: ''
     });
     const [successStatus, setSuccessStatus] = useState<Record<SocialPlatform, boolean>>({
         linkedin: false,
         github: false,
-        twitter: false,
-        portfolio: false
+        twitter: false
     });
 
-    const platforms: SocialPlatform[] = ['linkedin', 'github', 'twitter', 'portfolio'];
+    const platforms: SocialPlatform[] = ['linkedin', 'github', 'twitter'];
     const platformNames = {
         linkedin: 'LinkedIn',
         github: 'GitHub',
         twitter: 'Twitter / X',
-        portfolio: 'Portfolio / Website',
     };
     const platformIcons = {
         linkedin: Linkedin,
         github: Github,
         twitter: Twitter,
-        portfolio: Globe,
     };
 
     const handleUpdate = async (platform: SocialPlatform) => {
@@ -118,8 +112,7 @@ export const SocialManagementModal = ({ initialLinks, onSave, onClose }: SocialM
                                     <div className="flex items-center gap-2">
                                         <div className={`p-1.5 rounded-lg ${platform === 'linkedin' ? 'text-[#0077B5] bg-blue-50' :
                                             platform === 'github' ? 'text-[#333] bg-gray-100' :
-                                                platform === 'twitter' ? 'text-black bg-gray-50' :
-                                                    'text-emerald-600 bg-emerald-50'
+                                                'text-black bg-gray-50'
                                             }`}>
                                             <Icon size={18} />
                                         </div>
@@ -157,8 +150,7 @@ export const SocialManagementModal = ({ initialLinks, onSave, onClose }: SocialM
                                         }}
                                         placeholder={
                                             platform === 'twitter' ? 'https://x.com/your-username' :
-                                                platform === 'portfolio' ? 'https://yourwebsite.com' :
-                                                    `https://${platform}.com/your-username`
+                                                `https://${platform}.com/your-username`
                                         }
                                         className={`w-full pl-5 pr-24 py-4 bg-gray-50/50 border-2 rounded-2xl outline-none transition-all font-medium text-gray-700 ${hasError ? 'border-red-100 focus:border-red-500 bg-red-50/30' : 'border-transparent focus:border-[#5693C1] focus:bg-white focus:shadow-sm'
                                             }`}

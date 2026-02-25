@@ -1,20 +1,18 @@
 import User from '@/lib/models/User';
 import connectDB from '@/lib/db/mongoose';
 
-export type SocialPlatform = 'linkedin' | 'github' | 'twitter' | 'portfolio';
+export type SocialPlatform = 'linkedin' | 'github' | 'twitter';
 
 const PLATFORM_REGEX: Record<SocialPlatform, RegExp> = {
     linkedin: /^https:\/\/[a-z.]*linkedin\.com\/in\/[a-zA-Z0-9-_.]+\/?(\?.*)?$/,
     github: /^https:\/\/github\.com\/[a-zA-Z0-9-_.]+\/?(\?.*)?$/,
     twitter: /^https:\/\/(www\.)?(twitter|x)\.com\/[a-zA-Z0-9_]+\/?(\?.*)?$/,
-    portfolio: /^https:\/\/[a-zA-Z0-9-._~:/?#[\]@!$&'()*+,;=%]+$/,
 };
 
 const PLATFORM_DOMAINS: Record<SocialPlatform, string[]> = {
     linkedin: ['linkedin.com'],
     github: ['github.com'],
     twitter: ['twitter.com', 'x.com'],
-    portfolio: [],
 };
 
 /**
@@ -69,7 +67,6 @@ export class SocialLinksService {
 
         if (platform === 'linkedin') updateData.$set['profile.linkedinUrl'] = url;
         if (platform === 'github') updateData.$set['profile.githubUrl'] = url;
-        if (platform === 'portfolio') updateData.$set['profile.portfolioUrl'] = url;
 
         const user = await User.findByIdAndUpdate(userId, updateData, { new: true }).lean();
 
@@ -91,7 +88,6 @@ export class SocialLinksService {
 
         if (platform === 'linkedin') updateData.$unset['profile.linkedinUrl'] = "";
         if (platform === 'github') updateData.$unset['profile.githubUrl'] = "";
-        if (platform === 'portfolio') updateData.$unset['profile.portfolioUrl'] = "";
 
         const user = await User.findByIdAndUpdate(userId, updateData, { new: true }).lean();
 

@@ -50,20 +50,22 @@ export default function ResumePreview({ data, onDownload, isDownloading }: Resum
             </div>
 
             {/* Resume Document Wrapper */}
-            <div className="bg-white p-[0.75in] shadow-2xl border border-gray-100 min-h-[11in] w-full max-w-[8.5in] mx-auto print:shadow-none print:border-none print:p-0">
-                <div className="space-y-4 text-black font-serif">
+            <div className="bg-white p-[1in] shadow-2xl border border-gray-100 min-h-[11in] w-full max-w-[8.5in] mx-auto print:shadow-none print:border-none print:p-0">
+                <div className="space-y-6 text-black font-serif">
                     {/* Header */}
-                    <div className="text-center space-y-2 mb-6">
-                        <h1 className="text-3xl font-bold text-gray-900 mb-1">{data.contact.fullName}</h1>
+                    {/* Header */}
+                    {/* Header */}
+                    <div className="text-center space-y-3 mb-8">
+                        <h1 className="text-4xl font-bold text-gray-900 mb-2">{data.contact.fullName}</h1>
                         {data.contact.headline && (
-                            <p className="text-blue-600 font-bold uppercase tracking-widest text-[10px] mt-2 mb-1">{data.contact.headline}</p>
+                            <p className="text-blue-600 font-bold uppercase tracking-widest text-xs mt-3 mb-1">{data.contact.headline}</p>
                         )}
-                        <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-gray-500 pt-0.5">
-                            <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" /> {data.contact.email}</span>
-                            {data.contact.phone && <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> {data.contact.phone}</span>}
-                            {data.contact.location && <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {data.contact.location}</span>}
+                        <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-gray-500 pt-1">
+                            <span className="flex items-center gap-1"><Mail className="w-4 h-4" /> {data.contact.email}</span>
+                            {data.contact.phone && <span className="flex items-center gap-1"><Phone className="w-4 h-4" /> {data.contact.phone}</span>}
+                            {data.contact.location && <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {data.contact.location}</span>}
                         </div>
-                        <div className="flex flex-wrap justify-center gap-x-5 gap-y-1 text-[10px] font-semibold text-blue-700">
+                        <div className="flex flex-wrap justify-center gap-x-6 gap-y-1 text-xs font-semibold text-blue-700">
                             {data.contact.linkedin && (
                                 <a href={data.contact.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:underline">
                                     <Linkedin className="w-3 h-3" /> LinkedIn
@@ -74,27 +76,22 @@ export default function ResumePreview({ data, onDownload, isDownloading }: Resum
                                     <Github className="w-3 h-3" /> GitHub
                                 </a>
                             )}
-                            {data.contact.portfolio && (
-                                <a href={data.contact.portfolio} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:underline">
-                                    <Globe className="w-3 h-3" /> Portfolio
-                                </a>
-                            )}
                         </div>
                     </div>
 
                     {/* Summary */}
                     {summary && (
-                        <section className="space-y-1">
-                            <h2 className="text-base font-bold uppercase border-b border-black">Professional Summary</h2>
-                            <p className="text-[13px] leading-snug text-justify text-gray-800">{summary}</p>
+                        <section className="space-y-2">
+                            <h2 className="text-lg font-bold uppercase border-b border-black">Professional Summary</h2>
+                            <p className="text-sm leading-relaxed text-justify">{summary}</p>
                         </section>
                     )}
 
                     {/* Skills */}
                     {skills.length > 0 && (
-                        <section className="space-y-1">
-                            <h2 className="text-base font-bold uppercase border-b border-black">Technical Skills</h2>
-                            <div className="text-[13px] space-y-0.5">
+                        <section className="space-y-2">
+                            <h2 className="text-lg font-bold uppercase border-b border-black">Technical Skills</h2>
+                            <div className="text-sm space-y-1">
                                 {data.groupedSkills ? (
                                     Object.entries(data.groupedSkills).map(([category, skillList], i) => (
                                         <div key={i}>
@@ -110,21 +107,21 @@ export default function ResumePreview({ data, onDownload, isDownloading }: Resum
 
                     {/* Experience */}
                     {experience.length > 0 && (
-                        <section className="space-y-2">
-                            <h2 className="text-base font-bold uppercase border-b border-black">Professional Experience</h2>
-                            <div className="space-y-3">
+                        <section className="space-y-3">
+                            <h2 className="text-lg font-bold uppercase border-b border-black">Professional Experience</h2>
+                            <div className="space-y-4">
                                 {experience.map((exp, i) => (
-                                    <div key={i} className="space-y-0.5">
+                                    <div key={i} className="space-y-1">
                                         <div className="flex justify-between items-baseline">
-                                            <h3 className="font-bold text-[14px]">{exp.title}</h3>
-                                            <span className="text-xs italic">{exp.startDate} - {exp.endDate}</span>
+                                            <h3 className="font-bold">{exp.title}</h3>
+                                            <span className="text-sm italic">{exp.startDate} - {exp.endDate}</span>
                                         </div>
-                                        <div className="flex justify-between items-baseline italic text-xs text-gray-700">
+                                        <div className="flex justify-between items-baseline italic text-sm">
                                             <span>{exp.company}</span>
                                             {exp.location && <span>{exp.location}</span>}
                                         </div>
                                         {exp.description && (
-                                            <ul className="list-disc ml-4 text-[13px] space-y-0.5 mt-0.5">
+                                            <ul className="list-disc ml-5 text-sm space-y-1 mt-1">
                                                 {exp.description.split('\n').filter(l => l.trim()).map((line, idx) => (
                                                     <li key={idx}>{line}</li>
                                                 ))}
@@ -138,22 +135,22 @@ export default function ResumePreview({ data, onDownload, isDownloading }: Resum
 
                     {/* Projects */}
                     {projects.length > 0 && (
-                        <section className="space-y-2">
-                            <h2 className="text-base font-bold uppercase border-b border-black">Key Projects</h2>
-                            <div className="space-y-3">
+                        <section className="space-y-3">
+                            <h2 className="text-lg font-bold uppercase border-b border-black">Key Projects</h2>
+                            <div className="space-y-4">
                                 {projects.map((proj, i) => (
-                                    <div key={i} className="space-y-0.5">
+                                    <div key={i} className="space-y-1">
                                         <div className="flex justify-between items-baseline">
-                                            <h3 className="font-bold text-[14px]">{proj.name}</h3>
-                                            <span className="text-xs italic">{proj.startDate} - {proj.endDate}</span>
+                                            <h3 className="font-bold">{proj.name}</h3>
+                                            <span className="text-sm italic">{proj.startDate} - {proj.endDate}</span>
                                         </div>
                                         {proj.technologies.length > 0 && (
-                                            <p className="text-[11px] font-semibold italic opacity-80 mb-0.5">
+                                            <p className="text-xs font-semibold italic opacity-80">
                                                 Technologies: {proj.technologies.join(', ')}
                                             </p>
                                         )}
                                         {proj.description && (
-                                            <ul className="list-disc ml-4 text-[13px] space-y-0.5 mt-0.5">
+                                            <ul className="list-disc ml-5 text-sm space-y-1 mt-1">
                                                 {proj.description.split('\n').filter(l => l.trim()).map((line, idx) => (
                                                     <li key={idx}>{line}</li>
                                                 ))}
@@ -173,18 +170,18 @@ export default function ResumePreview({ data, onDownload, isDownloading }: Resum
 
                     {/* Education */}
                     {education.length > 0 && (
-                        <section className="space-y-2">
-                            <h2 className="text-base font-bold uppercase border-b border-black">Education</h2>
-                            <div className="space-y-2">
+                        <section className="space-y-3">
+                            <h2 className="text-lg font-bold uppercase border-b border-black">Education</h2>
+                            <div className="space-y-3">
                                 {education.map((edu, i) => (
                                     <div key={i} className="space-y-0.5">
                                         <div className="flex justify-between items-baseline">
-                                            <h3 className="font-bold text-[14px]">{edu.institution}</h3>
-                                            <span className="text-xs italic">{edu.startDate} - {edu.endDate}</span>
+                                            <h3 className="font-bold">{edu.institution}</h3>
+                                            <span className="text-sm italic">{edu.startDate} - {edu.endDate}</span>
                                         </div>
-                                        <div className="text-[13px]">
+                                        <div className="text-sm">
                                             <span>{edu.degree}{edu.fieldOfStudy ? ` in ${edu.fieldOfStudy}` : ''}</span>
-                                            {edu.grade && <span className="ml-2 font-medium whitespace-nowrap text-gray-600"> · Grade: {edu.grade}</span>}
+                                            {edu.grade && <span className="ml-2 font-medium whitespace-nowrap"> · Grade: {edu.grade}</span>}
                                         </div>
                                     </div>
                                 ))}
@@ -192,57 +189,33 @@ export default function ResumePreview({ data, onDownload, isDownloading }: Resum
                         </section>
                     )}
 
-                    {/* Merged or Separate Certifications & Achievements */}
-                    {(data as any).shouldMergeSmallSections ? (
-                        (data.certificates || data.achievements) && (
-                            <section className="space-y-1">
-                                <h2 className="text-base font-bold uppercase border-b border-black">Certifications & Achievements</h2>
-                                <div className="space-y-1 text-[13px]">
-                                    {data.certificates?.map((cert, i) => (
-                                        <div key={`cert-${i}`}>
-                                            <span className="font-bold">{cert.name}</span> – {cert.issuer} {cert.date ? `(${cert.date})` : ''}
-                                        </div>
-                                    ))}
-                                    {data.achievements?.map((ach, i) => (
-                                        <div key={`ach-${i}`} className={data.certificates?.length ? 'mt-1' : ''}>
-                                            <div><span className="font-bold">{ach.title}</span> – {ach.issuer} {ach.date ? `(${ach.date})` : ''}</div>
-                                            {ach.description && <p className="text-[11px] text-gray-600 mt-0.5 ml-4 text-justify">{ach.description}</p>}
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
-                        )
-                    ) : (
-                        <>
-                            {/* Certifications */}
-                            {data.certificates && data.certificates.length > 0 && (
-                                <section className="space-y-1">
-                                    <h2 className="text-base font-bold uppercase border-b border-black">Certifications</h2>
-                                    <div className="space-y-0.5 text-[13px]">
-                                        {data.certificates.map((cert, i) => (
-                                            <div key={i}>
-                                                <span className="font-bold">{cert.name}</span> – {cert.issuer} {cert.date ? `(${cert.date})` : ''}
-                                            </div>
-                                        ))}
+                    {/* Certifications */}
+                    {data.certificates && data.certificates.length > 0 && (
+                        <section className="space-y-2">
+                            <h2 className="text-lg font-bold uppercase border-b border-black">Certifications</h2>
+                            <div className="space-y-1 text-sm">
+                                {data.certificates.map((cert, i) => (
+                                    <div key={i}>
+                                        <span className="font-bold">{cert.name}</span> – {cert.issuer} {cert.date ? `(${cert.date})` : ''}
                                     </div>
-                                </section>
-                            )}
+                                ))}
+                            </div>
+                        </section>
+                    )}
 
-                            {/* Achievements */}
-                            {data.achievements && data.achievements.length > 0 && (
-                                <section className="space-y-1">
-                                    <h2 className="text-base font-bold uppercase border-b border-black">Achievements & Awards</h2>
-                                    <div className="space-y-2">
-                                        {data.achievements.map((ach, i) => (
-                                            <div key={i} className="text-[13px]">
-                                                <div><span className="font-bold">{ach.title}</span> – {ach.issuer} {ach.date ? `(${ach.date})` : ''}</div>
-                                                {ach.description && <p className="text-[11px] text-gray-600 mt-0.5 ml-4 text-justify">{ach.description}</p>}
-                                            </div>
-                                        ))}
+                    {/* Achievements */}
+                    {data.achievements && data.achievements.length > 0 && (
+                        <section className="space-y-2">
+                            <h2 className="text-lg font-bold uppercase border-b border-black">Achievements & Awards</h2>
+                            <div className="space-y-3">
+                                {data.achievements.map((ach, i) => (
+                                    <div key={i} className="text-sm">
+                                        <div><span className="font-bold">{ach.title}</span> – {ach.issuer} {ach.date ? `(${ach.date})` : ''}</div>
+                                        {ach.description && <p className="text-xs text-gray-600 mt-0.5 ml-4">{ach.description}</p>}
                                     </div>
-                                </section>
-                            )}
-                        </>
+                                ))}
+                            </div>
+                        </section>
                     )}
                 </div>
             </div>
@@ -252,17 +225,17 @@ export default function ResumePreview({ data, onDownload, isDownloading }: Resum
             </p>
 
             <style jsx global>{`
-                @media print {
-                    .no-print {
-                        display: none !important;
-                    }
-                    body {
-                        background: white !important;
-                        padding: 0 !important;
-                        margin: 0 !important;
-                    }
-                }
-            `}</style>
+        @media print {
+          .no-print {
+            display: none !important;
+          }
+          body {
+            background: white !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+        }
+      `}</style>
         </div>
     );
 }

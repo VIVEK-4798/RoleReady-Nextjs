@@ -8,7 +8,6 @@ interface SocialLinks {
     linkedin?: string;
     github?: string;
     twitter?: string;
-    portfolio?: string;
 }
 
 interface ProfileSocialLinksProps {
@@ -88,11 +87,6 @@ export const ProfileSocialLinks = ({ initialLinks, onUpdate }: ProfileSocialLink
                     url={initialLinks.twitter}
                     onMissing={handleMissingLink}
                 />
-                {/* <SocialIcon
-                    platform="portfolio"
-                    url={initialLinks.portfolio}
-                    onMissing={handleMissingLink}
-                /> */}
             </div>
 
             <div className="h-8 w-px bg-gray-200 mx-1" />

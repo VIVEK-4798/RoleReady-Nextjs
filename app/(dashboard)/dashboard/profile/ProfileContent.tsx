@@ -24,7 +24,6 @@ interface ProfileData {
     location?: string;
     linkedinUrl?: string;
     githubUrl?: string;
-    portfolioUrl?: string;
     education: Education[];
     experience: Experience[];
     projects: Project[];
@@ -82,7 +81,6 @@ export default function ProfileContent() {
     location: '',
     linkedinUrl: '',
     githubUrl: '',
-    portfolioUrl: '',
   });
 
   const fetchProfile = useCallback(async () => {
@@ -102,7 +100,6 @@ export default function ProfileContent() {
           location: data.data.profile?.location || '',
           linkedinUrl: data.data.profile?.linkedinUrl || '',
           githubUrl: data.data.profile?.githubUrl || '',
-          portfolioUrl: data.data.profile?.portfolioUrl || '',
         });
       }
     } catch (err) {
@@ -143,7 +140,6 @@ export default function ProfileContent() {
             location: formData.location,
             linkedinUrl: formData.linkedinUrl,
             githubUrl: formData.githubUrl,
-            portfolioUrl: formData.portfolioUrl,
           },
         }),
       });
@@ -301,7 +297,7 @@ export default function ProfileContent() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     LinkedIn URL
@@ -326,20 +322,6 @@ export default function ProfileContent() {
                     value={formData.githubUrl}
                     onChange={handleChange}
                     placeholder="https://github.com/..."
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    style={{ color: '#000000' }}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Portfolio URL
-                  </label>
-                  <input
-                    type="url"
-                    name="portfolioUrl"
-                    value={formData.portfolioUrl}
-                    onChange={handleChange}
-                    placeholder="https://yourportfolio.com"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     style={{ color: '#000000' }}
                   />
@@ -391,16 +373,6 @@ export default function ProfileContent() {
                     className="text-gray-700 hover:text-gray-900 font-medium"
                   >
                     GitHub
-                  </a>
-                )}
-                {profile?.profile?.portfolioUrl && (
-                  <a
-                    href={profile.profile.portfolioUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-purple-600 hover:text-purple-700 font-medium"
-                  >
-                    Portfolio
                   </a>
                 )}
               </div>

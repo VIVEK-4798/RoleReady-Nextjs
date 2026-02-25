@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useAuth } from '@/hooks';
@@ -27,7 +28,6 @@ interface ProfileData {
     location?: string;
     linkedinUrl?: string;
     githubUrl?: string;
-    portfolioUrl?: string;
     education: Education[];
     experience: Experience[];
     projects: Project[];
@@ -325,7 +325,7 @@ export default function NewProfileContent() {
     if (!profile) return;
 
     let filled = 0;
-    const total = 9;
+    const total = 12; // 9 base sections + 3 social links
 
     if (profile.name) filled++;
     if (profile.email) filled++;
@@ -336,6 +336,12 @@ export default function NewProfileContent() {
     if (resume?.hasResume) filled++;
     if (profile.profile?.certificates?.length || 0 > 0) filled++;
     if (profile.profile?.projects?.length > 0) filled++;
+
+    // Social links contribution (counting valid standard URLs)
+    const links = profile.profile?.socialLinks;
+    if (links?.linkedin?.startsWith('https://')) filled++;
+    if (links?.github?.startsWith('https://')) filled++;
+    if (links?.twitter?.startsWith('https://')) filled++;
 
     const progressValue = Math.round((filled / total) * 100);
     setProgress(progressValue);
@@ -365,7 +371,6 @@ export default function NewProfileContent() {
               location: data.location,
               linkedinUrl: data.linkedinUrl,
               githubUrl: data.githubUrl,
-              portfolioUrl: data.portfolioUrl,
             },
           };
           break;
@@ -669,23 +674,62 @@ export default function NewProfileContent() {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700">Profile Completion</span>
-                    <span className="text-sm font-bold text-[#5693C1]">{progress}%</span>
+                    <div className="flex items-center gap-1.5">
+                      {progress === 100 && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="flex items-center gap-1 bg-green-50 px-2 py-0.5 rounded-full border border-green-100 shadow-sm"
+                        >
+                          <CheckCircle className="w-3.5 h-3.5 text-green-600" />
+                          <span className="text-[10px] font-bold text-green-700 uppercase tracking-tight">All sections completed</span>
+                        </motion.div>
+                      )}
+                      <span className={`text-sm font-bold ${progress === 100 ? 'text-green-600' : 'text-[#5693C1]'}`}>
+                        {progress}%
+                      </span>
+                    </div>
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-2">
+                  <motion.div
+                    initial={false}
+                    animate={progress === 100 ? { scale: [1, 1.02, 1] } : {}}
+                    transition={{ duration: 0.5 }}
+                    className={`h-2 bg-gray-200 rounded-full overflow-hidden mb-2 relative ${progress === 100 ? 'shadow-[0_0_10px_rgba(34,197,94,0.4)]' : ''}`}
+                  >
                     <div
-                      className="h-full rounded-full transition-all duration-300"
+                      className="h-full rounded-full transition-all duration-1000 ease-out"
                       style={{
                         width: `${progress}%`,
-                        backgroundColor: '#5693C1'
+                        backgroundColor: progress === 100 ? '#22c55e' : '#5693C1'
                       }}
                     />
-                  </div>
+                  </motion.div>
 
-                  <p className="text-xs text-gray-500">
-                    Complete your profile to increase your readiness score
-                  </p>
+                  <div className="flex items-center gap-1.5 min-h-[1rem]">
+                    {progress === 100 ? (
+                      <motion.p
+                        initial={{ opacity: 0, x: -5 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="text-xs font-semibold text-green-600 flex items-center gap-1"
+                      >
+                        Profile Complete — Great job!
+                      </motion.p>
+                    ) : (
+                      <div className="flex flex-col gap-1">
+                        <p className="text-xs text-gray-500">
+                          Complete your profile to increase your readiness score
+                        </p>
+                        {(!profile?.profile?.socialLinks?.linkedin || !profile?.profile?.socialLinks?.github || !profile?.profile?.socialLinks?.twitter) && (
+                          <p className="text-[10px] text-[#5693C1] font-medium flex items-center gap-1 animate-pulse">
+                            <Sparkles className="w-3 h-3" />
+                            Tip: Connect social links to reach 100% faster
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

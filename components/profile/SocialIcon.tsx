@@ -1,8 +1,8 @@
 import React from 'react';
-import { Linkedin, Github, Twitter, Globe } from 'lucide-react';
+import { Linkedin, Github, Twitter } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export type SocialPlatform = 'linkedin' | 'github' | 'twitter' | 'portfolio';
+export type SocialPlatform = 'linkedin' | 'github' | 'twitter';
 
 interface SocialIconProps {
     platform: SocialPlatform;
@@ -14,14 +14,12 @@ const iconMap = {
     linkedin: Linkedin,
     github: Github,
     twitter: Twitter,
-    portfolio: Globe,
 };
 
 const colorMap = {
     linkedin: 'text-[#0077B5] border-blue-50 bg-white',
     github: 'text-[#333] border-gray-100 bg-white',
     twitter: 'text-black border-gray-50 bg-white',
-    portfolio: 'text-emerald-600 border-emerald-50 bg-white',
 };
 
 /**

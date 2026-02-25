@@ -118,14 +118,13 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
       const profile = user.profile;
       if (profile) {
-        const { bio, headline, location, linkedinUrl, githubUrl, portfolioUrl } = body.profile;
+        const { bio, headline, location, linkedinUrl, githubUrl } = body.profile;
 
         if (bio !== undefined) profile.bio = bio;
         if (headline !== undefined) profile.headline = headline;
         if (location !== undefined) profile.location = location;
         if (linkedinUrl !== undefined) profile.linkedinUrl = linkedinUrl;
         if (githubUrl !== undefined) profile.githubUrl = githubUrl;
-        if (portfolioUrl !== undefined) profile.portfolioUrl = portfolioUrl;
       }
     }
 

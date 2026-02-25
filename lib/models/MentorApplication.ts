@@ -9,7 +9,6 @@ export interface IMentorApplication extends Document {
     professionalIdentity: {
         linkedinUrl?: string;
         githubUrl?: string; // Optional for non-tech
-        portfolioUrl?: string;
         companyEmail?: string;
         phoneNumber?: string;
     };
@@ -71,7 +70,6 @@ const MentorApplicationSchema = new Schema<IMentorApplication>(
         professionalIdentity: {
             linkedinUrl: String,
             githubUrl: String, // Treat as optional
-            portfolioUrl: String,
             companyEmail: String,
             phoneNumber: String,
         },

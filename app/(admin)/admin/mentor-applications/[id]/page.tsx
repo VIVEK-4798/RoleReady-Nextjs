@@ -130,7 +130,6 @@ export default function AdminApplicationDetail() {
                     <AdminSection title="Professional Identity">
                         <DetailItem label="LinkedIn" value={application.professionalIdentity?.linkedinUrl} isLink />
                         <DetailItem label="GitHub" value={application.professionalIdentity?.githubUrl} isLink />
-                        <DetailItem label="Portfolio" value={application.professionalIdentity?.portfolioUrl} isLink />
                         <DetailItem label="Company Email" value={application.professionalIdentity?.companyEmail} />
                     </AdminSection>
 

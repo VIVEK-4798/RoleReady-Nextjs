@@ -11,7 +11,6 @@ interface ApplicationData {
     professionalIdentity: {
         linkedinUrl: string;
         githubUrl: string;
-        portfolioUrl: string;
         companyEmail: string;
         phoneNumber: string;
     };
@@ -48,7 +47,6 @@ const INITIAL_DATA: ApplicationData = {
     professionalIdentity: {
         linkedinUrl: '',
         githubUrl: '',
-        portfolioUrl: '',
         companyEmail: '',
         phoneNumber: '',
     },
@@ -280,13 +278,6 @@ export default function ApplyClient() {
                                 value={formData.professionalIdentity.githubUrl}
                                 disabled={isReadOnly}
                                 onChange={(v: string) => setFormData(p => ({ ...p, professionalIdentity: { ...p.professionalIdentity, githubUrl: v } }))}
-                            />
-                            <Input
-                                label="Portfolio URL / Website"
-                                placeholder="https://yourportfolio.com"
-                                value={formData.professionalIdentity.portfolioUrl}
-                                disabled={isReadOnly}
-                                onChange={(v: string) => setFormData(p => ({ ...p, professionalIdentity: { ...p.professionalIdentity, portfolioUrl: v } }))}
                             />
                             <Input
                                 label="Company Email (Optional)"

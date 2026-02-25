@@ -7,7 +7,6 @@ export interface ResumeData {
         phone?: string;
         linkedin?: string;
         github?: string;
-        portfolio?: string;
         location?: string;
         headline?: string;
     };
