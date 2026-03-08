@@ -110,6 +110,76 @@ function formatToBullets(text: string): string[] {
 }
 
 /**
+ * Group skills by category with expansion and enrichment
+ */
+function groupSkills(skills: { name: string, level: string }[]): Record<string, string[]> {
+    const groups: Record<string, string[]> = {};
+    const skillNamesLower = new Set(skills.map(s => s.name.toLowerCase()));
+
+    // Expansion Rules Map
+    const expansionMap: Record<string, string> = {
+        'html': 'HTML5',
+        'css': 'CSS3',
+        'javascript': 'JavaScript (ES6+)',
+        'react': 'React.js',
+        'express': 'Express.js',
+        'nextjs': 'Next.js',
+        'next.js': 'Next.js',
+        'mongodb': 'MongoDB (NoSQL)',
+        'sql': 'SQL (Relational Databases)',
+        'postgresql': 'PostgreSQL',
+        'mysql': 'MySQL'
+    };
+
+    skills.forEach(skill => {
+        let categorized = false;
+        let finalName = skill.name;
+        const lowName = skill.name.toLowerCase();
+
+        // Apply Expansion
+        if (expansionMap[lowName]) {
+            finalName = expansionMap[lowName];
+        }
+
+        for (const [category, keywords] of Object.entries(SKILL_CATEGORIES)) {
+            if (keywords.some(k => lowName.includes(k))) {
+                if (!groups[category]) groups[category] = [];
+                if (!groups[category].includes(finalName)) {
+                    groups[category].push(finalName);
+                }
+                categorized = true;
+                break;
+            }
+        }
+
+        if (!categorized) {
+            const miscKey = 'Tools & Technologies';
+            if (!groups[miscKey]) groups[miscKey] = [];
+            if (!groups[miscKey].includes(finalName)) {
+                groups[miscKey].push(finalName);
+            }
+        }
+    });
+
+    // Enrichment Logic (Rule-based phrases)
+    if (groups['Backend']) {
+        const hasNode = skillNamesLower.has('node.js') || skillNamesLower.has('nodejs');
+        const hasExpress = skillNamesLower.has('express') || skillNamesLower.has('express.js');
+        if (hasNode && hasExpress && !groups['Backend'].includes('REST API Development')) {
+            groups['Backend'].push('REST API Development');
+        }
+    }
+
+    if (groups['Database']) {
+        if (!groups['Database'].includes('Database Design')) {
+            groups['Database'].push('Database Design');
+        }
+    }
+
+    return groups;
+}
+
+/**
  * Infer professional role from skills
  */
 function inferRole(skillNames: string[]): string {
@@ -124,32 +194,22 @@ function inferRole(skillNames: string[]): string {
 }
 
 /**
- * Group skills by category
+ * Robust validation to detect and filter out "junk" or placeholder content.
+ * Filters common dummy inputs like 'q', '-', 'test', 'NA', etc.
  */
-function groupSkills(skills: { name: string, level: string }[]): Record<string, string[]> {
-    const groups: Record<string, string[]> = {};
+function isValidContent(text: string | undefined): boolean {
+    if (!text || typeof text !== 'string') return false;
+    const trimmed = text.trim();
+    if (trimmed.length < 2) return false;
 
-    skills.forEach(skill => {
-        let categorized = false;
-        const lowName = skill.name.toLowerCase();
+    const lower = trimmed.toLowerCase();
+    const placeholders = ['placeholder', 'test', 'n/a', 'na', 'none', 'dummy', 'todo', 'null', 'undefined', '---', '...', '--- ---'];
+    if (placeholders.some(p => lower === p)) return false;
 
-        for (const [category, keywords] of Object.entries(SKILL_CATEGORIES)) {
-            if (keywords.some(k => lowName.includes(k))) {
-                if (!groups[category]) groups[category] = [];
-                groups[category].push(skill.name);
-                categorized = true;
-                break;
-            }
-        }
+    // Pattern: single character repeated (e.g., 'qqq', '...')
+    if (/^(.)\1+$/.test(trimmed) && trimmed.length < 5) return false;
 
-        if (!categorized) {
-            const miscKey = 'Tools & Technologies';
-            if (!groups[miscKey]) groups[miscKey] = [];
-            groups[miscKey].push(skill.name);
-        }
-    });
-
-    return groups;
+    return true;
 }
 
 export async function buildResumeData(userId: string): Promise<ResumeData> {
@@ -182,7 +242,7 @@ export async function buildResumeData(userId: string): Promise<ResumeData> {
             name: us.skillId?.name || 'Unknown Skill',
             level: us.level as SkillLevel
         }))
-        .filter(s => s.name !== 'Unknown Skill')
+        .filter(s => s.name !== 'Unknown Skill' && isValidContent(s.name))
         .sort((a, b) => LEVEL_ORDER[b.level] - LEVEL_ORDER[a.level]);
 
     const skillNames = skills.map(s => s.name);
@@ -210,19 +270,35 @@ export async function buildResumeData(userId: string): Promise<ResumeData> {
         }
     };
 
-    // Summary Enrichment
+    // Summary Enrichment Engine
     let userAbout = user.profile?.about || user.profile?.bio || '';
     let summary = cleanDescription(userAbout);
-
-    // If summary is auto-generated or too short, or contains the wrong role, we rebuild/enrich it
-    const isAutoSummary = summary.length < 50 || summary.toLowerCase().includes('placeholder');
+    const isAutoSummary = !isValidContent(summary) || summary.length < 120;
 
     if (isAutoSummary && skillNames.length >= 2) {
-        const topSkillsGroup = skillNames.slice(0, 5).join(', ');
-        summary = `${finalRoleHeadline} with a strong foundation in ${topSkillsGroup}. Dedicated to building efficient, scalable applications and solving complex technical challenges with modern development practices.`;
+        const lowSkills = skillNames.map(s => s.toLowerCase());
+        const hasSkill = (s: string) => lowSkills.some(k => k.includes(s));
+
+        // Build architecture phrases
+        const coreSkills = skillNames.slice(0, 4).map(s => {
+            if (s.toLowerCase() === 'react') return 'React.js';
+            if (s.toLowerCase() === 'next.js' || s.toLowerCase() === 'nextjs') return 'Next.js';
+            return s;
+        }).join(', ');
+
+        let contextualPhrases = '';
+        if (hasSkill('react')) contextualPhrases += ' proficient in component-based UI development,';
+        if (hasSkill('next.js') || hasSkill('nextjs')) contextualPhrases += ' SSR and performance optimization,';
+        if (hasSkill('node') || hasSkill('express')) contextualPhrases += ' developing RESTful APIs,';
+        if (hasSkill('sql') || hasSkill('mongodb')) contextualPhrases += ' and database design and management.';
+
+        const rolePart = finalRoleHeadline.toLowerCase().includes('developer') ? finalRoleHeadline : `${finalRoleHeadline} Developer`;
+
+        summary = `${rolePart} experienced in building scalable applications using ${coreSkills}. Focused on${contextualPhrases || ' modern web architectures and delivering high-quality, maintainable software solutions.'}`;
+
+        // Final cleanup of the generated summary
+        summary = summary.replace(/,\s+\./g, '.').replace(/,\s+and/g, ' and').trim();
     } else if (targetRoleName && summary.toLowerCase().includes('full stack developer') && targetRoleName !== 'Full Stack Developer') {
-        // If user has a specific target role (e.g. Backend Developer) but their manual 'about' says 'Full Stack', 
-        // we respect the target role choice and update the summary to match.
         summary = summary.replace(/full\s+stack\s+developer/gi, targetRoleName);
     }
 
@@ -240,6 +316,7 @@ export async function buildResumeData(userId: string): Promise<ResumeData> {
         skills,
         groupedSkills,
         experience: (user.profile?.experience || [])
+            .filter((exp: any) => isValidContent(exp.title) && isValidContent(exp.company))
             .map((exp: any) => {
                 const bullets = formatToBullets(exp.description || '');
                 return {
@@ -252,69 +329,134 @@ export async function buildResumeData(userId: string): Promise<ResumeData> {
                     description: bullets.length >= 1 ? bullets.slice(0, 5).join('\n') : undefined
                 };
             })
-            .filter((exp: any) => exp.title && exp.company && exp.description),
+            .filter((exp: any) => exp.description),
         projects: (user.profile?.projects || [])
             .map((proj: any) => {
-                let bullets = formatToBullets(proj.description || '');
-                const techs = proj.technologies || [];
+                const originalDescription = proj.description || '';
+                let bullets = formatToBullets(originalDescription);
+                const projectTechs = (proj.technologies || []) as string[];
+                const userSkillNames = new Set(skills.map(s => s.name.toLowerCase()));
+                const projectTechSet = new Set(projectTechs.map(t => t.toLowerCase()));
 
-                if (bullets.length < 2 && techs.length > 0) {
-                    const lowTechs = techs.map((t: string) => t.toLowerCase());
-                    if (lowTechs.some((t: string) => t.includes('react') || t.includes('next'))) {
-                        bullets.push(`Developed a responsive and dynamic user interface using ${techs.find((t: string) => t.toLowerCase().includes('react') || t.toLowerCase().includes('next'))}`);
+                // Detection: Is the description weak, too short, or placeholder?
+                const isWeak =
+                    bullets.length < 3 ||
+                    originalDescription.length < 80 ||
+                    !isValidContent(originalDescription) ||
+                    /placeholder|built\s+using|project\s+built|basic\s+project/i.test(originalDescription);
+
+                // If weak, we trigger the Contextual Enhancement Engine
+                if (isWeak) {
+                    const enhancedBullets: string[] = [];
+
+                    // Priority 1: Use technologies specifically listed for this project
+                    // Priority 2: Use user's overall skill set if project tech is sparse
+                    const hasTech = (t: string) => projectTechSet.has(t) || userSkillNames.has(t);
+
+                    // Rule 1: Frontend (React / Next.js)
+                    if (hasTech('react') || hasTech('next.js') || hasTech('nextjs')) {
+                        enhancedBullets.push('Developed responsive user interfaces using React.js and modern JavaScript patterns.');
                     }
-                    if (lowTechs.some((t: string) => t.includes('node') || t.includes('express'))) {
-                        bullets.push(`Built and maintained robust server-side logic and RESTful APIs with ${techs.find((t: string) => t.toLowerCase().includes('node') || t.toLowerCase().includes('express'))}`);
+
+                    // Rule 2: Backend (Node.js / Express)
+                    if (hasTech('node.js') || hasTech('nodejs') || hasTech('express.js') || hasTech('express')) {
+                        enhancedBullets.push('Built RESTful APIs and server-side logic using Node.js and Express.js for seamless data flow.');
                     }
-                    if (lowTechs.some((t: string) => t.includes('razorpay') || t.includes('stripe'))) {
-                        bullets.push(`Integrated secure and reliable payment processing workflows using ${techs.find((t: string) => t.toLowerCase().includes('razorpay') || t.toLowerCase().includes('stripe'))}`);
+
+                    // Rule 3: Database (SQL / MongoDB)
+                    const hasSQL = hasTech('sql') || hasTech('postgresql') || hasTech('mysql');
+                    const hasMongo = hasTech('mongodb') || hasTech('mongoose');
+                    if (hasSQL || hasMongo) {
+                        const dbTech = hasSQL ? 'SQL' : 'MongoDB';
+                        enhancedBullets.push(`Designed and managed complex database operations and schema structures using ${dbTech}.`);
                     }
-                    if (lowTechs.some((t: string) => t.includes('mongo') || t.includes('sql') || t.includes('db'))) {
-                        bullets.push(`Managed data persistence and optimized database queries using ${techs.find((t: string) => t.toLowerCase().includes('mongo') || t.toLowerCase().includes('sql') || t.toLowerCase().includes('db'))}`);
+
+                    // Rule 4: Integrations (Auth / Payments / Cloud)
+                    const hasIntegrations = projectTechs.some(t => {
+                        const low = t.toLowerCase();
+                        return low.includes('auth') || low.includes('stripe') || low.includes('razorpay') ||
+                            low.includes('firebase') || low.includes('api') || low.includes('cloud');
+                    }) || userSkillNames.has('auth') || userSkillNames.has('firebase');
+
+                    if (hasIntegrations) {
+                        enhancedBullets.push('Integrated third-party services and secure backend functionality to enhance application features.');
+                    }
+
+                    // Rule 5: Full Stack indicator
+                    const isFullStack =
+                        (hasTech('react') || hasTech('next.js')) &&
+                        (hasTech('node.js') || hasTech('python') || hasTech('java') || hasTech('backend'));
+
+                    if (isFullStack && enhancedBullets.length < 4) {
+                        enhancedBullets.push('Implemented full-stack architecture connecting frontend and backend systems for optimal performance.');
+                    }
+
+                    // Fallback: If still under 3 bullets, add a general professional one if we have ANY tech
+                    if (enhancedBullets.length < 3 && projectTechs.length > 0) {
+                        const topTechs = projectTechs.slice(0, 2).join(' and ');
+                        enhancedBullets.push(`Architected and engineered core features utilizing ${topTechs} to deliver robust software solutions.`);
+                    }
+
+                    // Merge and cleanup
+                    if (bullets.length <= 1 || bullets.some(b => !isValidContent(b) || b.length < 20)) {
+                        bullets = enhancedBullets;
+                    } else {
+                        // Blend: Add unique enhanced bullets to existing ones
+                        enhancedBullets.forEach(eb => {
+                            if (bullets.length < 4 && !bullets.some(b => b.substring(0, 15) === eb.substring(0, 15))) {
+                                bullets.push(eb);
+                            }
+                        });
                     }
                 }
 
+                // Final safety: Cap at 4 bullets
+                const finalBullets = bullets.filter(b => isValidContent(b)).slice(0, 4);
+
                 return {
                     name: proj.name,
-                    description: bullets.length >= 1 ? bullets.slice(0, 5).join('\n') : undefined,
-                    technologies: techs,
+                    description: finalBullets.length >= 1 ? finalBullets.join('\n') : undefined,
+                    technologies: projectTechs,
                     url: proj.url,
                     githubUrl: proj.githubUrl,
                     startDate: formatDate(proj.startDate),
                     endDate: proj.isOngoing ? 'Present' : formatDate(proj.endDate)
                 };
             })
-            .filter((proj: any) => proj.name && proj.description),
+            .filter((proj: any) => isValidContent(proj.name) && proj.description),
         education: (user.profile?.education || [])
-            .filter((edu: any) => edu.institution && edu.degree)
+            .filter((edu: any) => isValidContent(edu.institution) && isValidContent(edu.degree))
             .map((edu: any) => ({
-                institution: edu.institution,
-                degree: edu.degree,
+                institution: edu.institution.trim(),
+                degree: edu.degree.trim(),
                 fieldOfStudy: edu.fieldOfStudy,
                 startDate: formatDate(edu.startDate),
                 endDate: edu.isCurrent ? 'Present' : formatDate(edu.endDate),
                 grade: edu.grade
             })),
         certificates: (user.profile?.certificates || [])
-            .filter((cert: any) => cert.name)
+            .filter((cert: any) => isValidContent(cert.name) && isValidContent(cert.issuer))
             .map((cert: any) => ({
-                name: cert.name,
-                issuer: cert.issuer || 'Professional Certification',
+                name: cert.name.trim(),
+                issuer: cert.issuer.trim(),
                 date: cert.issueDate ? new Date(cert.issueDate).getFullYear().toString() : undefined
             })),
         achievements: (user.profile?.achievements || [])
-            .filter((ach: any) => ach.title)
+            .filter((ach: any) => isValidContent(ach.title))
             .map((ach: any) => ({
-                title: ach.title,
-                issuer: ach.issuer || 'Achievement Recognition',
+                title: ach.title.trim(),
+                issuer: ach.issuer || 'Professional Achievement',
                 date: ach.date ? formatDate(ach.date) : (ach.issueDate ? formatDate(ach.issueDate) : undefined),
-                description: ach.description ? cleanDescription(ach.description) : undefined
+                description: isValidContent(ach.description) ? cleanDescription(ach.description!) : undefined
             }))
     };
 
-    // Cleanup empty sections
-    if (resumeData.certificates && resumeData.certificates.length === 0) delete resumeData.certificates;
-    if (resumeData.achievements && resumeData.achievements.length === 0) delete resumeData.achievements;
+    // Final Cleanup: Remove empty sections entirely
+    if (resumeData.education && resumeData.education.length === 0) delete (resumeData as any).education;
+    if (resumeData.experience && resumeData.experience.length === 0) delete (resumeData as any).experience;
+    if (resumeData.projects && resumeData.projects.length === 0) delete (resumeData as any).projects;
+    if (resumeData.certificates && resumeData.certificates.length === 0) delete (resumeData as any).certificates;
+    if (resumeData.achievements && resumeData.achievements.length === 0) delete (resumeData as any).achievements;
 
     return resumeData;
 }

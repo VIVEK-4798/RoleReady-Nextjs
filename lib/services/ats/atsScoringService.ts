@@ -21,6 +21,7 @@ import { Resume } from '@/lib/models/Resume';
 import Role from '@/lib/models/Role';
 import TargetRole from '@/lib/models/TargetRole';
 import ATSScore from '@/lib/models/ATSScore';
+import { evaluateGroupLogic, ItemMatch } from '@/lib/utils/evaluation';
 
 // ============================================================================
 // Types
@@ -41,11 +42,22 @@ export interface ATSScoreResult {
     calculatedAt: Date;
 }
 
-interface BenchmarkSkill {
+interface ATSBenchmarkSkill {
     skillId: string;
     skillName: string;
     weight: number;
     importance: 'required' | 'optional';
+}
+
+interface ATSBenchmarkGroup {
+    name: string;
+    type: 'ALL_REQUIRED' | 'ANY_ONE_REQUIRED';
+    weight: number;
+    required: boolean;
+    skills: {
+        skillId: string;
+        skillName: string;
+    }[];
 }
 
 // ============================================================================
@@ -98,30 +110,61 @@ const STRUCTURE_POINTS = {
  */
 function calculateKeywordRelevance(
     resumeText: string,
-    benchmarks: BenchmarkSkill[]
+    benchmarks: ATSBenchmarkSkill[],
+    benchmarkGroups: ATSBenchmarkGroup[]
 ): { score: number; missingKeywords: string[] } {
-    if (!resumeText || benchmarks.length === 0) {
+    if (!resumeText && benchmarks.length === 0 && benchmarkGroups.length === 0) {
         return { score: 0, missingKeywords: [] };
     }
 
-    const lowerText = resumeText.toLowerCase();
-    let matchedWeight = 0;
-    let totalWeight = 0;
+    const lowerText = resumeText?.toLowerCase() || '';
+    let totalMatchedWeight = 0;
+    let totalMaxWeight = 0;
     const missingKeywords: string[] = [];
 
+    // 1. Process individual standalone benchmarks
     for (const benchmark of benchmarks) {
-        totalWeight += benchmark.weight;
+        totalMaxWeight += benchmark.weight;
 
         // Check if skill name appears in resume (case-insensitive)
         const skillLower = benchmark.skillName.toLowerCase();
         if (lowerText.includes(skillLower)) {
-            matchedWeight += benchmark.weight;
-        } else {
+            totalMatchedWeight += benchmark.weight;
+        } else if (benchmark.importance === 'required') {
             missingKeywords.push(benchmark.skillName);
         }
     }
 
-    const score = totalWeight > 0 ? (matchedWeight / totalWeight) * 100 : 0;
+    // 2. Process benchmark groups using shared evaluation logic
+    for (const group of benchmarkGroups) {
+        totalMaxWeight += group.weight;
+
+        const itemMatches: ItemMatch[] = group.skills.map(skill => {
+            const matched = lowerText.includes(skill.skillName.toLowerCase());
+            return {
+                name: skill.skillName,
+                matched,
+                score: matched ? 1 : 0
+            };
+        });
+
+        const result = evaluateGroupLogic(group.type, itemMatches);
+
+        // Add weighted score (result.score is 0-1)
+        totalMatchedWeight += result.score * group.weight;
+
+        // Collect missing keywords if group is not satisfied
+        if (group.required && !result.satisfied) {
+            if (group.type === 'ANY_ONE_REQUIRED') {
+                missingKeywords.push(`At least one of: ${group.skills.map(s => s.skillName).join(', ')}`);
+            } else {
+                // For ALL_REQUIRED, only list specific missing skills
+                missingKeywords.push(...result.missingNames);
+            }
+        }
+    }
+
+    const score = totalMaxWeight > 0 ? (totalMatchedWeight / totalMaxWeight) * 100 : 0;
     return { score: Math.round(score), missingKeywords };
 }
 
@@ -144,54 +187,61 @@ function calculateKeywordRelevance(
  */
 function calculateContextDepth(
     resumeText: string,
-    benchmarks: BenchmarkSkill[],
+    benchmarks: ATSBenchmarkSkill[],
+    benchmarkGroups: ATSBenchmarkGroup[],
     experienceSection?: string
 ): number {
-    if (!resumeText || benchmarks.length === 0) {
+    if (!resumeText && benchmarks.length === 0 && benchmarkGroups.length === 0) {
         return 0;
     }
 
-    const lowerText = resumeText.toLowerCase();
+    const lowerText = resumeText?.toLowerCase() || '';
     const lowerExperience = experienceSection?.toLowerCase() || '';
 
     let totalPoints = 0;
     let maxPossiblePoints = 0;
 
-    for (const benchmark of benchmarks) {
-        const skillLower = benchmark.skillName.toLowerCase();
+    const evaluateSkillContext = (skillName: string): number => {
+        const skillLower = skillName.toLowerCase();
+        // Use a more robust check for occurrences
+        const occurrences = (lowerText.match(new RegExp(skillLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
+        if (occurrences === 0) return 0;
 
-        // Count occurrences
-        const occurrences = (lowerText.match(new RegExp(skillLower, 'g')) || []).length;
-
-        // Base points for presence
         const maxForSkill = 10;
-        maxPossiblePoints += maxForSkill;
-
-        if (occurrences === 0) {
-            continue; // No points
-        }
-
         let points = 0;
 
-        // 1 mention: 40% of max
-        if (occurrences === 1) {
-            points = maxForSkill * 0.4;
-        }
-        // 2-3 mentions: 70% of max
-        else if (occurrences >= 2 && occurrences <= 3) {
-            points = maxForSkill * 0.7;
-        }
-        // 4+ mentions: 80% of max (diminishing returns, avoid stuffing)
-        else {
-            points = maxForSkill * 0.8;
-        }
+        if (occurrences === 1) points = maxForSkill * 0.4;
+        else if (occurrences >= 2 && occurrences <= 3) points = maxForSkill * 0.7;
+        else points = maxForSkill * 0.8;
 
-        // Bonus if appears in experience section
         if (lowerExperience && lowerExperience.includes(skillLower)) {
             points += maxForSkill * 0.2;
         }
 
-        totalPoints += Math.min(points, maxForSkill);
+        return Math.min(points, maxForSkill);
+    };
+
+    // 1. Evaluate individual benchmarks
+    for (const benchmark of benchmarks) {
+        maxPossiblePoints += 10;
+        totalPoints += evaluateSkillContext(benchmark.skillName);
+    }
+
+    // 2. Evaluate group benchmarks using shared evaluation logic
+    for (const group of benchmarkGroups) {
+        maxPossiblePoints += 10; // Treat the whole group as 1 unit for context depth scaling
+
+        const itemMatches: ItemMatch[] = group.skills.map(skill => {
+            const pts = evaluateSkillContext(skill.skillName);
+            return {
+                name: skill.skillName,
+                matched: pts > 0,
+                score: pts / 10 // Normalize to 0-1
+            };
+        });
+
+        const result = evaluateGroupLogic(group.type, itemMatches);
+        totalPoints += result.score * 10;
     }
 
     const score = maxPossiblePoints > 0 ? (totalPoints / maxPossiblePoints) * 100 : 0;
@@ -391,18 +441,35 @@ export async function calculateATSScore(
     await connectDB();
 
     // 1. Fetch active resume
-    const resume = await Resume.findOne({
+    let resume = await Resume.findOne({
         userId: new Types.ObjectId(userId),
         isActive: true,
-        status: 'completed'
-    }).lean();
+    }).sort({ createdAt: -1 }); // Don't use lean so we can potentially save or use record
 
     if (!resume) {
         throw new Error('No active resume found. Please upload a resume first.');
     }
 
-    if (!resume.extractedData?.rawText) {
-        throw new Error('Resume has not been parsed yet. Please wait for processing to complete.');
+    // 🚀 SELF-HEALING: If resume exists but not parsed, try parsing it NOW
+    if (resume.status !== 'completed' || !resume.extractedData?.rawText) {
+        if (resume.status === 'failed') {
+            throw new Error(`Resume processing failed: ${resume.parseError || 'Unknown error'}. Please try re-uploading.`);
+        }
+
+        // Try to trigger parse if not already processing, or as a last resort
+        const { performResumeParsing } = await import('@/lib/services/resumeParser');
+        try {
+            console.log(`[atsScoring] Resume not parsed. Triggering immediate parse for ${resume._id}`);
+            await performResumeParsing(resume, userId);
+
+            // Re-fetch to get the newly extracted text
+            resume = await Resume.findById(resume._id);
+            if (!resume || resume.status !== 'completed') {
+                throw new Error('Resume processing in progress. Please wait a moment.');
+            }
+        } catch (err) {
+            throw new Error('Resume is still being processed. Please wait a few moments and try again.');
+        }
     }
 
     // 2. Fetch role benchmarks
@@ -423,56 +490,82 @@ export async function calculateATSScore(
         throw new Error(`Role not found: ${roleId}`);
     }
 
-    // 3. Extract benchmark skills from both direct benchmarks and benchmark groups
-    const benchmarks: BenchmarkSkill[] = [];
+    // 3. Extract benchmarks
+    const benchmarks: ATSBenchmarkSkill[] = [];
+    const benchmarkGroups: ATSBenchmarkGroup[] = [];
 
-    // Process direct benchmarks
+    // Track skills that are part of a group to avoid double-counting them as standalone
+    const groupedSkillIds = new Set<string>();
+
+    // Process benchmark groups FIRST
+    for (const group of role.benchmarkGroups || []) {
+        if (!group.isActive) continue;
+
+        const groupSkills: { skillId: string; skillName: string }[] = [];
+
+        for (const s of group.skills || []) {
+            const skill = s.skillId as unknown as { _id: Types.ObjectId; name: string } | null;
+            if (!skill || typeof skill === 'string' || !('name' in skill)) continue;
+
+            const sId = skill._id.toString();
+            groupSkills.push({
+                skillId: sId,
+                skillName: skill.name
+            });
+            groupedSkillIds.add(sId);
+        }
+
+        if (groupSkills.length > 0) {
+            benchmarkGroups.push({
+                name: group.name,
+                type: group.type,
+                weight: group.weight,
+                required: group.required,
+                skills: groupSkills
+            });
+        }
+    }
+
+    // Process direct benchmarks, EXCLUDING those already handled in groups
     for (const benchmark of role.benchmarks || []) {
         if (!benchmark.isActive) continue;
 
         const skill = benchmark.skillId as unknown as { _id: Types.ObjectId; name: string } | null;
         if (!skill || typeof skill === 'string' || !('name' in skill)) continue;
 
+        const sId = skill._id.toString();
+        // Skip if already in a group to respect AND/OR logic over standalone requirements
+        if (groupedSkillIds.has(sId)) continue;
+
         benchmarks.push({
-            skillId: skill._id.toString(),
+            skillId: sId,
             skillName: skill.name,
             weight: benchmark.weight,
             importance: benchmark.importance
         });
     }
 
-    // Process skills within groups
-    for (const group of role.benchmarkGroups || []) {
-        if (!group.isActive) continue;
-
-        for (const s of group.skills || []) {
-            const skill = s.skillId as unknown as { _id: Types.ObjectId; name: string } | null;
-            if (!skill || typeof skill === 'string' || !('name' in skill)) continue;
-
-            benchmarks.push({
-                skillId: skill._id.toString(),
-                skillName: skill.name,
-                weight: group.weight, // Use group weight or a default?
-                importance: group.required ? 'required' : 'optional'
-            });
-        }
+    // 4. Calculate component scores
+    if (!resume.extractedData || !resume.extractedData.rawText) {
+        throw new Error('Resume text extraction failed. Please try re-uploading.');
     }
 
-    // 4. Calculate component scores
     const resumeText = resume.extractedData.rawText;
     const experienceText = resume.extractedData.experience
-        ?.map(exp => `${exp.title} ${exp.company} ${exp.duration}`)
+        ?.map((exp: any) => `${exp.title} ${exp.company} ${exp.duration}`)
         .join(' ');
 
     const { score: relevanceScore, missingKeywords } = calculateKeywordRelevance(
         resumeText,
-        benchmarks
+        benchmarks,
+        benchmarkGroups
     );
 
     const contextDepthScore = calculateContextDepth(
         resumeText,
         benchmarks,
-        experienceText
+        benchmarkGroups,
+        experienceText || ''
     );
 
     const structureScore = calculateStructureScore(

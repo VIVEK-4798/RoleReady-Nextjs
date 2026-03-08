@@ -135,7 +135,7 @@ export const ResumePDF = ({ data }: { data: ResumeData }) => (
             )}
 
             {/* Skills */}
-            {data.skills.length > 0 && (
+            {data.skills && data.skills.length > 0 && (
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Technical Skills</Text>
                     {data.groupedSkills ? (
@@ -158,7 +158,7 @@ export const ResumePDF = ({ data }: { data: ResumeData }) => (
             )}
 
             {/* Experience */}
-            {data.experience.length > 0 && (
+            {data.experience && data.experience.length > 0 && (
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Professional Experience</Text>
                     {data.experience.map((exp, i) => (
@@ -183,7 +183,7 @@ export const ResumePDF = ({ data }: { data: ResumeData }) => (
             )}
 
             {/* Projects */}
-            {data.projects.length > 0 && (
+            {data.projects && data.projects.length > 0 && (
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Key Projects</Text>
                     {data.projects.map((proj, i) => (
@@ -215,7 +215,7 @@ export const ResumePDF = ({ data }: { data: ResumeData }) => (
             )}
 
             {/* Education */}
-            {data.education.length > 0 && (
+            {data.education && data.education.length > 0 && (
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Education</Text>
                     {data.education.map((edu, i) => (

@@ -11,12 +11,12 @@ export interface ResumeData {
         headline?: string;
     };
     summary?: string;
-    skills: {
+    skills?: {
         name: string;
         level: SkillLevel;
     }[];
     groupedSkills?: Record<string, string[]>;
-    experience: {
+    experience?: {
         title: string;
         company: string;
         location?: string;
@@ -25,7 +25,7 @@ export interface ResumeData {
         isCurrent: boolean;
         description?: string;
     }[];
-    projects: {
+    projects?: {
         name: string;
         description?: string;
         technologies: string[];
@@ -34,7 +34,7 @@ export interface ResumeData {
         startDate?: string;
         endDate?: string;
     }[];
-    education: {
+    education?: {
         institution: string;
         degree: string;
         fieldOfStudy?: string;

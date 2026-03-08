@@ -55,6 +55,7 @@
  */
 
 import type { SkillLevel, ValidationStatus, SkillSource } from '@/types';
+import { evaluateGroupLogic, ItemMatch } from '@/lib/utils/evaluation';
 
 // ============================================================================
 // Types
@@ -269,11 +270,23 @@ export function calculateReadiness(
   let maxPossibleScore = 0;
   let requiredItemsMet = 0;
   let requiredItemsTotal = 0;
-  let skillsMatched = 0;
-  let skillsMissing = 0;
+  let skillsMatchedCount = 0;
+  let skillsMissingCount = 0;
+
+  // Track skills that are part of a group to avoid double-counting them as standalone
+  const groupedSkillIds = new Set<string>();
+  for (const group of benchmarkGroups) {
+    if (!group.skills) continue;
+    for (const skillItem of group.skills) {
+      groupedSkillIds.add(skillItem.skillId);
+    }
+  }
 
   // 1. Process Flat Benchmarks (Backward Compatibility)
   for (const benchmark of benchmarks) {
+    // Skip if this skill is already part of a group to respect group AND/OR logic
+    if (groupedSkillIds.has(benchmark.skillId)) continue;
+
     const userSkill = userSkillMap.get(benchmark.skillId);
     const isMissing = !userSkill;
 
@@ -300,9 +313,9 @@ export function calculateReadiness(
 
     // Track counts
     if (isMissing || userLevel === 'none') {
-      skillsMissing++;
+      skillsMissingCount++;
     } else {
-      skillsMatched++;
+      skillsMatchedCount++;
     }
 
     totalScore += weightedScore;
@@ -329,15 +342,10 @@ export function calculateReadiness(
 
   // 2. Process Benchmark Groups
   for (const group of benchmarkGroups) {
-    let groupScore = 0;
-    let groupSatisfied = true;
-    let anySkillMet = false;
-    let bestSkillRawScore = 0;
-
     const skillCount = group.skills.length;
     if (skillCount === 0) continue;
 
-    for (const skillItem of group.skills) {
+    const itemMatches: ItemMatch[] = group.skills.map(skillItem => {
       const userSkill = userSkillMap.get(skillItem.skillId);
       const isMissing = !userSkill;
       const userLevel: SkillLevel = userSkill?.level || 'none';
@@ -352,69 +360,66 @@ export function calculateReadiness(
 
       // Track counts
       if (isMissing || userLevel === 'none') {
-        skillsMissing++;
+        skillsMissingCount++;
       } else {
-        skillsMatched++;
+        skillsMatchedCount++;
       }
 
+      return {
+        name: skillItem.skillName,
+        matched: meets && !isMissing,
+        score: rawScore
+      };
+    });
+
+    const evalResult = evaluateGroupLogic(group.type, itemMatches);
+    const groupWeightScore = evalResult.score * group.weight;
+
+    totalScore += groupWeightScore;
+    maxPossibleScore += group.weight;
+
+    if (group.required) {
+      requiredItemsTotal++;
+      if (evalResult.satisfied) {
+        requiredItemsMet++;
+      }
+    }
+
+    // Add to breakdown
+    group.skills.forEach((skillItem, index) => {
+      const match = itemMatches[index];
+      const userSkill = userSkillMap.get(skillItem.skillId);
       const relativeWeight = group.weight / skillCount;
 
-      if (group.type === 'ALL_REQUIRED') {
-        groupScore += rawScore * relativeWeight;
-        if (!meets || isMissing) groupSatisfied = false;
-      } else {
-        // ANY_ONE_REQUIRED
-        if (rawScore > bestSkillRawScore) {
-          bestSkillRawScore = rawScore;
-        }
-        if (meets && !isMissing) {
-          anySkillMet = true;
-        }
-      }
-
-      // Add to main breakdown for UI clarity
       breakdown.push({
         skillId: skillItem.skillId,
         skillName: skillItem.skillName,
         importance: group.required ? 'required' : 'optional',
         weight: relativeWeight,
         requiredLevel: skillItem.requiredLevel,
-        userLevel,
-        levelPoints,
-        validationMultiplier,
-        rawScore,
-        weightedScore: rawScore * relativeWeight,
+        userLevel: userSkill?.level || 'none',
+        levelPoints: LEVEL_POINTS[userSkill?.level || 'none'],
+        validationMultiplier: getValidationMultiplier(userSkill?.source || null, userSkill?.validationStatus || null),
+        rawScore: match.score,
+        weightedScore: match.score * relativeWeight,
         maxPossibleScore: relativeWeight,
-        meetsRequirement: meets,
-        isMissing,
+        // If it's an OR group and it's satisfied, we mark members as "meeting" requirement 
+        // for UI display unless the group is failing.
+        meetsRequirement: group.type === 'ANY_ONE_REQUIRED' ? (evalResult.satisfied || match.matched) : match.matched,
+        isMissing: !userSkill,
         source: userSkill?.source || null,
         validationStatus: userSkill?.validationStatus || null,
         groupName: group.name,
         groupType: group.type
       });
-    }
-
-    if (group.type === 'ANY_ONE_REQUIRED') {
-      groupScore = bestSkillRawScore * group.weight;
-      groupSatisfied = anySkillMet;
-    }
-
-    totalScore += groupScore;
-    maxPossibleScore += group.weight;
-
-    if (group.required) {
-      requiredItemsTotal++;
-      if (groupSatisfied) {
-        requiredItemsMet++;
-      }
-    }
+    });
 
     groupResults.push({
       name: group.name,
       type: group.type,
-      score: groupScore,
+      score: groupWeightScore,
       maxScore: group.weight,
-      satisfied: groupSatisfied
+      satisfied: evalResult.satisfied
     });
   }
 
@@ -437,8 +442,8 @@ export function calculateReadiness(
     requiredSkillsMet: requiredItemsMet,
     requiredSkillsTotal: requiredItemsTotal,
     totalBenchmarks: benchmarks.length + breakdown.length - benchmarks.length,
-    skillsMatched,
-    skillsMissing,
+    skillsMatched: skillsMatchedCount,
+    skillsMissing: skillsMissingCount,
     breakdown,
     groupResults,
     calculatedAt: new Date(),

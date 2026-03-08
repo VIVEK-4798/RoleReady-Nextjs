@@ -104,6 +104,17 @@ export async function POST(request: NextRequest) {
 
         await dbUser.save();
 
+        // 🚀 CRITICAL: Trigger parsing immediately so it's ready for ATS scoring
+        const { performResumeParsing } = await import('@/lib/services/resumeParser');
+        try {
+            // We await it here to ensure it's done for the immediate UX, 
+            // but we wrap in try-catch to ensure the upload itself doesn't fail if parsing does
+            await performResumeParsing(resumeRecord, dbUser._id.toString());
+        } catch (parseError) {
+            console.error('Immediate parsing failed:', parseError);
+            // We continue anyway, the user might try parsing again manually
+        }
+
         return NextResponse.json({
             success: true,
             resume: dbUser.profile.resume

@@ -12,7 +12,14 @@ interface ResumePreviewProps {
 }
 
 export default function ResumePreview({ data, onDownload, isDownloading }: ResumePreviewProps) {
-    const { contact, summary, skills, experience, projects, education } = data;
+    const {
+        contact,
+        summary,
+        skills = [],
+        experience = [],
+        projects = [],
+        education = []
+    } = data;
 
     return (
         <div className="max-w-4xl mx-auto py-12 px-4 space-y-8">
