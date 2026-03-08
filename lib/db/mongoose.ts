@@ -10,12 +10,6 @@ import { initModels } from '@/lib/models'; // Register all models
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
-if (!MONGODB_URI) {
-  throw new Error(
-    'Please define the MONGODB_URI environment variable inside .env.local'
-  );
-}
-
 /**
  * Global cache for the mongoose connection.
  * This prevents connections from growing exponentially
@@ -46,6 +40,13 @@ if (!global.mongooseCache) {
  * Returns cached connection if available, otherwise creates a new one
  */
 async function connectDB(): Promise<typeof mongoose> {
+  const MONGODB_URI = process.env.MONGODB_URI;
+  if (!MONGODB_URI) {
+    throw new Error(
+      'Please define the MONGODB_URI environment variable inside .env.local'
+    );
+  }
+
   initModels();
   // Return cached connection if available
   if (cached.conn) {
