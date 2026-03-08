@@ -78,11 +78,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     return successResponse(user.toJSON(), 'User updated successfully');
   } catch (error) {
     console.error('PUT /api/users/[id] error:', error);
-    
+
     if (error instanceof Error && error.name === 'ValidationError') {
       return errors.validationError(error.message);
     }
-    
+
     return errors.serverError('Failed to update user');
   }
 }
@@ -118,7 +118,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       const { default: UserSkill } = await import('@/lib/models/UserSkill');
       const { default: Roadmap } = await import('@/lib/models/Roadmap');
       const { default: ReadinessSnapshot } = await import('@/lib/models/ReadinessSnapshot');
-      const { default: Resume } = await import('@/lib/models/Resume');
+      const { Resume } = await import('@/lib/models/Resume');
       const { default: TargetRole } = await import('@/lib/models/TargetRole');
 
       // Delete all user-related data in parallel

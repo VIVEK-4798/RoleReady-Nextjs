@@ -11,12 +11,12 @@ import User from '@/lib/models/User';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
 
-    const userId = params.id;
+    const { id: userId } = await context.params;
 
     const user = await User.findById(userId);
     if (!user) {
@@ -52,13 +52,13 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
 
     const { settings } = await request.json();
-    const userId = params.id;
+    const { id: userId } = await context.params;
 
     if (!settings) {
       return NextResponse.json(

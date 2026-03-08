@@ -17,7 +17,7 @@ export const feedbackService = {
     async getFeedbackList({ page, limit, type, status, search }: GetFeedbackParams) {
         await connectDB();
 
-        const query: mongoose.FilterQuery<any> = {};
+        const query: any = {};
 
         if (type && type !== 'all') {
             query.type = type;

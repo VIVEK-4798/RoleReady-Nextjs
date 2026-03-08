@@ -13,11 +13,11 @@ import { Internship } from '@/lib/models';
 // PATCH /api/admin/internships/[id] - Update internship
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
-    
+
     if (!session?.user || (session.user as { role?: string }).role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
@@ -27,7 +27,7 @@ export async function PATCH(
 
     await connectDB();
 
-    const { id } = params;
+    const { id } = await context.params;
     const body = await req.json();
 
     // Find internship
@@ -75,11 +75,11 @@ export async function PATCH(
 // DELETE /api/admin/internships/[id] - Delete internship
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
-    
+
     if (!session?.user || (session.user as { role?: string }).role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
@@ -89,7 +89,7 @@ export async function DELETE(
 
     await connectDB();
 
-    const { id } = params;
+    const { id } = await context.params;
 
     // Find and delete internship
     const internship = await Internship.findByIdAndDelete(id);

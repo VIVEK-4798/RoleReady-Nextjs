@@ -9,7 +9,7 @@ import { successResponse, errors } from '@/lib/utils/api';
  */
 export async function POST(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
         const session = await auth();
@@ -19,7 +19,7 @@ export async function POST(
             return errors.forbidden('Admin access required');
         }
 
-        const requestId = params.id;
+        const { id: requestId } = await context.params;
         if (!requestId) {
             return errors.badRequest('Request ID is required');
         }

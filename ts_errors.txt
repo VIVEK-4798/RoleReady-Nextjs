@@ -1,0 +1,44 @@
+app/(dashboard)/dashboard/notifications/page.tsx(89,13): error TS2322: Type '{ _id: string; type: NotificationType; title: string; message: string; actionUrl: string | undefined; isRead: boolean; metadata: Record<string, any>; createdAt: string; }[]' is not assignable to type 'Notification[]'.
+  Type '{ _id: string; type: NotificationType; title: string; message: string; actionUrl: string | undefined; isRead: boolean; metadata: Record<string, any>; createdAt: string; }' is not assignable to type 'Notification'.
+    Types of property 'type' are incompatible.
+      Type 'import("C:/Users/ASUS/Pictures/Nextjsroleready/lib/models/Notification").NotificationType' is not assignable to type 'NotificationType'.
+        Type '"mentor_application"' is not assignable to type 'NotificationType'. Did you mean '"mentor_validation"'?
+app/api/admin/tickets/[id]/assign/route.ts(37,48): error TS2339: Property 'role' does not exist on type 'User'.
+app/api/admin/tickets/[id]/reply/route.ts(38,48): error TS2339: Property 'role' does not exist on type 'User'.
+app/api/admin/tickets/[id]/route.ts(33,48): error TS2339: Property 'role' does not exist on type 'User'.
+app/api/admin/tickets/[id]/status/route.ts(38,48): error TS2339: Property 'role' does not exist on type 'User'.
+app/api/admin/tickets/route.ts(18,48): error TS2339: Property 'role' does not exist on type 'User'.
+app/api/tickets/[id]/reply/route.ts(45,39): error TS2339: Property 'role' does not exist on type 'User'.
+app/api/tickets/[id]/route.ts(41,39): error TS2339: Property 'role' does not exist on type 'User'.
+app/api/tickets/route.ts(34,39): error TS2339: Property 'role' does not exist on type 'User'.
+app/api/users/[id]/achievements/route.ts(99,10): error TS18048: 'user.profile' is possibly 'undefined'.
+app/api/users/[id]/achievements/route.ts(100,7): error TS18048: 'user.profile' is possibly 'undefined'.
+app/api/users/[id]/achievements/route.ts(106,67): error TS18048: 'user.profile' is possibly 'undefined'.
+app/api/users/[id]/achievements/route.ts(107,59): error TS18048: 'user.profile' is possibly 'undefined'.
+app/api/users/[id]/achievements/route.ts(110,56): error TS18048: 'user.profile' is possibly 'undefined'.
+app/api/users/[id]/achievements/route.ts(119,57): error TS18048: 'user.profile' is possibly 'undefined'.
+app/api/users/[id]/achievements/route.ts(120,30): error TS18048: 'user.profile' is possibly 'undefined'.
+app/api/users/[id]/achievements/route.ts(126,55): error TS18048: 'user.profile' is possibly 'undefined'.
+app/api/users/[id]/achievements/route.ts(142,20): error TS18048: 'user.profile' is possibly 'undefined'.
+app/api/users/[id]/achievements/route.ts(173,5): error TS18048: 'user.profile' is possibly 'undefined'.
+app/api/users/[id]/achievements/route.ts(176,70): error TS18048: 'user.profile' is possibly 'undefined'.
+app/api/users/[id]/achievements/route.ts(188,30): error TS18048: 'user.profile' is possibly 'undefined'.
+app/api/users/[id]/achievements/route.ts(188,56): error TS18048: 'user.profile' is possibly 'undefined'.
+app/api/users/[id]/route.ts(121,15): error TS2339: Property 'default' does not exist on type 'typeof import("C:/Users/ASUS/Pictures/Nextjsroleready/lib/models/Resume")'.
+app/api/users/[id]/skills/route.ts(96,29): error TS2339: Property 'rejectionReason' does not exist on type 'Document<unknown, {}, IUserSkillDocument, {}, DefaultSchemaOptions> & IUserSkillDocument & Required<{ _id: ObjectId; }> & { ...; } & { ...; }'.
+lib/jobs/emailScheduler.ts(75,56): error TS2339: Property 'lastLoginAt' does not exist on type 'IUserDocument & Required<{ _id: ObjectId; }> & { __v: number; }'.
+lib/jobs/emailScheduler.ts(84,49): error TS2339: Property 'lastLoginAt' does not exist on type 'IUserDocument & Required<{ _id: ObjectId; }> & { __v: number; }'.
+lib/jobs/emailScheduler.ts(158,41): error TS2339: Property 'toString' does not exist on type 'never'.
+lib/services/mentorAssignmentService.ts(192,13): error TS2322: Type 'null' is not assignable to type 'ObjectId | undefined'.
+lib/services/mentorAssignmentService.ts(193,13): error TS2322: Type 'null' is not assignable to type 'Date | undefined'.
+lib/services/mentorAssignmentService.ts(194,13): error TS2322: Type 'null' is not assignable to type 'ObjectId | undefined'.
+lib/services/projectImportService.ts(56,13): error TS18048: 'user.profile' is possibly 'undefined'.
+scripts/remove-test-resume.ts(1,7): error TS2451: Cannot redeclare block-scoped variable 'path'.
+scripts/remove-test-resume.ts(4,7): error TS2451: Cannot redeclare block-scoped variable 'connectDB'.
+scripts/remove-test-resume.ts(5,9): error TS2451: Cannot redeclare block-scoped variable 'User'.
+scripts/remove-test-resume.ts(5,15): error TS2451: Cannot redeclare block-scoped variable 'Resume'.
+scripts/verify-resume-removal.ts(1,7): error TS2451: Cannot redeclare block-scoped variable 'path'.
+scripts/verify-resume-removal.ts(4,7): error TS2451: Cannot redeclare block-scoped variable 'connectDB'.
+scripts/verify-resume-removal.ts(5,9): error TS2451: Cannot redeclare block-scoped variable 'User'.
+scripts/verify-resume-removal.ts(5,15): error TS2451: Cannot redeclare block-scoped variable 'Resume'.
+services/admin/feedbackService.ts(20,31): error TS2694: Namespace '"mongoose"' has no exported member 'FilterQuery'.

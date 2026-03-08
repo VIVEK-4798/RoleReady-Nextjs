@@ -53,7 +53,16 @@ export class ProjectImportService {
         }
 
         if (importedProjects.length > 0) {
-            user.profile.projects = currentProjects;
+            if (!user.profile) {
+                user.profile = {
+                    education: [],
+                    experience: [],
+                    projects: [],
+                    certificates: [],
+                    achievements: []
+                } as any;
+            }
+            user.profile!.projects = currentProjects as any[];
             await user.save();
         }
 

@@ -93,7 +93,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         validationStatus: us.validationStatus,
         validatedBy: us.validatedBy,
         validatedAt: us.validatedAt,
-        rejectionReason: us.rejectionReason,
+        rejectionReason: (us as any).rejectionReason,
       };
     });
 

@@ -38,7 +38,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
         }
 
         const userId = session.user.id;
-        const userRole = session.user.role || 'user';
+        const userRole = (session.user as any).role || 'user';
 
         await connectDB();
 

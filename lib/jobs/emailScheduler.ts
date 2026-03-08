@@ -70,9 +70,8 @@ export async function checkInactiveUsers(): Promise<{
                         continue;
                     }
 
-                    // Calculate exact days since last login
                     const daysSinceLogin = Math.floor(
-                        (now.getTime() - new Date(user.lastLoginAt).getTime()) / (1000 * 60 * 60 * 24)
+                        (now.getTime() - new Date((user as any).lastLoginAt).getTime()) / (1000 * 60 * 60 * 24)
                     );
 
                     // Send inactivity email
@@ -81,7 +80,7 @@ export async function checkInactiveUsers(): Promise<{
                         event: threshold.event,
                         metadata: {
                             daysSinceLastLogin: daysSinceLogin,
-                            lastLoginDate: user.lastLoginAt.toISOString(),
+                            lastLoginDate: (user as any).lastLoginAt.toISOString(),
                         },
                     });
 
@@ -153,8 +152,8 @@ export async function sendWeeklyDigest(): Promise<{
                     continue;
                 }
 
-                const roleId = typeof targetRole.roleId === 'object' && '_id' in targetRole.roleId
-                    ? targetRole.roleId._id.toString()
+                const roleId = typeof targetRole.roleId === 'object' && '_id' in (targetRole.roleId as any)
+                    ? (targetRole.roleId as any)._id.toString()
                     : targetRole.roleId.toString();
 
                 const roleName = targetRole.roleId && typeof targetRole.roleId === 'object' && 'name' in targetRole.roleId

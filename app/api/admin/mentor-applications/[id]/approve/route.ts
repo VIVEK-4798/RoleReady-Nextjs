@@ -9,7 +9,7 @@ import { successResponse, errors } from '@/lib/utils/api';
  */
 export async function POST(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
         const session = await auth();
@@ -17,7 +17,8 @@ export async function POST(
             return errors.forbidden('Admin access required');
         }
 
-        const result = await mentorApplicationService.approveApplication(params.id, session.user.id);
+        const { id } = await context.params;
+        const result = await mentorApplicationService.approveApplication(id, session.user.id);
 
         if (!result.success) return errors.badRequest(result.message);
         return successResponse(null, result.message);

@@ -34,7 +34,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
         // 2. Auth check - Admin only
         const session = await auth();
-        if (!session?.user?.id || session.user.role !== 'admin') {
+        if (!session?.user?.id || (session.user as any).role !== 'admin') {
             return NextResponse.json(
                 { success: false, error: 'Unauthorized. Admin access required.' },
                 { status: 403 }

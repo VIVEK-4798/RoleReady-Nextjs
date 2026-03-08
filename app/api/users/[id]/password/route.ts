@@ -12,13 +12,13 @@ import bcrypt from 'bcryptjs';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
 
     const { currentPassword, newPassword } = await request.json();
-    const userId = params.id;
+    const { id: userId } = await context.params;
 
     // Validate input
     if (!currentPassword || !newPassword) {
@@ -52,6 +52,12 @@ export async function PUT(
     }
 
     // Verify current password
+    if (!user.password) {
+      return NextResponse.json(
+        { success: false, message: 'User password is not set (you might be using OAuth)' },
+        { status: 400 }
+      );
+    }
     const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
     if (!isPasswordValid) {
       return NextResponse.json(

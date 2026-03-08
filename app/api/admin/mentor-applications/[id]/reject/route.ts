@@ -9,7 +9,7 @@ import { successResponse, errors } from '@/lib/utils/api';
  */
 export async function POST(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
         const session = await auth();
@@ -22,7 +22,8 @@ export async function POST(
 
         if (!reason) return errors.badRequest('Rejection reason is required');
 
-        const result = await mentorApplicationService.rejectApplication(params.id, session.user.id, reason);
+        const { id } = await context.params;
+        const result = await mentorApplicationService.rejectApplication(id, session.user.id, reason);
 
         if (!result.success) return errors.badRequest(result.message);
         return successResponse(null, result.message);

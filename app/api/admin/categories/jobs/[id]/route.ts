@@ -13,11 +13,11 @@ import { Category } from '@/lib/models';
 // PATCH /api/admin/categories/jobs/[id] - Update job category
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
-    
+
     if (!session?.user || (session.user as { role?: string }).role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
@@ -27,7 +27,7 @@ export async function PATCH(
 
     await connectDB();
 
-    const { id } = params;
+    const { id } = await context.params;
     const body = await req.json();
 
     // Find category
@@ -65,11 +65,11 @@ export async function PATCH(
 // DELETE /api/admin/categories/jobs/[id] - Delete job category
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
-    
+
     if (!session?.user || (session.user as { role?: string }).role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
@@ -79,7 +79,7 @@ export async function DELETE(
 
     await connectDB();
 
-    const { id } = params;
+    const { id } = await context.params;
 
     // Find and delete category
     const category = await Category.findOneAndDelete({

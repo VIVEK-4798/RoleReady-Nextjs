@@ -29,3 +29,5 @@ async function checkUserResume() {
 }
 
 checkUserResume();
+
+export {};

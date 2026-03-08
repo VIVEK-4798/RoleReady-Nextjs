@@ -15,12 +15,12 @@ import { Resume } from '@/lib/models/Resume';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
 
-    const userId = params.id;
+    const { id: userId } = await context.params;
 
     // Fetch all user data
     const user = await User.findById(userId).select('-password');

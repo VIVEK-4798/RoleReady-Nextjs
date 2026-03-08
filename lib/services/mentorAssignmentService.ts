@@ -189,9 +189,9 @@ export async function changeMentor(
 
         // If unassigning (newMentorId is null)
         if (!newMentorObjectId) {
-            user.mentorId = null;
-            user.mentorAssignedAt = null;
-            user.mentorAssignedBy = null;
+            user.mentorId = undefined as any;
+            user.mentorAssignedAt = undefined as any;
+            user.mentorAssignedBy = undefined as any;
             user.assignedMentor = undefined;
 
             await user.save();
