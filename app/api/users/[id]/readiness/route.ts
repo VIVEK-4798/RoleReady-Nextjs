@@ -20,6 +20,7 @@ import {
   calculateReadinessOnly,
 } from '@/lib/services/readinessService';
 import type { SnapshotTrigger } from '@/lib/models/ReadinessSnapshot';
+import { UsageService } from '@/lib/services/usageService';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -212,7 +213,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     // 5. Calculate and save snapshot
-    // 5. Calculate and save snapshot
+    try {
+      await UsageService.enforceAndIncrement(userId, 'readinessChecks');
+    } catch (planError: any) {
+      return errors.forbidden(planError.message);
+    }
+
     const result = await calculateAndSnapshot({
       userId,
       roleId: extractRoleId(targetRole),

@@ -8,6 +8,7 @@
 import { ReactNode } from 'react';
 import DashboardNav from './DashboardNav';
 import DashboardHeader from './DashboardHeader';
+import UsageAlerts from '@/components/dashboard/UsageAlerts';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -27,6 +28,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Page Content */}
         <main className="flex-1 p-4 sm:p-6 bg-white">
           <div className="max-w-7xl mx-auto">
+            <UsageAlerts />
             {children}
           </div>
         </main>

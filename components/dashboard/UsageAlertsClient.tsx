@@ -1,0 +1,77 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { AlertTriangle, Info, X } from 'lucide-react';
+
+export default function UsageAlertsClient({ remainingChecks, planName }: { remainingChecks: number; planName: string }) {
+  const [showModal, setShowModal] = useState(false);
+  const [showBanner, setShowBanner] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    if (remainingChecks === 0) {
+       const hasSeenModal = sessionStorage.getItem('hasSeenLimitModal');
+       if (!hasSeenModal) {
+         setShowModal(true);
+         sessionStorage.setItem('hasSeenLimitModal', 'true');
+       }
+    }
+  }, [remainingChecks]);
+
+  if (!mounted) return null;
+
+  const isExhausted = remainingChecks === 0;
+  if (remainingChecks > 1) return null;
+
+  return (
+    <>
+      {showBanner && (
+        <div className={`mb-6 p-4 rounded-xl flex items-center justify-between border ${isExhausted ? 'bg-red-50 border-red-200 text-red-800' : 'bg-orange-50 border-orange-200 text-orange-800'}`}>
+          <div className="flex items-center gap-3">
+            {isExhausted ? <AlertTriangle className="w-5 h-5 text-red-600" /> : <Info className="w-5 h-5 text-orange-600" />}
+            <p className="font-medium text-sm">
+               {isExhausted 
+                 ? (planName === 'PRO' ? "You've reached your monthly limit. Upgrade to Premium for unlimited access." : "You've used all free readiness checks. Upgrade to continue analyzing roles.") 
+                 : `You have 1 readiness check left on your ${planName.toLowerCase()} plan.`}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+             <Link href="/pricing" className={`px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm transition-colors ${isExhausted ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-orange-600 hover:bg-orange-700 text-white'}`}>
+               Upgrade to {planName === 'PRO' ? 'Premium' : 'Pro'}
+             </Link>
+             <button onClick={() => setShowBanner(false)} className="text-current hover:opacity-75 rounded-full p-1 transition-opacity">
+                <X className="w-4 h-4" />
+             </button>
+          </div>
+        </div>
+      )}
+
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+           <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 max-w-sm w-full animate-in zoom-in-95 duration-300 relative">
+              <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 p-1 rounded-full hover:bg-gray-100 text-gray-400">
+                 <X className="w-5 h-5" />
+              </button>
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-5 mx-auto">
+                 <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <h2 className="text-xl font-black text-center text-gray-900 mb-2">You've reached your limit</h2>
+              <p className="text-center text-gray-600 text-sm mb-6 leading-relaxed">
+                 {planName === 'PRO' 
+                   ? "You've reached your monthly limit. Upgrade to Premium for unlimited access to all features." 
+                   : "You've used all free readiness checks. Upgrade to Pro to unlock generous monthly limits, roadmap generation, and mentor validations."}
+              </p>
+              <Link onClick={() => setShowModal(false)} href="/pricing" className="block w-full text-center py-3 bg-[#5693C1] text-white font-bold rounded-xl hover:bg-[#4a80b0] transition-colors shadow-md">
+                 Upgrade to {planName === 'PRO' ? 'Premium' : 'Pro'}
+              </Link>
+              <button onClick={() => setShowModal(false)} className="block w-full text-center mt-3 py-2 text-gray-500 font-semibold text-sm hover:bg-gray-50 rounded-lg transition-colors">
+                 Maybe Later
+              </button>
+           </div>
+        </div>
+      )}
+    </>
+  );
+}

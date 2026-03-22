@@ -18,6 +18,7 @@ import {
     calculateATSScoreForActiveRole,
     getLatestATSScoreForActiveRole
 } from '@/lib/services/ats/atsScoringService';
+import { UsageService } from '@/lib/services/usageService';
 
 export async function GET(req: NextRequest) {
     try {
@@ -74,6 +75,12 @@ export async function POST(req: NextRequest) {
 
         if (!authResult || !authResult.id) {
             return errorResponse('Unauthorized', 401);
+        }
+
+        try {
+            await UsageService.enforceAndIncrement(authResult.id, 'readinessChecks');
+        } catch (planError: any) {
+            return errorResponse(planError.message, 403);
         }
 
         // Force recalculation

@@ -11,6 +11,7 @@ import connectDB from '@/lib/db/mongoose';
 import { Ticket, TicketMessage } from '@/lib/models';
 import { auth } from '@/lib/auth';
 import type { TicketCategory, TicketPriority } from '@/lib/models/Ticket';
+import { UsageService } from '@/lib/services/usageService';
 
 interface CreateTicketBody {
     subject: string;
@@ -72,6 +73,15 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(
                 { success: false, error: 'Invalid priority' },
                 { status: 400 }
+            );
+        }
+
+        try {
+            await UsageService.enforceAndIncrement(userId, 'tickets');
+        } catch (planError: any) {
+            return NextResponse.json(
+                { success: false, error: planError.message },
+                { status: 403 }
             );
         }
 

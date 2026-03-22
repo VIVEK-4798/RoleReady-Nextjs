@@ -13,6 +13,7 @@ import { parseResumeFile, SkillMatch } from '@/lib/services/resumeParser';
 import path from 'path';
 import fs from 'fs';
 import { promisify } from 'util';
+import { UsageService } from '@/lib/services/usageService';
 const unlinkAsync = promisify(fs.unlink);
 
 interface RouteContext {
@@ -44,6 +45,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     if (!resume) {
       return errors.notFound('No active resume found. Please upload a resume first.');
+    }
+
+    try {
+      await UsageService.enforceAndIncrement(id, 'skillExtractions');
+    } catch (planError: any) {
+      return errors.forbidden(planError.message);
     }
 
     // Check if already parsed

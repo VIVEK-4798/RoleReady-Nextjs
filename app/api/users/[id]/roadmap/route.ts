@@ -21,6 +21,7 @@ import {
 } from '@/lib/services/roadmapService';
 import { TargetRole, ReadinessSnapshot } from '@/lib/models';
 import type { GeneratedStep } from '@/lib/services/roadmapGenerator';
+import { UsageService } from '@/lib/services/usageService';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -255,14 +256,24 @@ export async function GET(request: NextRequest, context: RouteContext) {
         // Auto-generate roadmap
         console.log('[Roadmap GET] Readiness snapshot found. Auto-generating roadmap...');
         try {
+          await UsageService.enforceAndIncrement(userId, 'roadmapGenerations');
           roadmap = await generateAndSaveRoadmap({
             userId,
             roleId,
             archiveExisting: true,
           });
           console.log('[Roadmap GET] Roadmap auto-generated successfully.');
-        } catch (genError) {
+        } catch (genError: any) {
           console.error('[Roadmap GET] Failed to auto-generate roadmap:', genError);
+          if (genError.message?.includes('Free limit reached')) {
+            return success({
+              hasTargetRole: true,
+              roleId,
+              roadmap: null,
+              message: genError.message,
+              needsGeneration: true
+            });
+          }
           // Fallthrough to return null roadmap if generation fails
         }
       }
@@ -379,6 +390,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
         roleId = String(targetRole.roleId);
       }
       console.log('[Roadmap POST] Extracted roleId:', roleId);
+    }
+
+    try {
+      await UsageService.enforceAndIncrement(userId, 'roadmapGenerations');
+    } catch (planError: any) {
+      return errors.forbidden(planError.message);
     }
 
     // Generate and save roadmap

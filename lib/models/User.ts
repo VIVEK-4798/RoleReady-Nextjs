@@ -227,6 +227,43 @@ const UserSchema = new Schema<IUserDocument>(
     passwordChangedAt: {
       type: Date,
     },
+    plan: {
+      type: String,
+      enum: ['FREE', 'PRO', 'PREMIUM'],
+      default: 'FREE',
+    },
+    usage: {
+      type: {
+        readinessChecksUsed: { type: Number, default: 0 },
+        roadmapGenerated: { type: Number, default: 0 },
+        resumeGenerated: { type: Number, default: 0 },
+        skillExtractionsUsed: { type: Number, default: 0 },
+        mentorRequestsUsed: { type: Number, default: 0 },
+        ticketsUsed: { type: Number, default: 0 },
+      },
+      default: () => ({
+        readinessChecksUsed: 0,
+        roadmapGenerated: 0,
+        resumeGenerated: 0,
+        skillExtractionsUsed: 0,
+        mentorRequestsUsed: 0,
+        ticketsUsed: 0,
+      }),
+    },
+    payments: [
+      {
+        orderId: { type: String, required: true },
+        paymentId: { type: String },
+        plan: { type: String, required: true },
+        amount: { type: Number, required: true },
+        status: { type: String, enum: ['SUCCESS', 'FAILED', 'PENDING'], default: 'PENDING' },
+        createdAt: { type: Date, default: Date.now },
+      }
+    ],
+    usageResetDate: {
+      type: Date,
+      default: null,
+    },
     profile: {
       type: ProfileSchema,
       default: () => ({

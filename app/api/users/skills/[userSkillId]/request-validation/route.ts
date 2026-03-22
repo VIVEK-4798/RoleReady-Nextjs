@@ -15,6 +15,7 @@ import { successResponse, errors } from '@/lib/utils/api';
 import { requireAuthApi } from '@/lib/auth/utils';
 import { isValidObjectId } from '@/lib/utils/db';
 import { sendNotifications } from '@/lib/services/notificationService';
+import { UsageService } from '@/lib/services/usageService';
 
 interface RouteParams {
   params: Promise<{ userSkillId: string }>;
@@ -66,6 +67,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (userSkill.validationStatus === 'validated') {
       return errors.badRequest('Skill is already validated');
+    }
+
+    try {
+      await UsageService.enforceAndIncrement(user.id, 'mentorRequests');
+    } catch (planError: any) {
+      return errors.forbidden(planError.message);
     }
 
     // Update status to pending

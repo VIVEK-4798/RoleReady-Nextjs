@@ -138,6 +138,24 @@ export interface IUser {
     allowMentorRequests: boolean;
     showInSearch: boolean;
   };
+  plan?: 'FREE' | 'PRO' | 'PREMIUM';
+  usage?: {
+    readinessChecksUsed: number;
+    roadmapGenerated: number;
+    resumeGenerated: number;
+    skillExtractionsUsed: number;
+    mentorRequestsUsed: number;
+    ticketsUsed: number;
+  };
+  payments?: {
+    orderId: string;
+    paymentId?: string;
+    plan: string;
+    amount: number;
+    status: 'SUCCESS' | 'FAILED' | 'PENDING';
+    createdAt: Date;
+  }[];
+  usageResetDate?: Date | null;
   passwordChangedAt?: Date;
   evaluationState?: {
     readinessOutdated: boolean;

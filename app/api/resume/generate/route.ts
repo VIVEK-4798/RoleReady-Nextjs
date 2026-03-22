@@ -5,6 +5,7 @@ import { renderToBuffer } from '@react-pdf/renderer';
 import React from 'react';
 import connectDB from '@/lib/db/mongoose';
 import { User } from '@/lib/models';
+import { UsageService } from '@/lib/services/usageService';
 
 export async function POST(req: NextRequest) {
     try {
@@ -15,11 +16,19 @@ export async function POST(req: NextRequest) {
 
         const data = await req.json();
 
+        await connectDB();
+
+        // Feature gating: resumeGenerations
+        try {
+            await UsageService.enforceAndIncrement(session.user.id, 'resumeGenerations');
+        } catch (planError: any) {
+            return NextResponse.json({ error: planError.message }, { status: 403 });
+        }
+
         // 1. Generate the PDF buffer
         const buffer = await renderToBuffer(React.createElement(ResumePDF, { data }) as any) as any;
 
         // 2. Set the "has generated resume" flag for the user
-        await connectDB();
         await User.findByIdAndUpdate(session.user.id, {
             $set: { 'profile.hasGeneratedResume': true }
         });

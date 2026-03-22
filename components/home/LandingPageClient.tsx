@@ -21,6 +21,7 @@ import PublicFooter from '@/components/layout/PublicFooter';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import LandingUsagePopup from './LandingUsagePopup';
 
 interface LandingPageClientProps {
   isAuthenticated: boolean;
@@ -126,6 +127,9 @@ export default function LandingPageClient({ isAuthenticated }: LandingPageClient
       <FeedbackSection />
 
       <PublicFooter />
+      
+      {/* Free Usage Promotion */}
+      <LandingUsagePopup />
     </>
   );
 }
