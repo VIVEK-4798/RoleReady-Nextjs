@@ -22,7 +22,7 @@ const navItems = [
   { href: '/dashboard/reports', label: 'Reports', icon: 'report' },
   { href: '/dashboard/tickets', label: 'Support', icon: 'support' },
   { href: '/dashboard/notifications', label: 'Notifications', icon: 'notifications' },
-  { href: '/pricing', label: 'Plans', icon: 'pricing' },
+  { href: '/dashboard/usage', label: 'Plan Usage', icon: 'pricing' },
   { href: '/dashboard/settings', label: 'Settings', icon: 'settings' },
 ];
 

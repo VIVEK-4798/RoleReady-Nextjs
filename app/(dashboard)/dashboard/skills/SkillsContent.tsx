@@ -10,6 +10,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks';
 import { SkeletonPage, ProgressBar, ConfirmationModal } from '@/components/ui';
 import toast from 'react-hot-toast';
+import MentorCard from '@/components/dashboard/MentorCard';
 
 interface UserSkill {
   id: string;
@@ -22,6 +23,16 @@ interface UserSkill {
   isVerified: boolean;
   source: string;
   validationStatus: 'none' | 'pending' | 'validated' | 'rejected';
+  rejectionReason?: string;
+  mentor?: {
+    name: string;
+    title?: string;
+    company?: string;
+    experience?: number;
+    profileImage?: string;
+    linkedinUrl?: string;
+    isVerified?: boolean;
+  };
 }
 
 interface AvailableSkill {
@@ -57,6 +68,10 @@ export default function SkillsContent() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [skillToDelete, setSkillToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Re-request state
+  const [showReRequestModal, setShowReRequestModal] = useState(false);
+  const [skillToReRequest, setSkillToReRequest] = useState<string | null>(null);
 
   const fetchSkills = useCallback(async () => {
     if (!user?.id) return;
@@ -213,6 +228,36 @@ export default function SkillsContent() {
     } catch (err) {
       console.error('Failed to request validation:', err);
       toast.error('Failed to request validation');
+    }
+  };
+
+  const submitReRequest = async (evidence: string) => {
+    if (!skillToReRequest) return;
+    try {
+      const response = await fetch('/api/validation/re-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          skillId: skillToReRequest,
+          newEvidence: evidence 
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setSkills(prev => prev.map(s =>
+          s.id === skillToReRequest
+            ? { ...s, validationStatus: 'pending' as const }
+            : s
+        ));
+        toast.success('Re-request submitted successfully');
+        setShowReRequestModal(false);
+        setSkillToReRequest(null);
+      } else {
+        toast.error(data.error || 'Failed to re-request validation');
+      }
+    } catch (err) {
+      console.error('Failed to re-request:', err);
+      toast.error('Failed to re-request validation');
     }
   };
 
@@ -383,6 +428,10 @@ export default function SkillsContent() {
                     onUpdateProficiency={handleUpdateProficiency}
                     onRemove={handleRemoveSkill}
                     onRequestValidation={handleRequestValidation}
+                    onReRequestValidation={(id) => {
+                      setSkillToReRequest(id);
+                      setShowReRequestModal(true);
+                    }}
                   />
                 ))}
               </div>
@@ -417,6 +466,50 @@ export default function SkillsContent() {
         type="danger"
         isLoading={isDeleting}
       />
+
+      {/* Re-Request Validation Modal */}
+      {showReRequestModal && skillToReRequest && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-xl w-full max-w-md max-h-[80vh] flex flex-col shadow-2xl">
+            <div className="p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Imrpove & Re-Request Validation
+              </h3>
+            </div>
+            <div className="p-6 flex-1 overflow-y-auto">
+              <p className="text-sm text-gray-600 mb-4">
+                To request validation again, please update your evidence. What did you improve?
+              </p>
+              <textarea
+                id="rerequest-evidence"
+                rows={4}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5693C1] focus:outline-none"
+                placeholder="E.g., Added a new project with hooks and API integration..."
+              />
+            </div>
+            <div className="p-6 border-t border-gray-200 flex gap-3">
+              <button
+                onClick={() => {
+                  setShowReRequestModal(false);
+                  setSkillToReRequest(null);
+                }}
+                className="flex-1 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  const ev = (document.getElementById('rerequest-evidence') as HTMLTextAreaElement)?.value;
+                  submitReRequest(ev || '');
+                }}
+                className="flex-1 py-2 bg-[#5693C1] hover:bg-[#4a80b0] text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:ring-offset-2"
+              >
+                Submit Request
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -427,9 +520,10 @@ interface SkillCardProps {
   onUpdateProficiency: (id: string, proficiency: number) => void;
   onRemove: (id: string) => void;
   onRequestValidation: (id: string) => void;
+  onReRequestValidation: (id: string) => void;
 }
 
-function SkillCard({ skill, onUpdateProficiency, onRemove, onRequestValidation }: SkillCardProps) {
+function SkillCard({ skill, onUpdateProficiency, onRemove, onRequestValidation, onReRequestValidation }: SkillCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [proficiency, setProficiency] = useState(skill.proficiency);
 
@@ -564,6 +658,29 @@ function SkillCard({ skill, onUpdateProficiency, onRemove, onRequestValidation }
         </div>
       )}
 
+      {/* MENTOR CARD SECTION */}
+      {skill.validationStatus === 'pending' && (
+        <div className="mt-4 bg-gray-50 border border-gray-100 rounded-lg p-3 text-sm text-gray-500 font-medium italic flex items-center gap-2">
+          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Assigned to mentor — review in progress
+        </div>
+      )}
+
+      {(skill.validationStatus === 'validated' || skill.validationStatus === 'rejected') && (
+        <>
+          {skill.mentor ? (
+            <MentorCard mentor={skill.mentor} />
+          ) : (
+            <div className="mt-4 bg-gray-50 border border-gray-100 rounded-lg p-3 text-sm text-gray-500 font-medium italic flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+              Mentor will be assigned soon
+            </div>
+          )}
+        </>
+      )}
+
       {/* Request Validation Button */}
       {skill.source === 'self' && skill.validationStatus === 'none' && !isEditing && (
         <div className="mt-3 pt-3 border-t border-gray-200">
@@ -575,6 +692,21 @@ function SkillCard({ skill, onUpdateProficiency, onRemove, onRequestValidation }
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             Request Mentor Validation
+          </button>
+        </div>
+      )}
+
+      {/* Re-Request Validation Button */}
+      {skill.validationStatus === 'rejected' && !isEditing && (
+        <div className="mt-3 pt-3 border-t border-gray-200">
+          <button
+            onClick={() => onReRequestValidation(skill.skillId)}
+            className="w-full py-2 px-3 bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 text-sm font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Improve & Re-Request Validation
           </button>
         </div>
       )}

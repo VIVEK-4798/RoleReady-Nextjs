@@ -11,6 +11,10 @@ interface PendingSkill {
     level: string;
     source: string;
     requestedAt: string;
+    isReRequest?: boolean;
+    evidence?: string;
+    reRequestCount?: number;
+    validationNote?: string;
 }
 
 interface UserDetails {
@@ -162,8 +166,31 @@ export default function UserValidationDetailsClient({ userId }: { userId: string
                             <tbody className="divide-y divide-gray-100 font-medium">
                                 {skills.map((skill) => (
                                     <tr key={skill._id} className="hover:bg-gray-50/50 transition-colors">
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="font-semibold text-gray-900">{skill.skillName}</div>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col gap-1">
+                                                <div className="font-semibold text-gray-900 flex items-center gap-2">
+                                                    {skill.skillName}
+                                                    {skill.isReRequest && (
+                                                        <span className="bg-amber-100 text-amber-800 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-amber-200 shadow-sm flex items-center gap-1">
+                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                            </svg>
+                                                            Re-Request
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                
+                                                {skill.isReRequest && skill.validationNote && (
+                                                    <div className="mt-1 flex flex-col gap-1 p-2 bg-gray-50 border border-gray-100 rounded text-xs text-gray-600">
+                                                        <div><span className="font-semibold text-red-600">Previous Feedback:</span> "{skill.validationNote}"</div>
+                                                        {skill.evidence && (
+                                                            <div className="mt-1 pt-1 border-t border-gray-200 text-blue-800 font-medium">
+                                                                <span className="font-bold text-blue-900">New Evidence:</span> "{skill.evidence}"
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className="text-sm text-gray-600 capitalize">{skill.skillDomain}</span>

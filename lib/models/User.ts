@@ -136,6 +136,11 @@ const UserSchema = new Schema<IUserDocument>(
     image: {
       type: String,
     },
+    // Mentor Specific Fields
+    title: { type: String },
+    company: { type: String },
+    experience: { type: Number },
+    isVerifiedMentor: { type: Boolean, default: false },
     linkedinId: {
       type: String,
       sparse: true, // Allow multiple null values but unique non-null values

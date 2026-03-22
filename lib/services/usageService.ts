@@ -20,41 +20,100 @@ export const UsageFeatureDBMap: Record<UsageFeature, string> = {
 
 export class UsageService {
   /**
+   * Month boundary reset
+   */
+  static async resetUsageIfNeeded(user: any) {
+    const plan = (user.plan as keyof typeof PLAN_LIMITS) || 'FREE';
+    const planConfig = PLAN_LIMITS[plan] as any;
+
+    if (!planConfig.monthlyReset) return user.usage || {};
+
+    const now = new Date();
+    const usageResetDate = user.usageResetDate;
+
+    if (!usageResetDate || now >= new Date(usageResetDate)) {
+      const nextReset = new Date();
+      nextReset.setMonth(nextReset.getMonth() + 1);
+
+      const emptyUsage = {
+        readinessChecksUsed: 0,
+        roadmapGenerated: 0,
+        resumeGenerated: 0,
+        skillExtractionsUsed: 0,
+        mentorRequestsUsed: 0,
+        ticketsUsed: 0,
+      };
+
+      await User.findByIdAndUpdate(user._id, {
+        $set: { usage: emptyUsage, usageResetDate: nextReset }
+      });
+
+      user.usage = emptyUsage;
+      user.usageResetDate = nextReset;
+    }
+
+    return user.usage || {};
+  }
+
+  /**
+   * Get Usage Status for generic UI
+   */
+  static async getUsageStatus(user: any) {
+    const plan = (user.plan as keyof typeof PLAN_LIMITS) || 'FREE';
+    const limits = PLAN_LIMITS[plan] as any;
+
+    if (limits.unlimited) {
+      return { unlimited: true, plan };
+    }
+
+    const usage = await this.resetUsageIfNeeded(user) || {};
+
+    return {
+      unlimited: false,
+      plan,
+      readinessChecks: {
+        used: usage.readinessChecksUsed || 0,
+        limit: limits.readinessChecks,
+        remaining: limits.readinessChecks - (usage.readinessChecksUsed || 0),
+      },
+      roadmapGenerations: {
+        used: usage.roadmapGenerated || 0,
+        limit: limits.roadmapGenerations,
+        remaining: limits.roadmapGenerations - (usage.roadmapGenerated || 0),
+      },
+      resumeGenerations: {
+        used: usage.resumeGenerated || 0,
+        limit: limits.resumeGenerations,
+        remaining: limits.resumeGenerations - (usage.resumeGenerated || 0),
+      },
+      skillExtractions: {
+        used: usage.skillExtractionsUsed || 0,
+        limit: limits.skillExtractions,
+        remaining: limits.skillExtractions - (usage.skillExtractionsUsed || 0),
+      },
+      mentorRequests: {
+        used: usage.mentorRequestsUsed || 0,
+        limit: limits.mentorRequests,
+        remaining: limits.mentorRequests - (usage.mentorRequestsUsed || 0),
+      },
+      tickets: {
+        used: usage.ticketsUsed || 0,
+        limit: limits.tickets,
+        remaining: limits.tickets - (usage.ticketsUsed || 0),
+      }
+    };
+  }
+
+  /**
    * Check if user can use a feature. Throws error if limit reached.
    */
   static async checkLimit(userId: string, feature: UsageFeature): Promise<void> {
     const user = await User.findById(userId).select('plan usage usageResetDate').lean();
     if (!user) throw new Error('User not found');
 
-    let usageObj = user.usage as any;
-    let usageResetDate = (user as any).usageResetDate;
+    const usageObj = await this.resetUsageIfNeeded(user);
     const plan = (user.plan as keyof typeof PLAN_LIMITS) || 'FREE';
     const planConfig = PLAN_LIMITS[plan] as any;
-
-    // Monthly Reset Logic for PRO
-    if (planConfig.monthlyReset) {
-       const now = new Date();
-       if (!usageResetDate || now >= new Date(usageResetDate)) {
-         // Create a date exactly 1 month from now
-         const nextReset = new Date();
-         nextReset.setMonth(nextReset.getMonth() + 1);
-
-         // Reset usage counters
-         usageObj = {
-           readinessChecksUsed: 0,
-           roadmapGenerated: 0,
-           resumeGenerated: 0,
-           skillExtractionsUsed: 0,
-           mentorRequestsUsed: 0,
-           ticketsUsed: 0,
-         };
-
-         await User.findByIdAndUpdate(userId, {
-           $set: { usage: usageObj, usageResetDate: nextReset }
-         });
-       }
-    }
-    if (!user) throw new Error('User not found');
 
     if (planConfig.unlimited) {
       return; 
@@ -67,10 +126,10 @@ export class UsageService {
     const currentUsage = usageObj?.[usageField] || 0;
 
     if (currentUsage >= limit) {
-      if (plan === 'PRO') {
-         throw new Error(`You've reached your monthly limit. Upgrade to Premium for unlimited access.`);
-      }
-      throw new Error(`Free limit reached. Upgrade to continue.`);
+      throw new Error(JSON.stringify({
+        type: "LIMIT_REACHED",
+        feature,
+      }));
     }
   }
 

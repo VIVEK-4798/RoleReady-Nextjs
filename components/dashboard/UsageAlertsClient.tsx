@@ -4,26 +4,21 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, Info, X } from 'lucide-react';
 
-export default function UsageAlertsClient({ remainingChecks, planName }: { remainingChecks: number; planName: string }) {
+export default function UsageAlertsClient({ isExhausted, planName }: { isExhausted: boolean; planName: string }) {
   const [showModal, setShowModal] = useState(false);
   const [showBanner, setShowBanner] = useState(true);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    if (remainingChecks === 0) {
-       const hasSeenModal = sessionStorage.getItem('hasSeenLimitModal');
-       if (!hasSeenModal) {
-         setShowModal(true);
-         sessionStorage.setItem('hasSeenLimitModal', 'true');
-       }
+    const hasSeenModal = sessionStorage.getItem('hasSeenLimitModal');
+    if (!hasSeenModal) {
+      setShowModal(true);
+      sessionStorage.setItem('hasSeenLimitModal', 'true');
     }
-  }, [remainingChecks]);
+  }, []);
 
   if (!mounted) return null;
-
-  const isExhausted = remainingChecks === 0;
-  if (remainingChecks > 1) return null;
 
   return (
     <>
@@ -33,8 +28,8 @@ export default function UsageAlertsClient({ remainingChecks, planName }: { remai
             {isExhausted ? <AlertTriangle className="w-5 h-5 text-red-600" /> : <Info className="w-5 h-5 text-orange-600" />}
             <p className="font-medium text-sm">
                {isExhausted 
-                 ? (planName === 'PRO' ? "You've reached your monthly limit. Upgrade to Premium for unlimited access." : "You've used all free readiness checks. Upgrade to continue analyzing roles.") 
-                 : `You have 1 readiness check left on your ${planName.toLowerCase()} plan.`}
+                 ? (planName === 'PRO' ? "You've reached your monthly limit. Upgrade to Premium for unlimited access." : "You've used all free benefits. Upgrade to continue improving.") 
+                 : "You're running out of free benefits. Upgrade to continue improving."}
             </p>
           </div>
           <div className="flex items-center gap-3">

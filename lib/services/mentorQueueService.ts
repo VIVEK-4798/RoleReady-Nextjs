@@ -31,6 +31,10 @@ export interface PendingValidation {
     source: string;
     validationStatus: string;
     requestedAt: Date;
+    isReRequest?: boolean;
+    evidence?: string;
+    reRequestCount?: number;
+    validationNote?: string;
 }
 
 // ============================================================================
@@ -92,6 +96,10 @@ export async function getPendingValidationsForMentor(
             source: skill.source,
             validationStatus: skill.validationStatus,
             requestedAt: skill.createdAt,
+            isReRequest: skill.isReRequest,
+            evidence: skill.evidence,
+            reRequestCount: skill.reRequestCount,
+            validationNote: skill.validationNote,
         }));
 
     } catch (error) {
@@ -154,6 +162,10 @@ export async function getPendingValidationsForAdmin(): Promise<PendingValidation
             source: skill.source,
             validationStatus: skill.validationStatus,
             requestedAt: skill.createdAt,
+            isReRequest: skill.isReRequest,
+            evidence: skill.evidence,
+            reRequestCount: skill.reRequestCount,
+            validationNote: skill.validationNote,
         }));
 
     } catch (error) {
@@ -349,6 +361,10 @@ export async function getPendingSkillsForUser(
             source: skill.source,
             validationStatus: skill.validationStatus,
             requestedAt: skill.createdAt,
+            isReRequest: skill.isReRequest,
+            evidence: skill.evidence,
+            reRequestCount: skill.reRequestCount,
+            validationNote: skill.validationNote,
         }));
 
         // Resolve Target Role Name (Priority: Profile > Collection)

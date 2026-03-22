@@ -138,6 +138,10 @@ export interface IUser {
     allowMentorRequests: boolean;
     showInSearch: boolean;
   };
+  title?: string;
+  company?: string;
+  experience?: number;
+  isVerifiedMentor?: boolean;
   plan?: 'FREE' | 'PRO' | 'PREMIUM';
   usage?: {
     readinessChecksUsed: number;
@@ -254,6 +258,11 @@ export interface IUserSkill {
   validatedBy?: Types.ObjectId;
   validatedAt?: Date;
   validationNote?: string;
+  evidence?: string;
+  evidenceHash?: string;
+  isReRequest?: boolean;
+  reRequestCount?: number;
+  lastRejectedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }

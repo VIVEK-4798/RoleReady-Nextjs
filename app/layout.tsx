@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/components/providers";
 import TawkChat from "@/components/support/TawkChat";
 import { Toaster } from 'react-hot-toast';
+import LimitReachedModal from '@/components/LimitReachedModal';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,6 +38,7 @@ export default function RootLayout({
           {children}
           <TawkChat />
           <Toaster position="top-center" />
+          <LimitReachedModal />
         </AuthProvider>
       </body>
     </html>

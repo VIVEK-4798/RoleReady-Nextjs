@@ -90,6 +90,24 @@ const UserSkillSchema = new Schema<IUserSkillDocument>(
       type: String,
       maxlength: [500, 'Validation note cannot exceed 500 characters'],
     },
+    evidence: {
+      type: String,
+      maxlength: [2000, 'Evidence cannot exceed 2000 characters'],
+    },
+    evidenceHash: {
+      type: String,
+    },
+    isReRequest: {
+      type: Boolean,
+      default: false,
+    },
+    reRequestCount: {
+      type: Number,
+      default: 0,
+    },
+    lastRejectedAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true,

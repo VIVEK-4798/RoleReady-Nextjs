@@ -13,6 +13,7 @@ import { SkeletonDashboard } from '@/components/ui';
 import { OverviewTab, HistoryTab, TrendsTab } from './tabs';
 import MentorApplicationCTA from '@/components/dashboard/MentorApplicationCTA';
 import PerfectResumeCTA from '@/components/dashboard/PerfectResumeCTA';
+import UsageWidget from '@/components/dashboard/UsageWidget';
 
 type TabType = 'overview' | 'history' | 'trends';
 
@@ -169,8 +170,12 @@ export default function DashboardContent() {
       </div>
 
       {/* Quick Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 items-stretch">
+        <div className="lg:col-span-1 h-full">
+           <UsageWidget />
+        </div>
+        
+        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Readiness Score</p>

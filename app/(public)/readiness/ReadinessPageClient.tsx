@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { apiClient } from '@/lib/apiClient';
 import {
     Target,
     BarChart3,
@@ -428,7 +429,7 @@ export default function ReadinessPageClient({ userId }: ReadinessPageClientProps
         setCalculationResult(null);
         
         try {
-            const response = await fetch(`/api/users/${userId}/readiness`, {
+            const response = await apiClient(`/api/users/${userId}/readiness`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ force }),

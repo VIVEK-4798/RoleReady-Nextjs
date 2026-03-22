@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { apiClient } from '@/lib/apiClient';
 
 // ============================================================================
 // Types
@@ -249,7 +250,7 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
     setError(null);
 
     try {
-      const response = await fetch(`/api/users/${userId}/roadmap${refresh ? '?refresh=true' : ''}`);
+      const response = await apiClient(`/api/users/${userId}/roadmap${refresh ? '?refresh=true' : ''}`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -322,7 +323,7 @@ export default function RoadmapPageClient({ userId }: RoadmapPageClientProps) {
     setIsRefreshing(true);
     setError(null);
     try {
-      const response = await fetch(`/api/users/${userId}/roadmap`, {
+      const response = await apiClient(`/api/users/${userId}/roadmap`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });

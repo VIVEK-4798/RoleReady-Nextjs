@@ -18,11 +18,22 @@ export default async function UsageAlerts() {
   const limits = PLAN_LIMITS[planName] as any;
   const usage = (user.usage || {}) as any;
 
-  const checksLimit = limits.readinessChecks || 3;
-  const checksUsed = usage.readinessChecksUsed || 0;
-  const remainingChecks = Math.max(0, checksLimit - checksUsed);
+  const getRatio = (used: number, limit: number) => {
+     if (!limit) return 1;
+     return Math.max(0, limit - used) / limit;
+  };
+
+  const readinessRatio = getRatio(usage.readinessChecksUsed || 0, limits.readinessChecks);
+  const roadmapRatio = getRatio(usage.roadmapGenerated || 0, limits.roadmapGenerations);
+  const mentorRatio = getRatio(usage.mentorRequestsUsed || 0, limits.mentorRequests);
+  const minRatio = Math.min(readinessRatio, roadmapRatio, mentorRatio);
+
+  const isDanger = minRatio <= 0.2;
+  const isExhausted = minRatio === 0;
+
+  if (!isDanger) return null;
 
   return (
-    <UsageAlertsClient remainingChecks={remainingChecks} planName={planName} />
+    <UsageAlertsClient isExhausted={isExhausted} planName={planName} />
   );
 }

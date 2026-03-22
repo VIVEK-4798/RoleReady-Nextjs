@@ -62,6 +62,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
         select: 'name normalizedName domain description',
         match: domain ? { domain } : undefined,
       })
+      .populate({
+        path: 'validatedBy',
+        select: 'name image title company experience linkedinId isVerifiedMentor',
+      })
       .sort({ level: -1, createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -93,7 +97,16 @@ export async function GET(request: NextRequest, context: RouteContext) {
         validationStatus: us.validationStatus,
         validatedBy: us.validatedBy,
         validatedAt: us.validatedAt,
-        rejectionReason: (us as any).rejectionReason,
+        rejectionReason: (us as any).rejectionReason || us.validationNote, 
+        mentor: us.validatedBy ? {
+          name: (us.validatedBy as any).name,
+          title: (us.validatedBy as any).title,
+          company: (us.validatedBy as any).company,
+          experience: (us.validatedBy as any).experience,
+          profileImage: (us.validatedBy as any).image,
+          linkedinUrl: (us.validatedBy as any).linkedinId,
+          isVerified: (us.validatedBy as any).isVerifiedMentor
+        } : null,
       };
     });
 

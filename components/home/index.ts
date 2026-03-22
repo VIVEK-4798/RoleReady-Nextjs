@@ -17,5 +17,9 @@ export { default as MentorBenefitsSection } from './MentorBenefitsSection';
 export { default as LandingPageClient } from './LandingPageClient';
 export { default as LandingOpportunitiesSection } from './LandingOpportunitiesSection';
 export { default as FeedbackSection } from './FeedbackSection';
+export { default as UsagePlansSection } from './UsagePlansSection';
+export { default as UsagePlansTrigger } from './UsagePlansTrigger';
+export { default as LoginNudgeModal } from './LoginNudgeModal';
+export { default as LandingDemoVideo } from './LandingDemoVideo';
 
 export type { WhyChooseUsSectionRef } from './WhyChooseUsSection';
