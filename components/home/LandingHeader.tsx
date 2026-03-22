@@ -19,7 +19,8 @@ import {
   UserPlus,
   User as UserIcon,
   Mail,
-  GraduationCap
+  GraduationCap,
+  CreditCard
 } from 'lucide-react';
 import VerifiedMentorBadge from '@/components/mentor/VerifiedMentorBadge';
 
@@ -37,8 +38,10 @@ export default function LandingHeader({ isAuthenticated }: LandingHeaderProps) {
   const { user } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
@@ -51,11 +54,13 @@ export default function LandingHeader({ isAuthenticated }: LandingHeaderProps) {
     guest: [
       { href: '/#how-it-works', label: 'How It Works', icon: <Zap className="w-4 h-4" /> },
       { href: '/#for-mentors', label: 'For Mentors', icon: <UserIcon className="w-4 h-4" /> },
+      { href: '/pricing', label: 'Pricing', icon: <CreditCard className="w-4 h-4" /> },
     ],
     user: [
       { href: '/readiness', label: 'Readiness', icon: <Target className="w-4 h-4" /> },
       { href: '/roadmap', label: 'Roadmap', icon: <Compass className="w-4 h-4" /> },
       { href: '/report', label: 'Report', icon: <BarChart3 className="w-4 h-4" /> },
+      { href: '/pricing', label: 'Pricing', icon: <CreditCard className="w-4 h-4" /> },
     ],
     mentor: [
       // { href: '/jobs', label: 'Jobs', icon: <Target className="w-4 h-4" /> },
@@ -70,7 +75,7 @@ export default function LandingHeader({ isAuthenticated }: LandingHeaderProps) {
     ]
   };
 
-  const currentRole = isAuthenticated && user ? user.role : 'guest';
+  const currentRole = mounted && isAuthenticated && user ? user.role : 'guest';
   const navLinks = NAV_BY_ROLE[currentRole] || NAV_BY_ROLE.guest;
 
   return (
@@ -107,7 +112,9 @@ export default function LandingHeader({ isAuthenticated }: LandingHeaderProps) {
 
           {/* Auth Buttons / User Info - Desktop */}
           <div className="hidden md:flex items-center gap-4">
-            {isAuthenticated && user ? (
+            {!mounted ? (
+              <div className="w-32 h-10 bg-gray-100 animate-pulse rounded-lg" />
+            ) : isAuthenticated && user ? (
               <div className="flex items-center gap-4">
                 <Link
                   href={user.role === 'mentor' ? '/mentor' : user.role === 'admin' ? '/admin' : '/dashboard'}
@@ -208,7 +215,9 @@ export default function LandingHeader({ isAuthenticated }: LandingHeaderProps) {
 
               {/* Mobile Auth Section */}
               <div className="pt-6 px-4 border-t border-gray-200">
-                {isAuthenticated && user ? (
+                {!mounted ? (
+                  <div className="w-full h-12 bg-gray-100 animate-pulse rounded-lg" />
+                ) : isAuthenticated && user ? (
                   <>
                     {/* User Info Card - Mobile */}
                     <Link
