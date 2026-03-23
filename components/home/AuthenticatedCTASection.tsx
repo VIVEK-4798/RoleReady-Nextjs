@@ -86,7 +86,7 @@ export default function AuthenticatedCTASection({ content }: AuthenticatedCTASec
 
           {user?.role !== 'mentor' && (
             <Link
-              href="/dashboard/readiness"
+              href="/readiness"
               className="group inline-flex items-center justify-center gap-3 px-8 py-4 bg-white text-[#5693C1] font-semibold rounded-xl border-2 border-[#5693C1] hover:bg-[#5693C1]/5 transition-all duration-200 hover:shadow-md"
             >
               Check Your Readiness

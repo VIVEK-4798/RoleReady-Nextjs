@@ -71,7 +71,7 @@ export default function LandingDemoVideo() {
                 </div>
                 {/* Fallback styling since user might not have the image right away */}
                 <img
-                  src="/img/video-thumbnail.jpg"
+                  src="/img/video-thumbnail.png"
                   alt="Readiness Demo"
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 group-hover:opacity-100 mix-blend-overlay"
                   loading="lazy"

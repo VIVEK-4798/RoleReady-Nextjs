@@ -111,7 +111,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       {
         title: 'Skill Validation Update',
         message: `Your ${skillName} skill was not approved. Recalculate your readiness and consider regenerating your roadmap.`,
-        actionUrl: '/dashboard/readiness',
+        actionUrl: '/readiness',
         metadata: {
           userSkillId: userSkill._id.toString(),
           skillName,

@@ -162,9 +162,10 @@ const POPULAR_ROLES: RoleOption[] = [
 
 interface DemoModalProps {
   onClose: () => void;
+  isAuthenticated?: boolean;
 }
 
-const DemoModal = ({ onClose }: DemoModalProps) => {
+const DemoModal = ({ onClose, isAuthenticated }: DemoModalProps) => {
   // Search state
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebounce(query, 300);
@@ -1004,7 +1005,7 @@ const DemoModal = ({ onClose }: DemoModalProps) => {
                   className="flex-1"
                 >
                   <Link
-                    href="/signup"
+                    href={isAuthenticated ? "/readiness" : "/signup"}
                     className="group relative overflow-hidden bg-gradient-to-r from-[#5693C1] to-[#2c5a7a] text-white py-4 rounded-xl font-semibold hover:shadow-2xl hover:shadow-[#5693C1]/30 transition-all duration-300 text-center flex items-center justify-center gap-2 w-full"
                     onClick={onClose}
                   >
@@ -1463,7 +1464,7 @@ const WhyChooseUsSection = forwardRef<WhyChooseUsSectionRef, WhyChooseUsSectionP
                   whileTap={{ scale: 0.98 }}
                 >
                   <Link
-                    href="/signup"
+                    href={user ? "/readiness" : "/signup"}
                     className="group relative overflow-hidden w-full h-16 bg-gradient-to-r from-[#5693C1] to-[#2c5a7a] text-white rounded-xl font-semibold flex items-center justify-center gap-3 hover:shadow-2xl transition-all duration-300"
                   >
                     <span className="relative z-10 flex items-center gap-2">
@@ -1772,7 +1773,7 @@ const WhyChooseUsSection = forwardRef<WhyChooseUsSectionRef, WhyChooseUsSectionP
 
       {/* Demo Modal */}
       <AnimatePresence>
-        {isDemoOpen && setIsDemoOpen && <DemoModal onClose={() => setIsDemoOpen(false)} />}
+        {isDemoOpen && setIsDemoOpen && <DemoModal onClose={() => setIsDemoOpen(false)} isAuthenticated={!!user} />}
       </AnimatePresence>
 
       <style jsx>{`

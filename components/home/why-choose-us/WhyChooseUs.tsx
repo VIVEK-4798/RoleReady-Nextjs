@@ -9,6 +9,8 @@
 
 import { useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import DemoModal from './DemoModal';
+import { useAuth } from '@/hooks';
+import Link from 'next/link';
 
 // Icons as SVG components for better performance
 const SearchIcon = () => (
@@ -113,6 +115,7 @@ export interface WhyChooseUsRef {
 const WhyChooseUs = forwardRef<WhyChooseUsRef>((props, ref) => {
   const [showDemo, setShowDemo] = useState(false);
   const ctaRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
 
   // Expose method to parent (matches old project behavior)
   useImperativeHandle(ref, () => ({
@@ -240,12 +243,12 @@ const WhyChooseUs = forwardRef<WhyChooseUsRef>((props, ref) => {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a
-                href="/signup"
+              <Link
+                href={user ? "/readiness" : "/signup"}
                 className="px-8 py-3 bg-white text-[#5693C1] font-semibold rounded-lg hover:bg-gray-100 transition-colors"
               >
                 Start Free Analysis
-              </a>
+              </Link>
 
               <button
                 onClick={() => setShowDemo(true)}

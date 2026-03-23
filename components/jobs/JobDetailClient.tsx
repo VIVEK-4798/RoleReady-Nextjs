@@ -474,7 +474,7 @@ export default function JobDetailClient() {
                             </div>
 
                             <Link
-                                href="/dashboard/readiness"
+                                href="/readiness"
                                 className="w-full py-3 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-semibold transition-all backdrop-blur-sm border border-white/10 flex items-center justify-center gap-2"
                             >
                                 <ShieldCheck className="w-4 h-4" />

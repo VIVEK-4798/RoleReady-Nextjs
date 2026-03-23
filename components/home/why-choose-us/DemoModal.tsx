@@ -19,6 +19,8 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { useAuth } from '@/hooks';
+import Link from 'next/link';
 
 interface Category {
   _id: string;
@@ -55,6 +57,7 @@ interface DemoModalProps {
 }
 
 export default function DemoModal({ onClose }: DemoModalProps) {
+  const { user } = useAuth();
   // State
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
@@ -460,12 +463,12 @@ export default function DemoModal({ onClose }: DemoModalProps) {
               <p className="text-sm text-gray-600 mb-3">
                 Sign up to save your skills, track improvement over time, and get personalized recommendations.
               </p>
-              <a
-                href="/signup"
+              <Link
+                href={user ? "/readiness" : "/signup"}
                 className="inline-block px-6 py-2 bg-[#5693C1] text-white font-semibold rounded-lg hover:bg-[#4a82ab] transition-colors"
               >
-                Create Free Account
-              </a>
+                {user ? "View Dashboard" : "Create Free Account"}
+              </Link>
             </div>
 
             {/* Action Buttons */}

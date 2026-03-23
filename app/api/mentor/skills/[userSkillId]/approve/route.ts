@@ -92,7 +92,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       {
         title: 'Skill Validated!',
         message: `Your ${(userSkill.skillId as unknown as { name: string }).name} skill has been validated by a mentor. Recalculate your readiness to see updated scores.`,
-        actionUrl: '/dashboard/readiness',
+        actionUrl: '/readiness',
         metadata: {
           userSkillId: userSkill._id.toString(),
           skillName: (userSkill.skillId as unknown as { name: string }).name,
