@@ -30,24 +30,29 @@ export default function GuestCTASection() {
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="flex flex-col items-center text-center">
-          <h2 className="text-3xl md:text-4xl lg:text-[2.5rem] font-bold leading-tight text-slate-800 mb-6 max-w-[800px]">
-            <span className="inline-block w-[280px] md:w-[380px] text-left h-[40px] md:h-[60px] overflow-hidden relative">
+          <h2 className="text-3xl md:text-4xl lg:text-[2.5rem] font-bold leading-tight text-slate-800 mb-6 flex flex-col md:flex-row items-center justify-center gap-x-3 gap-y-1">
+            <div className="relative h-[40px] md:h-[60px] overflow-hidden flex items-center justify-center">
+              {/* Invisible ghost element sets container width naturally without hardcoding pixels */}
+              <span className="invisible whitespace-nowrap px-1">
+                Empower your career with
+              </span>
+              
               {phrases.map((phrase, index) => (
                 <span 
                   key={index}
-                  className={`absolute top-0 left-0 whitespace-nowrap transition-all duration-600 ease-out ${
+                  className={`absolute right-1 md:right-0 whitespace-nowrap transition-all duration-500 ease-out ${
                     index === activeText 
                       ? 'opacity-100 translate-y-0' 
-                      : 'opacity-0 translate-y-5'
+                      : 'opacity-0 translate-y-8 pointer-events-none'
                   }`}
                 >
                   {phrase}
                 </span>
               ))}
-            </span>
-            <span className="text-[#5693C1] inline-block relative ml-2.5">
+            </div>
+            <span className="text-[#5693C1] relative flex-shrink-0 mt-2 md:mt-0">
               RoleReady
-              <span className="absolute -bottom-1 left-0 w-full h-[3px] bg-gradient-to-r from-[#5693C1]/40 to-[#5693C1]/10 rounded-sm" />
+              <span className="absolute -bottom-1 left-0 w-full h-[4px] bg-gradient-to-r from-[#5693C1]/40 to-[#5693C1]/10 rounded-full" />
             </span>
           </h2>
 

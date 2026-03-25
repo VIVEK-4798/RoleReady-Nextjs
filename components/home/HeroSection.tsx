@@ -456,7 +456,7 @@ const RoleReadyVisualization = () => {
 
       {/* Main visualization container */}
       <div className="absolute inset-0">
-        <svg width="500" height="450" className="absolute inset-0">
+        <svg width="100%" height="100%" viewBox="0 0 500 450" preserveAspectRatio="xMidYMid meet" className="absolute inset-0">
           {/* Connections */}
           {nodes.map((node, i) =>
             nodes.slice(i + 1).map((otherNode, j) => {
@@ -646,14 +646,14 @@ export default function HeroSection({ onCheckReadiness, onLearnMore, content }: 
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-wrap gap-4 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-4 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
               <button
                 onClick={handlePrimaryClick}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
-                className="group relative px-8 py-4 bg-gradient-to-r from-[#5693C1] to-[#3a6a8c] text-white rounded-xl font-semibold text-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-105 hover:-translate-y-1"
+                className="group relative w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-[#5693C1] to-[#3a6a8c] text-white rounded-xl font-semibold text-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-105 hover:-translate-y-1"
               >
-                <span className="relative z-10 flex items-center gap-2">
+                <span className="relative z-10 flex items-center justify-center gap-2">
                   {content.primaryCTA}
                   <ArrowRight className={`w-5 h-5 transition-transform duration-300 ${isHovered ? 'translate-x-1' : ''}`} />
                 </span>
@@ -662,7 +662,7 @@ export default function HeroSection({ onCheckReadiness, onLearnMore, content }: 
 
               <button
                 onClick={handleSecondaryClick}
-                className="group px-8 py-4 bg-white text-[#5693C1] border-2 border-[#5693C1] rounded-xl font-semibold text-lg transition-all duration-300 hover:shadow-xl hover:scale-105 hover:-translate-y-1 hover:bg-[#5693C1]/5 flex items-center gap-2"
+                className="group w-full sm:w-auto justify-center px-8 py-4 bg-white text-[#5693C1] border-2 border-[#5693C1] rounded-xl font-semibold text-lg transition-all duration-300 hover:shadow-xl hover:scale-105 hover:-translate-y-1 hover:bg-[#5693C1]/5 flex items-center gap-2"
               >
                 <Play className="w-5 h-5" />
                 {content.secondaryCTA}
@@ -670,7 +670,7 @@ export default function HeroSection({ onCheckReadiness, onLearnMore, content }: 
             </div>
 
             {/* Trust indicators */}
-            <div className="flex items-center gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-400">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 sm:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-400">
               <div className="flex items-center gap-2">
                 <div className="flex -space-x-2">
                   {[1, 2, 3, 4].map((i) => (
@@ -684,7 +684,7 @@ export default function HeroSection({ onCheckReadiness, onLearnMore, content }: 
                     />
                   ))}
                 </div>
-                <div className="text-sm">
+                <div className="text-sm border-r border-gray-200 pr-4 sm:border-none sm:pr-0">
                   <span className="font-bold text-gray-900">10k+</span>
                   <span className="text-gray-500 ml-1">active users</span>
                 </div>
@@ -704,7 +704,7 @@ export default function HeroSection({ onCheckReadiness, onLearnMore, content }: 
             <RoleReadyVisualization />
 
             {/* Stats grid below visualization */}
-            <div className="grid grid-cols-3 gap-4 mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-4 mt-8">
               <StatCounter value="10k+" label="Students" icon={Users} delay={600} />
               <StatCounter value="500+" label="Mentors" icon={Shield} delay={700} />
               <StatCounter value="98%" label="Satisfaction" icon={TrendingUp} delay={800} />
