@@ -23,21 +23,23 @@ export default function UsageAlertsClient({ isExhausted, planName }: { isExhaust
   return (
     <>
       {showBanner && (
-        <div className={`mb-6 p-4 rounded-xl flex items-center justify-between border ${isExhausted ? 'bg-red-50 border-red-200 text-red-800' : 'bg-orange-50 border-orange-200 text-orange-800'}`}>
-          <div className="flex items-center gap-3">
-            {isExhausted ? <AlertTriangle className="w-5 h-5 text-red-600" /> : <Info className="w-5 h-5 text-orange-600" />}
-            <p className="font-medium text-sm">
+        <div className={`mb-6 p-4 rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border ${isExhausted ? 'bg-red-50 border-red-200 text-red-800' : 'bg-orange-50 border-orange-200 text-orange-800'}`}>
+          <div className="flex items-start md:items-center gap-3">
+            <div className="flex-shrink-0 mt-0.5 md:mt-0">
+              {isExhausted ? <AlertTriangle className="w-5 h-5 text-red-600" /> : <Info className="w-5 h-5 text-orange-600" />}
+            </div>
+            <p className="font-medium text-sm leading-snug">
                {isExhausted 
                  ? (planName === 'PRO' ? "You've reached your monthly limit. Upgrade to Premium for unlimited access." : "You've used all free benefits. Upgrade to continue improving.") 
                  : "You're running out of free benefits. Upgrade to continue improving."}
             </p>
           </div>
-          <div className="flex items-center gap-3">
-             <Link href="/pricing" className={`px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm transition-colors ${isExhausted ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-orange-600 hover:bg-orange-700 text-white'}`}>
+          <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto mt-2 md:mt-0">
+             <Link href="/pricing" className={`flex-1 md:flex-none text-center px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors ${isExhausted ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-orange-600 hover:bg-orange-700 text-white'}`}>
                Upgrade to {planName === 'PRO' ? 'Premium' : 'Pro'}
              </Link>
-             <button onClick={() => setShowBanner(false)} className="text-current hover:opacity-75 rounded-full p-1 transition-opacity">
-                <X className="w-4 h-4" />
+             <button onClick={() => setShowBanner(false)} className="text-current hover:opacity-75 rounded-full p-2 transition-opacity flex-shrink-0">
+                <X className="w-5 h-5" />
              </button>
           </div>
         </div>

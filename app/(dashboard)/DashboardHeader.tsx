@@ -76,12 +76,7 @@ export default function DashboardHeader() {
 
         {/* Logo - hidden on large screens (shown in sidebar) */}
         <Link href="/" className="lg:hidden flex items-center">
-          <div className="h-8 w-auto flex items-center">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-[#5693C1] to-[#4a80b0] flex items-center justify-center text-white font-bold mr-2">
-              R
-            </div>
-            <span className="text-lg font-bold text-gray-900">RoleReady</span>
-          </div>
+          <img src="/img/logo/logo.png" alt="RoleReady Logo" className="w-28 h-8 object-contain" />
         </Link>
       </div>
 
@@ -93,9 +88,9 @@ export default function DashboardHeader() {
       </div>
 
       {/* Right Side - Actions */}
-      <div className="flex items-center gap-4">
-        {/* Notifications */}
-        <div className="hidden sm:block">
+      <div className="flex items-center gap-2 sm:gap-4">
+        {/* Notifications - Visible on all screens */}
+        <div className="block">
           <NotificationBell />
         </div>
 
@@ -130,7 +125,7 @@ export default function DashboardHeader() {
               <p className="text-sm font-semibold text-gray-900 leading-tight">
                 {user?.name || 'User'}
               </p>
-              <p className="text-xs text-gray-500 leading-tight mt-0.5 max-w-[150px] truncate">
+              <p className="hidden sm:block text-xs text-gray-500 leading-tight mt-0.5 max-w-[150px] truncate">
                 {user?.email || 'user@example.com'}
               </p>
             </div>

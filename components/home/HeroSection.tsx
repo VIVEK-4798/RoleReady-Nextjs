@@ -670,7 +670,7 @@ export default function HeroSection({ onCheckReadiness, onLearnMore, content }: 
             </div>
 
             {/* Trust indicators */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 sm:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-400">
+            {/* <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 sm:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-400">
               <div className="flex items-center gap-2">
                 <div className="flex -space-x-2">
                   {[1, 2, 3, 4].map((i) => (
@@ -695,7 +695,7 @@ export default function HeroSection({ onCheckReadiness, onLearnMore, content }: 
                 ))}
                 <span className="text-sm text-gray-500 ml-2">4.9 (2.3k reviews)</span>
               </div>
-            </div>
+            </div> */}
           </div>
 
           {/* Right Content - Animated Visualization */}
@@ -703,12 +703,11 @@ export default function HeroSection({ onCheckReadiness, onLearnMore, content }: 
             {/* Main visualization */}
             <RoleReadyVisualization />
 
-            {/* Stats grid below visualization */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-4 mt-8">
+            {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-4 mt-8">
               <StatCounter value="10k+" label="Students" icon={Users} delay={600} />
               <StatCounter value="500+" label="Mentors" icon={Shield} delay={700} />
               <StatCounter value="98%" label="Satisfaction" icon={TrendingUp} delay={800} />
-            </div>
+            </div> */}
           </div>
         </div>
 

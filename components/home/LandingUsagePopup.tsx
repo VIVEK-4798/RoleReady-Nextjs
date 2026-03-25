@@ -40,8 +40,8 @@ export default function LandingUsagePopup() {
   if (!mounted || !isVisible) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 fade-in duration-500">
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-5 max-w-sm relative">
+    <div className="fixed bottom-4 left-0 right-0 flex justify-center sm:bottom-6 sm:right-6 sm:left-auto z-50">
+  <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-5 w-full max-w-sm mx-4 sm:mx-0 relative">
         <button 
           onClick={() => setIsVisible(false)}
           className="absolute top-3 right-3 p-1 text-gray-400 hover:bg-gray-100 rounded-full transition-colors"

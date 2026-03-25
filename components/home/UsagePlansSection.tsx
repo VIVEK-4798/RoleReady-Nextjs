@@ -150,9 +150,9 @@ export default function UsagePlansSection() {
         </div>
 
         {/* Feature Comparison Table */}
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <table className="w-full text-left border-collapse">
+        <div className="max-w-4xl mx-auto overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[500px]">
               <thead>
                 <tr className="bg-gray-50/50">
                   <th className="py-4 px-6 text-sm font-bold text-gray-900 w-1/4 tracking-wider">FEATURE</th>
@@ -184,9 +184,9 @@ export default function UsagePlansSection() {
             </table>
           </div>
           
-          <div className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-500 font-medium bg-white border border-gray-100 py-3 px-6 rounded-xl w-max mx-auto shadow-sm">
-            <Info className="w-4 h-4 text-[#5693C1]" />
-            You’ll always see how much of your free usage is left inside your personalized dashboard.
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-2 text-center sm:text-left text-sm text-gray-500 font-medium bg-white border border-gray-100 py-3 px-4 sm:px-6 rounded-xl w-full sm:w-auto max-w-full lg:w-max mx-auto shadow-sm">
+            <Info className="w-5 h-5 flex-shrink-0 text-[#5693C1]" />
+            <span>You’ll always see how much of your free usage is left inside your personalized dashboard.</span>
           </div>
         </div>
       </div>

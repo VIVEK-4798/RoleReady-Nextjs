@@ -21,5 +21,6 @@ export { default as UsagePlansSection } from './UsagePlansSection';
 export { default as UsagePlansTrigger } from './UsagePlansTrigger';
 export { default as LoginNudgeModal } from './LoginNudgeModal';
 export { default as LandingDemoVideo } from './LandingDemoVideo';
+export { default as ScrollToTop } from './ScrollToTop';
 
 export type { WhyChooseUsSectionRef } from './WhyChooseUsSection';

@@ -21,13 +21,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <DashboardNav />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col lg:ml-64 bg-white min-h-screen">
+      <div className="flex-1 flex flex-col bg-white min-h-screen lg:ml-64 min-w-0 overflow-x-hidden">
         {/* Header */}
         <DashboardHeader />
 
         {/* Page Content */}
-        <main className="flex-1 p-4 sm:p-6 bg-white">
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-1 p-4 sm:p-6 bg-white min-w-0 w-full overflow-x-hidden">
+          <div className="max-w-7xl mx-auto w-full">
             <UsageAlerts />
             {children}
           </div>

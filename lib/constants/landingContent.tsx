@@ -90,7 +90,7 @@ export const LANDING_CONTENT = {
     },
     mentor: {
         hero: {
-            title: "Help Students Succeed with Confidence.",
+            title: "Help Students Succeed with Confidence",
             subtitle: "Provide structured validation, prioritize effort, and see measurable progress across your learners.",
             primaryCTA: "Open Mentor Dashboard",
             primaryHref: "/mentor",

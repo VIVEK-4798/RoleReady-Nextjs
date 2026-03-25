@@ -17,6 +17,7 @@ import {
   UsagePlansSection,
   UsagePlansTrigger,
   LoginNudgeModal,
+  ScrollToTop,
 } from '@/components/home';
 import { useAuth } from '@/hooks';
 import { LANDING_CONTENT } from '@/lib/constants/landingContent';
@@ -167,6 +168,9 @@ export default function LandingPageClient({ isAuthenticated }: LandingPageClient
       
       {/* Login Nudge */}
       {showLoginNudge && <LoginNudgeModal onClose={() => setShowLoginNudge(false)} />}
+
+      {/* Scroll to Top */}
+      <ScrollToTop />
     </>
   );
 }

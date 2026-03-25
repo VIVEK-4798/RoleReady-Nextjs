@@ -121,6 +121,19 @@ interface ReportPageClientProps {
     userName: string;
 }
 
+const decimalFormatter = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+});
+
+const formatDecimal = (value?: number | null) => {
+    if (value === null || value === undefined || Number.isNaN(value)) {
+        return '-';
+    }
+
+    return decimalFormatter.format(value);
+};
+
 // ============================================================================
 // Helper Components
 // ============================================================================
@@ -210,7 +223,11 @@ interface StatCardProps {
         direction: 'up' | 'down' | 'stable';
     };
 }
-
+const SCORE_RING_SIZE = 176;
+const SCORE_RING_STROKE = 10;
+const SCORE_RING_RADIUS = 60;
+const SCORE_RING_CENTER = SCORE_RING_SIZE / 2;
+const SCORE_RING_CIRCUMFERENCE = 2 * Math.PI * SCORE_RING_RADIUS;
 const StatCard = ({ icon: Icon, label, value, color, trend }: StatCardProps) => {
     const colorClasses = {
         blue: 'bg-blue-50 text-blue-600 border-blue-100',
@@ -370,49 +387,81 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                 throw new Error('Report element not found');
             }
 
+            // --- Pre-process DOM to prevent html2canvas lab() crash ---
+            const COLORS: Record<string, string> = {
+                'transparent': 'transparent', 'white': '#ffffff',
+                'gray-50': '#f9fafb', 'gray-100': '#f3f4f6', 'gray-200': '#e5e7eb', 'gray-300': '#d1d5db', 'gray-400': '#9ca3af', 'gray-500': '#6b7280', 'gray-600': '#4b5563', 'gray-700': '#374151', 'gray-800': '#1f2937', 'gray-900': '#111827',
+                'red-50': '#fef2f2', 'red-100': '#fee2e2', 'red-200': '#fecaca', 'red-500': '#ef4444', 'red-600': '#dc2626', 'red-700': '#b91c1c', 'red-800': '#991b1b',
+                'amber-50': '#fffbeb', 'amber-100': '#fef3c7', 'amber-200': '#fde68a', 'amber-500': '#f59e0b', 'amber-600': '#d97706', 'amber-700': '#b45309', 'amber-800': '#92400e',
+                'green-50': '#f0fdf4', 'green-100': '#dcfce7', 'green-200': '#bbf7d0', 'green-500': '#22c55e', 'green-600': '#16a34a', 'green-700': '#15803d',
+                'emerald-50': '#ecfdf5', 'emerald-100': '#d1fae5', 'emerald-500': '#10b981', 'emerald-600': '#059669', 'emerald-700': '#047857',
+                'blue-50': '#eff6ff', 'blue-100': '#dbeafe', 'blue-200': '#bfdbfe', 'blue-500': '#3b82f6', 'blue-600': '#2563eb', 'blue-700': '#1d4ed8', 'blue-800': '#1e40af', 'blue-900': '#1e3a8a',
+                'purple-50': '#faf5ff', 'purple-100': '#f3e8ff', 'purple-600': '#9333ea',
+            };
+
+            const appliedStyles: { el: HTMLElement, prop: string, oldVal: string }[] = [];
+            const safeSetStyle = (el: HTMLElement, prop: any, val: string) => {
+                appliedStyles.push({ el, prop, oldVal: el.style[prop as any] });
+                el.style[prop as any] = val;
+            };
+
+            const allElements = element.querySelectorAll('*');
+            allElements.forEach(node => {
+                const el = node as HTMLElement;
+                const classNameStr = typeof el.className === 'string' ? el.className : (el.getAttribute('class') || '');
+                if (!classNameStr) return;
+
+                classNameStr.split(' ').forEach(cls => {
+                    if (cls.includes('[#5693C1]')) {
+                        if (cls.startsWith('text-')) safeSetStyle(el, 'color', '#5693C1');
+                        if (cls.startsWith('bg-') || cls.startsWith('from-')) safeSetStyle(el, 'backgroundColor', '#5693C1');
+                        if (cls.startsWith('border-')) safeSetStyle(el, 'borderColor', '#5693C1');
+                    }
+                    if (cls.includes('[#3a6a8c]')) {
+                        if (cls.startsWith('text-')) safeSetStyle(el, 'color', '#3a6a8c');
+                        if (cls.startsWith('bg-') || cls.startsWith('to-')) safeSetStyle(el, 'backgroundColor', '#3a6a8c');
+                        if (cls.startsWith('border-')) safeSetStyle(el, 'borderColor', '#3a6a8c');
+                    }
+                    for (const [colorName, hexValue] of Object.entries(COLORS)) {
+                        if (cls === `text-${colorName}`) safeSetStyle(el, 'color', hexValue);
+                        if (cls === `bg-${colorName}`) safeSetStyle(el, 'backgroundColor', hexValue);
+                        if (cls === `border-${colorName}`) safeSetStyle(el, 'borderColor', hexValue);
+                    }
+                    if (el.tagName.toLowerCase() === 'svg') {
+                        if (cls === 'text-gray-200') safeSetStyle(el, 'color', '#e5e7eb');
+                        if (cls.includes('text-red-500')) safeSetStyle(el, 'color', '#ef4444');
+                        if (cls.includes('text-amber-500')) safeSetStyle(el, 'color', '#f59e0b');
+                        if (cls.includes('text-green-500')) safeSetStyle(el, 'color', '#22c55e');
+                        if (cls.includes('text-[#5693C1]')) safeSetStyle(el, 'color', '#5693C1');
+                    }
+                });
+            });
+
+            // Additionally enforce base text color on the root
+            safeSetStyle(element, 'color', '#111827');
+            safeSetStyle(element, 'backgroundColor', '#ffffff');
+
             const date = new Date().toISOString().split('T')[0];
 
             const opt = {
                 margin: [10, 10, 10, 10] as [number, number, number, number],
                 filename: `readiness-report-${userName.replace(/\s+/g, '-')}-${date}.pdf`,
-                image: {
-                    type: 'jpeg',
-                    quality: 0.98,
-                } as const,
+                image: { type: 'jpeg', quality: 0.98 } as const,
                 html2canvas: {
                     scale: 2,
                     useCORS: true,
                     logging: false,
-                    backgroundColor: '#ffffff',
-                    onclone: (clonedDoc: Document) => {
-                        // Remove external stylesheets
-                        const stylesheets = clonedDoc.querySelectorAll('link[rel="stylesheet"]');
-                        stylesheets.forEach(sheet => sheet.remove());
-
-                        // Apply theme color to elements
-                        const coloredElements = clonedDoc.querySelectorAll('[class*="blue-"]');
-                        coloredElements.forEach(el => {
-                            const element = el as HTMLElement;
-                            if (element.className.includes('text-blue-')) {
-                                element.style.color = '#5693C1';
-                            }
-                            if (element.className.includes('bg-blue-')) {
-                                element.style.backgroundColor = '#5693C1';
-                            }
-                            if (element.className.includes('border-blue-')) {
-                                element.style.borderColor = '#5693C1';
-                            }
-                        });
-                    }
+                    backgroundColor: '#ffffff'
                 },
-                jsPDF: {
-                    unit: 'mm',
-                    format: 'a4',
-                    orientation: 'portrait',
-                } as const,
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } as const,
             };
 
             await html2pdf().set(opt).from(element).save();
+
+            // --- Cleanup: Revert original styles ---
+            appliedStyles.forEach(({ el, prop, oldVal }) => {
+                el.style[prop as any] = oldVal;
+            });
 
         } catch (err) {
             console.error('PDF export error:', err);
@@ -532,6 +581,17 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
     const trend = calculateTrend(history);
     const TrendIcon = trend.icon;
     const hasPendingValidation = (validation?.pending_validation || 0) > 0;
+    const readinessPercentage = Math.max(0, Math.min(100, readiness?.percentage || 0));
+    const totalSkills = skill_breakdown?.total_skills || 0;
+    const matchedSkills = skill_breakdown?.met_count || 0;
+    const skillsMatchPercentage = totalSkills > 0 ? (matchedSkills / totalSkills) * 100 : 0;
+    const lastCalculatedLabel = readiness?.calculated_at
+        ? new Date(readiness.calculated_at).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        })
+        : 'Never';
 
     // Combine all skills for table view
     const allSkills: SkillEntry[] = [
@@ -583,15 +643,19 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row justify-end gap-3 mb-8 print:hidden">
+                <div className="flex flex-col sm:flex-row justify-end items-center gap-4 mb-8 print:hidden">
+                    <p className="text-sm text-gray-600 bg-blue-50/50 px-4 py-2 rounded-lg border border-blue-100 flex items-center gap-2">
+                        <Info className="w-4 h-4 text-[#5693C1]" />
+                        <span>To download, click Print and choose <strong className="font-semibold text-gray-900">"Save as PDF"</strong></span>
+                    </p>
                     <button
                         onClick={handlePrint}
-                        className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-all duration-300 inline-flex items-center justify-center gap-2 text-sm hover:-translate-y-1"
+                        className="px-6 py-2.5 bg-gradient-to-r from-[#5693C1] to-[#3a6a8c] text-white rounded-xl font-bold transition-all duration-300 inline-flex items-center justify-center gap-2 text-sm shadow-md hover:shadow-lg hover:-translate-y-1"
                     >
                         <Printer className="w-4 h-4" />
                         Print Report
                     </button>
-                    <button
+                    {/* <button
                         onClick={handleExportPDF}
                         disabled={isExporting}
                         className="px-5 py-2.5 bg-gradient-to-r from-[#5693C1] to-[#3a6a8c] text-white rounded-xl font-medium transition-all duration-300 hover:shadow-lg hover:-translate-y-1 disabled:opacity-50 inline-flex items-center justify-center gap-2 text-sm"
@@ -607,7 +671,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                 Export as PDF
                             </>
                         )}
-                    </button>
+                    </button> */}
                 </div>
 
                 {/* Report Content */}
@@ -696,93 +760,134 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                 Readiness Summary
                             </h2>
 
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                {/* Score Circle */}
-                                <div className="flex justify-center lg:justify-start">
-                                    <div className="relative">
-                                        <svg className="w-40 h-40 transform -rotate-90">
-                                            <circle
-                                                className="text-gray-200"
-                                                strokeWidth="8"
-                                                stroke="currentColor"
-                                                fill="transparent"
-                                                r="72"
-                                                cx="80"
-                                                cy="80"
-                                            />
-                                            <circle
-                                                className={readiness?.status_color === 'danger' ? 'text-red-500' :
-                                                    readiness?.status_color === 'warning' ? 'text-amber-500' :
-                                                        readiness?.status_color === 'success' ? 'text-green-500' :
-                                                            'text-[#5693C1]'}
-                                                strokeWidth="8"
-                                                strokeDasharray={452}
-                                                strokeDashoffset={452 - (452 * (readiness?.percentage || 0)) / 100}
-                                                strokeLinecap="round"
-                                                stroke="currentColor"
-                                                fill="transparent"
-                                                r="72"
-                                                cx="80"
-                                                cy="80"
-                                            />
-                                        </svg>
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                            <span className="text-3xl font-bold text-gray-900">{readiness?.percentage || 0}%</span>
-                                            <span className="text-xs text-gray-500">Readiness</span>
+                            <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_20px_60px_-40px_rgba(15,23,42,0.35)]">
+                                <div className="grid grid-cols-1 xl:grid-cols-[320px_minmax(0,1fr)]">
+                                    <div className="relative overflow-hidden border-b border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(86,147,193,0.2),_transparent_58%),linear-gradient(180deg,_#f8fbff_0%,_#ffffff_100%)] p-8 xl:border-b-0 xl:border-r">
+                                        <div className="absolute -top-16 right-0 h-40 w-40 rounded-full bg-[#5693C1]/10 blur-3xl" />
+                                        <div className="relative flex flex-col items-center text-center">
+                                            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-medium text-slate-600 backdrop-blur">
+                                                <Target className="h-3.5 w-3.5 text-[#5693C1]" />
+                                                Overall readiness
+                                            </div>
+
+                                            <div className="relative flex h-56 w-56 items-center justify-center">
+                                                <div className="absolute inset-6 rounded-full bg-[radial-gradient(circle,_rgba(86,147,193,0.16),_rgba(86,147,193,0.02)_65%,_transparent_70%)]" />
+                                                <svg
+                                                    className="-rotate-90 drop-shadow-[0_12px_24px_rgba(86,147,193,0.18)]"
+                                                    width={SCORE_RING_SIZE}
+                                                    height={SCORE_RING_SIZE}
+                                                    viewBox={`0 0 ${SCORE_RING_SIZE} ${SCORE_RING_SIZE}`}
+                                                    aria-hidden="true"
+                                                >
+                                                    <circle
+                                                        className="text-slate-200"
+                                                        strokeWidth={SCORE_RING_STROKE}
+                                                        stroke="currentColor"
+                                                        fill="transparent"
+                                                        r={SCORE_RING_RADIUS}
+                                                        cx={SCORE_RING_CENTER}
+                                                        cy={SCORE_RING_CENTER}
+                                                    />
+                                                    <circle
+                                                        className={readiness?.status_color === 'danger' ? 'text-red-500' :
+                                                            readiness?.status_color === 'warning' ? 'text-amber-500' :
+                                                                readiness?.status_color === 'success' ? 'text-green-500' :
+                                                                    'text-[#5693C1]'}
+                                                        strokeWidth={SCORE_RING_STROKE}
+                                                        strokeDasharray={SCORE_RING_CIRCUMFERENCE}
+                                                        strokeDashoffset={SCORE_RING_CIRCUMFERENCE - (SCORE_RING_CIRCUMFERENCE * readinessPercentage) / 100}
+                                                        strokeLinecap="round"
+                                                        stroke="currentColor"
+                                                        fill="transparent"
+                                                        r={SCORE_RING_RADIUS}
+                                                        cx={SCORE_RING_CENTER}
+                                                        cy={SCORE_RING_CENTER}
+                                                    />
+                                                </svg>
+                                                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                                    <span className="text-5xl font-bold tracking-tight text-slate-900">{readinessPercentage}%</span>
+                                                    <span className="mt-1 text-sm font-medium text-slate-500">Readiness score</span>
+                                                </div>
+                                            </div>
+
+                                            <p className="max-w-[220px] text-sm leading-6 text-slate-600">
+                                                A quick view of how closely your current profile matches the target frontend role.
+                                            </p>
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* Status & Details */}
-                                <div className="lg:col-span-2">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border border-gray-100">
-                                            <div className="text-sm text-gray-500 mb-2">Status</div>
-                                            <StatusBadge
-                                                label={readiness?.status_label || 'Unknown'}
-                                                color={readiness?.status_color || 'primary'}
-                                            />
-                                            <div className="mt-3 text-sm text-gray-600">
-                                                Last calculated: {readiness?.calculated_at
-                                                    ? new Date(readiness.calculated_at).toLocaleDateString('en-US', {
-                                                        month: 'short', day: 'numeric', year: 'numeric'
-                                                    })
-                                                    : 'Never'}
-                                            </div>
-                                        </div>
-
-                                        <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border border-gray-100">
-                                            <div className="text-sm text-gray-500 mb-2">Skills Match</div>
-                                            <div className="text-2xl font-bold text-gray-900">
-                                                {skill_breakdown?.met_count || 0}/{skill_breakdown?.total_skills || 0}
-                                            </div>
-                                            <div className="mt-2">
-                                                <ProgressBar
-                                                    percentage={((skill_breakdown?.met_count || 0) / (skill_breakdown?.total_skills || 1)) * 100}
-                                                    height={6}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 border border-gray-100 sm:col-span-2">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <TrendIcon className={`w-4 h-4 ${trend.color}`} />
-                                                <span className={`text-sm font-medium ${trend.color}`}>
-                                                    {trend.text}
-                                                </span>
-                                            </div>
-                                            {history && history.length > 0 && (
-                                                <div className="flex items-center gap-2">
-                                                    {history.slice(0, 3).map((entry, idx) => (
-                                                        <div key={idx} className="flex-1">
-                                                            <div className="text-xs text-gray-500 mb-1">
-                                                                {new Date(entry.calculated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                                            </div>
-                                                            <ProgressBar percentage={entry.percentage} color={entry.status_color} height={4} />
+                                    <div className="p-6 sm:p-8">
+                                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                                            <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5">
+                                                <div className="mb-3 flex items-start justify-between gap-3">
+                                                    <div>
+                                                        <div className="text-sm font-medium text-slate-500">Status</div>
+                                                        <div className="mt-2">
+                                                            <StatusBadge
+                                                                label={readiness?.status_label || 'Unknown'}
+                                                                color={readiness?.status_color || 'primary'}
+                                                            />
                                                         </div>
-                                                    ))}
+                                                    </div>
+                                                    <div className="rounded-xl bg-slate-100 p-2">
+                                                        <Shield className="h-4 w-4 text-slate-500" />
+                                                    </div>
                                                 </div>
-                                            )}
+                                                <div className="text-sm text-slate-600">
+                                                    Last calculated: <span className="font-medium text-slate-800">{lastCalculatedLabel}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5">
+                                                <div className="mb-2 flex items-center justify-between gap-3">
+                                                    <div className="text-sm font-medium text-slate-500">Skills Match</div>
+                                                    <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                                                        {formatDecimal(skillsMatchPercentage)}%
+                                                    </div>
+                                                </div>
+                                                <div className="text-3xl font-bold tracking-tight text-slate-900">
+                                                    {matchedSkills}/{totalSkills}
+                                                </div>
+                                                <div className="mt-3">
+                                                    <ProgressBar
+                                                        percentage={skillsMatchPercentage}
+                                                        height={8}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5 lg:col-span-2">
+                                                <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <TrendIcon className={`h-4 w-4 ${trend.color}`} />
+                                                        <span className={`text-sm font-semibold ${trend.color}`}>
+                                                            {trend.text}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-xs uppercase tracking-[0.18em] text-slate-400">
+                                                        Recent checkpoints
+                                                    </div>
+                                                </div>
+                                                {history && history.length > 0 ? (
+                                                    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                                                        {history.slice(0, 3).map((entry, idx) => (
+                                                            <div key={idx} className="rounded-xl border border-slate-100 bg-white p-4">
+                                                                <div className="mb-2 flex items-center justify-between gap-3">
+                                                                    <div className="text-xs font-medium text-slate-500">
+                                                                        {new Date(entry.calculated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                                                    </div>
+                                                                    <span className="text-sm font-semibold text-slate-800">{entry.percentage}%</span>
+                                                                </div>
+                                                                <ProgressBar percentage={entry.percentage} color={entry.status_color} height={6} />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-500">
+                                                        No historical trend data is available yet.
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -860,7 +965,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                                                             )}
                                                         </td>
                                                         <td className="text-center px-6 py-4 text-gray-600">
-                                                            {skill.weight || '-'}
+                                                            {formatDecimal(skill.weight)}
                                                         </td>
                                                     </tr>
                                                 );
