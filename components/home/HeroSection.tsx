@@ -45,6 +45,7 @@ interface HeroSectionProps {
     primaryHref: string;
     secondaryCTA: string;
     secondaryHref?: string;
+    showTypewriterSuffix?: boolean;
   };
 }
 
@@ -633,11 +634,13 @@ export default function HeroSection({ onCheckReadiness, onLearnMore, content }: 
 
             {/* Main Heading */}
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight">
-              {content.title.split('.')[0]}{' '}
-              <span className="block text-4xl md:text-5xl lg:text-6xl mt-2">
-                for{' '}
-                <TypewriterText text="" />
-              </span>
+              {content.title.split('.')[0]}
+              {content.showTypewriterSuffix !== false && (
+                <span className="block text-4xl md:text-5xl lg:text-6xl mt-2">
+                  for{' '}
+                  <TypewriterText text="" />
+                </span>
+              )}
             </h1>
 
             {/* Subtitle */}

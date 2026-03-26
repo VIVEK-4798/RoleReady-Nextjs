@@ -612,7 +612,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
 
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 {/* Page Header with breadcrumb */}
-                <div className="mb-8">
+                <div className="mb-8 print:hidden">
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
                         <Link href="/dashboard" className="hover:text-[#5693C1] transition-colors">Dashboard</Link>
                         <ChevronRight className="w-4 h-4" />
@@ -751,8 +751,66 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                             </div>
                         )}
 
+                        <div className="hidden print:block mb-8">
+                            <div className="border border-gray-300 rounded-2xl overflow-hidden">
+                                <div className="bg-gray-50 border-b border-gray-200 px-6 py-4">
+                                    <h2 className="text-lg font-semibold text-gray-900">Readiness Summary</h2>
+                                </div>
+                                <div className="p-6">
+                                    <div className="grid grid-cols-[160px_minmax(0,1fr)] gap-6 items-stretch">
+                                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 flex flex-col items-center justify-center text-center">
+                                            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                                Overall Score
+                                            </div>
+                                            <div className="mt-3 text-5xl font-bold text-slate-900">
+                                                {readinessPercentage}%
+                                            </div>
+                                            <div className="mt-2 text-sm text-slate-600">
+                                                {readiness?.status_label || 'Unknown'}
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="rounded-xl border border-slate-200 p-4">
+                                                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                                    Skills Match
+                                                </div>
+                                                <div className="mt-2 text-3xl font-bold text-slate-900">
+                                                    {matchedSkills}/{totalSkills}
+                                                </div>
+                                                <div className="mt-2 text-sm text-slate-600">
+                                                    {formatDecimal(skillsMatchPercentage)}% of tracked skills matched
+                                                </div>
+                                            </div>
+
+                                            <div className="rounded-xl border border-slate-200 p-4">
+                                                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                                    Last Calculated
+                                                </div>
+                                                <div className="mt-2 text-lg font-semibold text-slate-900">
+                                                    {lastCalculatedLabel}
+                                                </div>
+                                                <div className={`mt-2 text-sm font-medium ${trend.color}`}>
+                                                    {trend.text}
+                                                </div>
+                                            </div>
+
+                                            <div className="rounded-xl border border-slate-200 p-4 col-span-2">
+                                                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                                    Snapshot
+                                                </div>
+                                                <p className="mt-2 text-sm leading-6 text-slate-700">
+                                                    This report summarizes current readiness against the selected role, showing status, matched skills, and recent progress in one printable view.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         {/* SECTION 1: READINESS SUMMARY */}
-                        <div className="mb-10">
+                        <div className="mb-10 print:hidden">
                             <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
                                 <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
                                     <BarChart3 className="w-3.5 h-3.5 text-blue-600" />
@@ -1144,7 +1202,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                         </div>
 
                         {/* SECTION 5: FOOTER */}
-                        <div className="mt-10 pt-8 border-t-2 border-gray-200">
+                        <div className="mt-10 pt-8 border-t-2 border-gray-200 print:hidden">
                             <div className="text-center mb-6">
                                 <div className="text-sm font-semibold text-gray-700 flex items-center justify-center gap-2">
                                     <FileText className="w-4 h-4 text-[#5693C1]" />
@@ -1182,7 +1240,7 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                 </div>
 
                 {/* Navigation */}
-                <div className="flex flex-col sm:flex-row justify-between mt-8 gap-4">
+                <div className="flex flex-col sm:flex-row justify-between mt-8 gap-4 print:hidden">
                     <Link
                         href="/dashboard"
                         className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-all duration-300 hover:-translate-y-1 inline-flex items-center gap-2 justify-center"
@@ -1208,9 +1266,17 @@ export default function ReportPageClient({ userId, userName }: ReportPageClientP
                         print-color-adjust: exact !important;
                         background-color: white !important;
                     }
+
+                    footer {
+                        display: none !important;
+                    }
                     
                     .print\\:hidden {
                         display: none !important;
+                    }
+
+                    .print\\:block {
+                        display: block !important;
                     }
                     
                     #readiness-report {

@@ -3,21 +3,45 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function AdminHeader() {
   const { user, logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const toggleMobileMenu = () => {
+    const nextState = !isMobileMenuOpen;
+    setIsMobileMenuOpen(nextState);
+    window.dispatchEvent(new CustomEvent('toggleMobileMenu', { detail: nextState }));
+  };
 
   return (
     <header className="sticky top-0 h-16 md:h-20 bg-white/80 backdrop-blur-lg border-b border-gray-100 px-4 md:px-6 lg:px-8 flex items-center justify-between z-30">
-      {/* Left Section - Page Title */}
-      <div className="flex-1">
-        <h1 className="text-xl md:text-2xl font-bold text-gray-900">
-          Administration
-        </h1>
-        <p className="text-sm text-gray-500 hidden md:block">
-          Manage platform, users, and configurations
-        </p>
+      {/* Left Section */}
+      <div className="flex items-center gap-3 min-w-0 flex-1">
+        <button
+          className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors shrink-0"
+          onClick={toggleMobileMenu}
+          aria-label="Toggle menu"
+        >
+          <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+
+        <Link href="/" className="lg:hidden flex items-center shrink-0">
+          <img src="/img/logo/logo.png" alt="RoleReady Logo" className="w-28 h-8 object-contain" />
+        </Link>
+
+        <div className="min-w-0">
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 truncate">
+            Admin
+          </h1>
+          <p className="text-sm text-gray-500 hidden md:block">
+            Manage platform, users, and configurations
+          </p>
+        </div>
       </div>
 
       {/* Right Section */}

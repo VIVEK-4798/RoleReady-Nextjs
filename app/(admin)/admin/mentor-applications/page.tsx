@@ -55,8 +55,8 @@ export default function AdminApplicationsPage() {
     }
 
     return (
-        <div className="p-6 md:p-8">
-            <div className="flex justify-between items-center mb-8">
+        <div className="p-4 sm:p-6 md:p-8 min-w-0 overflow-x-hidden">
+            <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-8">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Mentor Applications</h1>
                     <p className="text-gray-500 mt-1">Review detailed profiles and proof of expertise from candidates.</p>
@@ -72,8 +72,9 @@ export default function AdminApplicationsPage() {
                     <p className="text-gray-500">There are no pending mentor applications to review.</p>
                 </div>
             ) : (
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                    <table className="min-w-full divide-y divide-gray-200">
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden min-w-0">
+                    <div className="max-w-full overflow-x-auto overscroll-x-contain">
+                    <table className="min-w-[860px] w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Candidate</th>
@@ -123,6 +124,7 @@ export default function AdminApplicationsPage() {
                             ))}
                         </tbody>
                     </table>
+                    </div>
                 </div>
             )}
         </div>

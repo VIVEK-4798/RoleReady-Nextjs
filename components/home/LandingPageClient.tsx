@@ -48,6 +48,7 @@ export default function LandingPageClient({ isAuthenticated }: LandingPageClient
 
   const userRole = (user?.role === 'mentor' ? 'mentor' : 'student') as 'student' | 'mentor';
   const content = LANDING_CONTENT[userRole];
+  const showPricingContent = userRole !== 'mentor';
 
   // Login Nudge Effect
   useEffect(() => {
@@ -135,7 +136,7 @@ export default function LandingPageClient({ isAuthenticated }: LandingPageClient
       {(userRole === 'mentor' || !isAuthenticated) && <MentorBenefitsSection />}
 
       {/* Usage Plans Section */}
-      <UsagePlansSection />
+      {showPricingContent && <UsagePlansSection />}
 
       {/* Who Is It For */}
       <section id="for-who">
@@ -164,7 +165,7 @@ export default function LandingPageClient({ isAuthenticated }: LandingPageClient
       
       {/* Free Usage Promotion */}
       <LandingUsagePopup />
-      <UsagePlansTrigger />
+      {showPricingContent && <UsagePlansTrigger />}
       
       {/* Login Nudge */}
       {showLoginNudge && <LoginNudgeModal onClose={() => setShowLoginNudge(false)} />}

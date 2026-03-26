@@ -30,6 +30,21 @@ export interface UseAuthReturn {
   hasRole: (roles: UserRole | UserRole[]) => boolean;
 }
 
+function getLoginErrorMessage(error?: string | null): string {
+  const errorMap: Record<string, string> = {
+    CredentialsSignin: 'Invalid email, password, or role. Please try again.',
+    Configuration: 'Invalid email, password, or role. Please try again.',
+    CallbackRouteError: 'Invalid email, password, or role. Please try again.',
+    AccessDenied: 'Your account does not have access to this area.',
+  };
+
+  if (!error) {
+    return 'Login failed. Please check your credentials and try again.';
+  }
+
+  return errorMap[error] || error;
+}
+
 export function useAuth(): UseAuthReturn {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -65,7 +80,7 @@ export function useAuth(): UseAuthReturn {
         });
 
         if (result?.error) {
-          return { success: false, error: result.error };
+          return { success: false, error: getLoginErrorMessage(result.error) };
         }
 
         // Redirect based on role
@@ -84,7 +99,7 @@ export function useAuth(): UseAuthReturn {
         console.error('Login error:', error);
         return {
           success: false,
-          error: error instanceof Error ? error.message : 'Login failed',
+          error: getLoginErrorMessage(error instanceof Error ? error.message : 'Login failed'),
         };
       }
     },

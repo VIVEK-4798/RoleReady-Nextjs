@@ -135,7 +135,7 @@ export default function UserValidationDetailsClient({ userId }: { userId: string
                 </div>
             </div>
 
-            <div className="p-6 md:p-8 max-w-7xl mx-auto">
+            <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto">
                 {skills.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-24 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-center">
                         <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
@@ -151,8 +151,9 @@ export default function UserValidationDetailsClient({ userId }: { userId: string
                         </button>
                     </div>
                 ) : (
-                    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-                        <table className="w-full">
+                    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                        <div className="overflow-x-auto overscroll-x-contain">
+                        <table className="w-full min-w-[920px]">
                             <thead>
                                 <tr className="bg-gray-50 border-b border-gray-200">
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Skill</th>
@@ -229,6 +230,7 @@ export default function UserValidationDetailsClient({ userId }: { userId: string
                                 ))}
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 )}
             </div>

@@ -9,6 +9,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signInWithGoogle, signInWithLinkedIn, signInWithGitHub } from '@/lib/auth/client';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function SignupForm() {
   const router = useRouter();
@@ -26,6 +27,8 @@ export default function SignupForm() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isLinkedInLoading, setIsLinkedInLoading] = useState(false);
   const [isGitHubLoading, setIsGitHubLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -319,17 +322,27 @@ export default function SignupForm() {
         >
           Password
         </label>
-        <input
-          type="password"
-          id="password"
-          name="password"
-          value={formData.password}
-          onChange={handleChange}
-          placeholder="••••••••"
-          required
-          minLength={6}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent transition-colors"
-        />
+        <div className="relative">
+          <input
+            type={showPassword ? 'text' : 'password'}
+            id="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            placeholder="••••••••"
+            required
+            minLength={6}
+            className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent transition-colors"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+            className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 transition-colors hover:text-gray-600 focus:outline-none focus:text-[#5693C1]"
+          >
+            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
+        </div>
         <p className="mt-2 text-xs text-gray-500">
           Must be at least 6 characters
         </p>
@@ -343,17 +356,27 @@ export default function SignupForm() {
         >
           Confirm Password
         </label>
-        <input
-          type="password"
-          id="confirmPassword"
-          name="confirmPassword"
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          placeholder="••••••••"
-          required
-          minLength={6}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent transition-colors"
-        />
+        <div className="relative">
+          <input
+            type={showConfirmPassword ? 'text' : 'password'}
+            id="confirmPassword"
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            placeholder="••••••••"
+            required
+            minLength={6}
+            className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5693C1] focus:border-transparent transition-colors"
+          />
+          <button
+            type="button"
+            onClick={() => setShowConfirmPassword((prev) => !prev)}
+            aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+            className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 transition-colors hover:text-gray-600 focus:outline-none focus:text-[#5693C1]"
+          >
+            {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Submit Button */}

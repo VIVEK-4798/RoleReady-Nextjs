@@ -125,6 +125,18 @@ export default function MentorNav() {
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  useEffect(() => {
+    const handleMobileMenuToggle = (event: Event) => {
+      const customEvent = event as CustomEvent<boolean>;
+      setIsMobileMenuOpen(Boolean(customEvent.detail));
+    };
+
+    window.addEventListener('toggleMobileMenu', handleMobileMenuToggle);
+    return () => {
+      window.removeEventListener('toggleMobileMenu', handleMobileMenuToggle);
+    };
+  }, []);
+
   // Initialize submenu states based on current path
   useEffect(() => {
     const newOpenSubmenus: Record<string, boolean> = {};
@@ -139,6 +151,10 @@ export default function MentorNav() {
       }
     });
     setOpenSubmenus(newOpenSubmenus);
+  }, [pathname]);
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
   }, [pathname]);
 
   // Prevent body scroll when mobile menu is open
@@ -339,17 +355,6 @@ export default function MentorNav() {
       <aside className="hidden lg:flex lg:flex-col fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 shadow-sm z-30">
         <NavContent />
       </aside>
-
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsMobileMenuOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-30 p-2 rounded-lg bg-white border border-gray-200 shadow-sm text-gray-900"
-        aria-label="Open menu"
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
     </>
   );
 }

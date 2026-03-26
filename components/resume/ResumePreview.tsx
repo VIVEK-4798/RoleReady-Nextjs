@@ -22,9 +22,9 @@ export default function ResumePreview({ data, onDownload, isDownloading }: Resum
     } = data;
 
     return (
-        <div className="max-w-4xl mx-auto py-12 px-4 space-y-8">
+        <div className="max-w-4xl mx-auto py-6 sm:py-8 md:py-12 px-3 sm:px-4 space-y-6 sm:space-y-8">
             {/* Header Actions */}
-            <div className="flex items-center justify-between no-print">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between no-print">
                 <Link
                     href="/dashboard"
                     className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors"
@@ -32,14 +32,14 @@ export default function ResumePreview({ data, onDownload, isDownloading }: Resum
                     <ArrowLeft className="w-4 h-4" />
                     Back to Dashboard
                 </Link>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
                     <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-xs font-medium border border-green-100">
                         Generated from RoleReady Profile
                     </div>
                     <button
                         onClick={onDownload}
                         disabled={isDownloading}
-                        className="flex items-center gap-2 px-6 py-2 bg-[#5693C1] text-white rounded-xl font-semibold hover:bg-[#4a80b0] transition-all shadow-md disabled:opacity-50"
+                        className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 bg-[#5693C1] text-white rounded-xl font-semibold hover:bg-[#4a80b0] transition-all shadow-md disabled:opacity-50"
                     >
                         {isDownloading ? (
                             <>
@@ -57,13 +57,13 @@ export default function ResumePreview({ data, onDownload, isDownloading }: Resum
             </div>
 
             {/* Resume Document Wrapper */}
-            <div className="bg-white p-[1in] shadow-2xl border border-gray-100 min-h-[11in] w-full max-w-[8.5in] mx-auto print:shadow-none print:border-none print:p-0">
-                <div className="space-y-6 text-black font-serif">
+            <div className="bg-white px-5 py-6 sm:px-8 sm:py-8 md:p-[0.75in] lg:p-[1in] shadow-lg sm:shadow-2xl border border-gray-100 min-h-0 md:min-h-[11in] w-full max-w-[8.5in] mx-auto rounded-2xl md:rounded-none print:shadow-none print:border-none print:p-0 print:rounded-none">
+                <div className="space-y-5 sm:space-y-6 text-black font-serif">
                     {/* Header */}
                     {/* Header */}
                     {/* Header */}
-                    <div className="text-center space-y-3 mb-8">
-                        <h1 className="text-4xl font-bold text-gray-900 mb-2">{data.contact.fullName}</h1>
+                    <div className="text-center space-y-3 mb-6 sm:mb-8">
+                        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2 break-words">{data.contact.fullName}</h1>
                         {data.contact.headline && (
                             <p className="text-blue-600 font-bold uppercase tracking-widest text-xs mt-3 mb-1">{data.contact.headline}</p>
                         )}
@@ -119,11 +119,11 @@ export default function ResumePreview({ data, onDownload, isDownloading }: Resum
                             <div className="space-y-4">
                                 {experience.map((exp, i) => (
                                     <div key={i} className="space-y-1">
-                                        <div className="flex justify-between items-baseline">
+                                        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-baseline">
                                             <h3 className="font-bold">{exp.title}</h3>
                                             <span className="text-sm italic">{exp.startDate} - {exp.endDate}</span>
                                         </div>
-                                        <div className="flex justify-between items-baseline italic text-sm">
+                                        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-baseline italic text-sm">
                                             <span>{exp.company}</span>
                                             {exp.location && <span>{exp.location}</span>}
                                         </div>
@@ -147,7 +147,7 @@ export default function ResumePreview({ data, onDownload, isDownloading }: Resum
                             <div className="space-y-4">
                                 {projects.map((proj, i) => (
                                     <div key={i} className="space-y-1">
-                                        <div className="flex justify-between items-baseline">
+                                        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-baseline">
                                             <h3 className="font-bold">{proj.name}</h3>
                                             <span className="text-sm italic">{proj.startDate} - {proj.endDate}</span>
                                         </div>
@@ -182,7 +182,7 @@ export default function ResumePreview({ data, onDownload, isDownloading }: Resum
                             <div className="space-y-3">
                                 {education.map((edu, i) => (
                                     <div key={i} className="space-y-0.5">
-                                        <div className="flex justify-between items-baseline">
+                                        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-baseline">
                                             <h3 className="font-bold">{edu.institution}</h3>
                                             <span className="text-sm italic">{edu.startDate} - {edu.endDate}</span>
                                         </div>

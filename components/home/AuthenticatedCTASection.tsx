@@ -45,6 +45,7 @@ interface AuthenticatedCTASectionProps {
 
 export default function AuthenticatedCTASection({ content }: AuthenticatedCTASectionProps) {
   const { user } = useAuth();
+  const hasTitleComma = content.title.includes(',');
 
   return (
     <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-white">
@@ -52,21 +53,24 @@ export default function AuthenticatedCTASection({ content }: AuthenticatedCTASec
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-            {content.title.split(',').map((part, i, arr) => (
-              <span key={i}>
-                {part}
-                {i < arr.length - 1 && (
-                  <>
-                    ,{' '}
-                    <span className="text-[#5693C1] relative">
-                      Smarter
-                      <span className="absolute -bottom-1 left-0 w-full h-1 bg-[#5693C1]/30 rounded-full" />
-                    </span>
-                  </>
-                )}
-              </span>
-            ))}
-            {!content.title.includes(',') && content.title}
+            {hasTitleComma ? (
+              content.title.split(',').map((part, i, arr) => (
+                <span key={i}>
+                  {part}
+                  {i < arr.length - 1 && (
+                    <>
+                      ,{' '}
+                      <span className="text-[#5693C1] relative">
+                        Smarter
+                        <span className="absolute -bottom-1 left-0 w-full h-1 bg-[#5693C1]/30 rounded-full" />
+                      </span>
+                    </>
+                  )}
+                </span>
+              ))
+            ) : (
+              content.title
+            )}
           </h1>
 
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">

@@ -28,13 +28,13 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
       <AdminNav />
       
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col lg:ml-64 transition-all duration-300">
+      <div className="flex-1 flex flex-col lg:ml-64 transition-all duration-300 min-w-0 overflow-x-hidden">
         {/* Sticky Header */}
         <AdminHeader />
         
         {/* Page Content with subtle gradient background */}
-        <main className="flex-1 p-4 md:p-6 lg:p-8 bg-gradient-to-b from-gray-50/50 to-white">
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-1 p-4 md:p-6 lg:p-8 bg-gradient-to-b from-gray-50/50 to-white min-w-0 w-full overflow-x-hidden">
+          <div className="max-w-7xl mx-auto min-w-0">
             {children}
           </div>
         </main>

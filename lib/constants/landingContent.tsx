@@ -13,7 +13,8 @@ export const LANDING_CONTENT = {
             subtitle: "RoleReady - Placement Readiness. We're redefining placement preparation with a focus on readiness, not just applications.",
             primaryCTA: "Start Free Analysis",
             primaryHref: "/signup",
-            secondaryCTA: "Learn How It Works"
+            secondaryCTA: "Learn How It Works",
+            showTypewriterSuffix: true
         },
         problem: {
             badge: "What Makes Us Different",
@@ -90,12 +91,13 @@ export const LANDING_CONTENT = {
     },
     mentor: {
         hero: {
-            title: "Help Students Succeed with Confidence",
+            title: "Guide Students with Clear, Measurable Progress",
             subtitle: "Provide structured validation, prioritize effort, and see measurable progress across your learners.",
             primaryCTA: "Open Mentor Dashboard",
             primaryHref: "/mentor",
             secondaryCTA: "Review Learners",
-            secondaryHref: "/mentor/validations"
+            secondaryHref: "/mentor/validations",
+            showTypewriterSuffix: false
         },
         problem: {
             badge: "The Challenge Mentors Face",

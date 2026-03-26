@@ -80,10 +80,9 @@ const sidebarData: SidebarItem[] = [
   {
     icon: <BriefcaseIcon />,
     title: 'Internships',
-    badge: '2',
     links: [
       { title: 'All Internships', href: '/admin/internships' },
-      { title: 'Add Internship', href: '/admin/internships/add', badge: 'New' },
+      { title: 'Add Internship', href: '/admin/internships/add'},
     ],
   },
   {
@@ -91,13 +90,12 @@ const sidebarData: SidebarItem[] = [
     title: 'Jobs',
     links: [
       { title: 'All Jobs', href: '/admin/jobs' },
-      { title: 'Add Job', href: '/admin/jobs/add', badge: 'New' },
+      { title: 'Add Job', href: '/admin/jobs/add' },
     ],
   },
   {
     icon: <UsersIcon />,
     title: 'Users',
-    badge: '12',
     links: [
       { title: 'All Users', href: '/admin/users' },
       { title: 'Add User', href: '/admin/users/add' },
@@ -112,7 +110,7 @@ const sidebarData: SidebarItem[] = [
     title: 'Mentorship',
     links: [
       { title: 'Overview', href: '/admin/mentorship' },
-      { title: 'Applications', href: '/admin/mentor-applications', badge: 'New' },
+      { title: 'Applications', href: '/admin/mentor-applications' },
     ],
   },
   {
@@ -169,11 +167,27 @@ export default function AdminNav() {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
+    const handleMobileMenuToggle = (event: Event) => {
+      const customEvent = event as CustomEvent<boolean>;
+      setIsMobileMenuOpen(Boolean(customEvent.detail));
+    };
+
+    window.addEventListener('toggleMobileMenu', handleMobileMenuToggle);
+    return () => {
+      window.removeEventListener('toggleMobileMenu', handleMobileMenuToggle);
+    };
+  }, []);
+
+  useEffect(() => {
     sidebarData.forEach((item, index) => {
       if (item.links?.some((link) => pathname.startsWith(link.href))) {
         setOpenDropdowns((prev) => ({ ...prev, [index]: true }));
       }
     });
+  }, [pathname]);
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
   }, [pathname]);
 
   const toggleDropdown = (index: number) => {
@@ -222,6 +236,16 @@ export default function AdminNav() {
             </div>
           )}
         </Link>
+
+        <button
+          onClick={() => setIsMobileMenuOpen(false)}
+          className="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg hover:bg-gray-100 text-gray-500"
+          aria-label="Close menu"
+        >
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+        </button>
 
         {/* Collapse Toggle - Desktop */}
         <button
@@ -383,20 +407,6 @@ export default function AdminNav() {
       >
         <SidebarContent />
       </aside>
-
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-3 rounded-xl bg-white border border-gray-200 shadow-lg text-gray-900 hover:shadow-xl transition-shadow"
-      >
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          {isMobileMenuOpen ? (
-            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-          ) : (
-            <path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-          )}
-        </svg>
-      </button>
     </>
   );
 }

@@ -52,7 +52,7 @@ export const authConfig: NextAuthConfig = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error('Email and password are required');
+          return null;
         }
 
         const email = credentials.email as string;
@@ -80,13 +80,13 @@ export const authConfig: NextAuthConfig = {
           }).select('+password');
 
           if (!user) {
-            throw new Error('Invalid credentials');
+            return null;
           }
 
           // Verify password
           const isValidPassword = await user.comparePassword(password);
           if (!isValidPassword) {
-            throw new Error('Invalid credentials');
+            return null;
           }
 
           // Return user object (without password)

@@ -377,7 +377,7 @@ export default function AdminUsersClient() {
   ], [selectedIds, users]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0 overflow-x-hidden">
       {/* Header with gradient */}
       <div className="bg-gradient-to-r from-[#5693C1]/10 to-blue-400/10 rounded-2xl p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -587,7 +587,7 @@ export default function AdminUsersClient() {
       </div>
 
       {/* Table Container */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden min-w-0">
         {loading ? (
           // Loading Skeleton
           <div className="p-6 space-y-4">
@@ -628,8 +628,8 @@ export default function AdminUsersClient() {
         ) : (
           <>
             {/* Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="max-w-full overflow-x-auto overscroll-x-contain">
+              <table className="w-full min-w-[980px]">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     {columns.map((column) => (
