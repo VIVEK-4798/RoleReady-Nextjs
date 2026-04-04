@@ -4,8 +4,9 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks';
 import { Check, Info, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
+import { forwardRef } from 'react';
 
-export default function UsagePlansSection() {
+const UsagePlansSection = forwardRef<HTMLElement>((props, ref) => {
   const { user } = useAuth();
   const router = useRouter();
   const isAuthenticated = !!user;
@@ -16,7 +17,7 @@ export default function UsagePlansSection() {
   };
 
   return (
-    <section id="usage-plans" className="py-20 bg-gray-50 border-t border-gray-100">
+    <section ref={ref} id="usage-plans" className="py-20 bg-gray-50 border-t border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
@@ -192,4 +193,8 @@ export default function UsagePlansSection() {
       </div>
     </section>
   );
-}
+});
+
+UsagePlansSection.displayName = 'UsagePlansSection';
+
+export default UsagePlansSection;

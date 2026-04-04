@@ -31,15 +31,18 @@ export default function LandingDemoVideo() {
     return () => observer.disconnect();
   }, []);
 
-  const handlePlay = () => {
+  const handlePlay = async () => {
+    if (!videoRef.current) return;
+    
+    // Optimistic UI update
     setIsPlaying(true);
-
-    // Slight delay ensures DOM update
-    setTimeout(() => {
-      videoRef.current?.play().catch(err => {
-        console.log("Autoplay prevented or video not found:", err);
-      });
-    }, 100);
+    
+    try {
+      await videoRef.current.play();
+    } catch (err) {
+      console.error("Autoplay prevented or video not found:", err);
+      // Let the user rely on native controls if programmatic play fails
+    }
   };
 
   return (
@@ -61,48 +64,47 @@ export default function LandingDemoVideo() {
         {isVisible && (
           <div className="relative w-full max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-2xl ring-1 ring-gray-900/5 bg-gray-900 aspect-video group custom-video-container">
             
-            {!isPlaying ? (
-              <div
-                className="absolute inset-0 cursor-pointer overflow-hidden"
-                onClick={handlePlay}
-              >
-                <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
-                  <span className="text-gray-400">Loading thumbnail...</span>
-                </div>
-                {/* Fallback styling since user might not have the image right away */}
-                <img
-                  src="/img/video-thumbnail.png"
-                  alt="Readiness Demo"
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 group-hover:opacity-100 mix-blend-overlay"
-                  loading="lazy"
-                  onError={(e) => {
-                    // Fallback if image doesn't exist yet
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-                
-                {/* Gradient Overlay for better play button contrast */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent transition-opacity duration-300 group-hover:opacity-80"></div>
+            {/* Custom Play UI Overlay */}
+            <div
+              className={`absolute inset-0 z-20 cursor-pointer overflow-hidden transition-opacity duration-500 ${isPlaying ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+              onClick={handlePlay}
+            >
+              <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
+                <span className="text-gray-400">Loading thumbnail...</span>
+              </div>
+              <img
+                src="/img/video-thumbnail.png"
+                alt="Readiness Demo"
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 group-hover:opacity-100"
+                loading="lazy"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+              
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent transition-opacity duration-300 group-hover:opacity-80"></div>
 
-                {/* Play Button */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-20 h-20 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:bg-[#5693C1] transition-all duration-300">
-                    <Play className="w-8 h-8 ml-1 fill-white" />
-                  </div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-20 h-20 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:bg-[#5693C1] transition-all duration-300">
+                  <Play className="w-8 h-8 ml-1 fill-white" />
                 </div>
               </div>
-            ) : (
-              <video
-                ref={videoRef}
-                src="/videos/readiness-demo.mp4"
-                controls
-                className="w-full h-full bg-black outline-none"
-                preload="none"
-              >
-                <source src="/videos/readiness-demo.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-            )}
+            </div>
+
+            {/* Video Element */}
+            <video
+              ref={videoRef}
+              src="/videos/readiness-demo.mp4"
+              controls
+              playsInline
+              preload="auto"
+              className="w-full h-full absolute inset-0 object-cover z-10 bg-black"
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              onEnded={() => setIsPlaying(false)}
+            >
+              Your browser does not support the video tag.
+            </video>
           </div>
         )}
       </div>

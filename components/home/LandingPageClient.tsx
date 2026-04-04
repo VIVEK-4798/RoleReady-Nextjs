@@ -1,6 +1,9 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import dynamic from 'next/dynamic';
 import {
   LandingHeader,
   HeroSection,
@@ -22,10 +25,6 @@ import {
 import { useAuth } from '@/hooks';
 import { LANDING_CONTENT } from '@/lib/constants/landingContent';
 import PublicFooter from '@/components/layout/PublicFooter';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import dynamic from 'next/dynamic';
 import LandingUsagePopup from './LandingUsagePopup';
 
 const LandingDemoVideo = dynamic(
@@ -43,29 +42,77 @@ export default function LandingPageClient({ isAuthenticated }: LandingPageClient
   const router = useRouter();
   const whyChooseUsRef = useRef<WhyChooseUsSectionRef>(null);
   const howItWorksRef = useRef<HTMLElement>(null);
+  const pricingRef = useRef<HTMLElement>(null);
+  
   const [isDemoOpen, setIsDemoOpen] = useState(false);
-  const [showLoginNudge, setShowLoginNudge] = useState(false);
+  
+  // Logical triggers for popups
+  const [shouldShowLoginNudge, setShouldShowLoginNudge] = useState(false);
+  const [shouldShowUsagePopup, setShouldShowUsagePopup] = useState(false);
+  
+  // Determine which popup to actually show (Priority: Login > Usage)
+  const activePopup = shouldShowLoginNudge ? 'login' : (shouldShowUsagePopup ? 'usage' : null);
 
   const userRole = (user?.role === 'mentor' ? 'mentor' : 'student') as 'student' | 'mentor';
   const content = LANDING_CONTENT[userRole];
   const showPricingContent = userRole !== 'mentor';
 
-  // Login Nudge Effect
+  // 1️⃣ Login Nudge Effect (15 seconds delay, frequency-capped)
   useEffect(() => {
-    // DO NOT show for logged-in users
     if (session) return;
 
     const timer = setTimeout(() => {
       const lastShown = localStorage.getItem("login_popup_time");
       // Prevent repeated popup (24 hour expiry)
       if (!lastShown || Date.now() - Number(lastShown) > 24 * 60 * 60 * 1000) {
-        setShowLoginNudge(true);
+        setShouldShowLoginNudge(true);
         localStorage.setItem("login_popup_time", Date.now().toString());
       }
-    }, 10000); // 10 seconds
+    }, 15000); // 15 seconds
 
     return () => clearTimeout(timer);
   }, [session]);
+
+  // 2️⃣ Usage Popup Effect (Scroll 60% OR Pricing Section Intersection)
+  useEffect(() => {
+    if (!showPricingContent) return;
+
+    const handleTriggerUsage = () => {
+      const hasSeen = sessionStorage.getItem('hasSeenFreeUsagePopup');
+      if (!hasSeen) {
+        setShouldShowUsagePopup(true);
+        sessionStorage.setItem('hasSeenFreeUsagePopup', 'true');
+      }
+    };
+
+    // Scroll 60% trigger
+    const handleScroll = () => {
+      const scrollPercent = (window.scrollY + window.innerHeight) / document.documentElement.scrollHeight;
+      if (scrollPercent > 0.6) {
+        handleTriggerUsage();
+        window.removeEventListener('scroll', handleScroll);
+      }
+    };
+
+    // Intersection Observer for Pricing Section
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          handleTriggerUsage();
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    if (pricingRef.current) observer.observe(pricingRef.current);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      observer.disconnect();
+    };
+  }, [showPricingContent]);
 
   const handleCheckReadiness = () => {
     whyChooseUsRef.current?.scrollToCTA();
@@ -105,23 +152,13 @@ export default function LandingPageClient({ isAuthenticated }: LandingPageClient
       {/* Counter Section */}
       <CounterSection />
 
-      {/* Job Listings - Currently disabled */}
-      {/* <section className="py-16 bg-blue-50">
-        <JobListings />
-      </section> */}
-
-      {/* Internship Listings - Currently disabled */}
-      {/* <section className="py-16 bg-blue-50">
-        <InternshipListings />
-      </section> */}
-
-      {/* How It Works (JoinOurBusiness equivalent) */}
+      {/* How It Works */}
       <section ref={howItWorksRef} id="how-it-works">
         <HowItWorksSection content={content.howItWorks} />
       </section>
 
       {/* Lightweight Lazy Video Demo */}
-      <LandingDemoVideo />
+      {/* <LandingDemoVideo /> */}
 
       <section id="features">
         <WhyChooseUsSection
@@ -132,11 +169,11 @@ export default function LandingPageClient({ isAuthenticated }: LandingPageClient
         />
       </section>
 
-      {/* Mentor Benefits - For Verified Mentors and Guests */}
+      {/* Mentor Benefits */}
       {(userRole === 'mentor' || !isAuthenticated) && <MentorBenefitsSection />}
 
-      {/* Usage Plans Section */}
-      {showPricingContent && <UsagePlansSection />}
+      {/* Usage Plans Section (Pricing) */}
+      {showPricingContent && <UsagePlansSection ref={pricingRef} />}
 
       {/* Who Is It For */}
       <section id="for-who">
@@ -163,12 +200,18 @@ export default function LandingPageClient({ isAuthenticated }: LandingPageClient
 
       <PublicFooter />
       
-      {/* Free Usage Promotion */}
-      <LandingUsagePopup />
+      {/* Free Usage Promotion Popup (Secondary Priority) */}
+      <LandingUsagePopup 
+        isVisible={activePopup === 'usage'} 
+        onClose={() => setShouldShowUsagePopup(false)} 
+      />
+
       {showPricingContent && <UsagePlansTrigger />}
       
-      {/* Login Nudge */}
-      {showLoginNudge && <LoginNudgeModal onClose={() => setShowLoginNudge(false)} />}
+      {/* Login Nudge Modal (High Priority) */}
+      {activePopup === 'login' && (
+        <LoginNudgeModal onClose={() => setShouldShowLoginNudge(false)} />
+      )}
 
       {/* Scroll to Top */}
       <ScrollToTop />
